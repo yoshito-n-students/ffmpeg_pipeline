@@ -9,6 +9,29 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(ffmpeg_cpp REQUIRED)
 find_package(image_transport REQUIRED)
+find_package(pluginlib REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(sensor_msgs REQUIRED)
+
+add_library(
+  ffmpeg_image_transport SHARED
+  src/ffmpeg_image_transport.cpp)
+target_include_directories(
+  ffmpeg_image_transport PUBLIC
+  "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
+  "$<INSTALL_INTERFACE:include>")
+ament_target_dependencies(
+  ffmpeg_image_transport
+  ffmpeg_cpp image_transport rclcpp pluginlib sensor_msgs)
+
+install(TARGETS ffmpeg_image_transport
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin)
+install(
+  DIRECTORY include/
+  DESTINATION include)
+pluginlib_export_plugin_description_file(image_transport plugins.xml)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
