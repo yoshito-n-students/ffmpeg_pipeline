@@ -54,7 +54,7 @@ int main(int argc, char **argv) {
   std::size_t n_decoded = 0, n_error = 0;
   while (reader->has_next() && rclcpp::ok()) {
     const auto bag_msg = reader->read_next();
-    if (bag_msg->topic_name != "/image/compressed") {
+    if (bag_msg->topic_name != "/image/ffmpeg") {
       continue;
     }
 

@@ -89,7 +89,7 @@ int main(int argc, char *argv[]) {
         };
 
     const auto subscription = node->create_subscription<sensor_msgs::msg::CompressedImage>(
-        "image/compressed", 10, decode_and_publish);
+        "image/ffmpeg", 10, decode_and_publish);
 
     rclcpp::spin(node);
   } catch (const std::runtime_error &err) {

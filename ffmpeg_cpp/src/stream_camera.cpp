@@ -25,7 +25,7 @@ int main(int argc, char *argv[]) {
 
   // Setup the destination packet publisher
   const auto publisher =
-      node->create_publisher<sensor_msgs::msg::CompressedImage>("image/compressed", 10);
+      node->create_publisher<sensor_msgs::msg::CompressedImage>("image/ffmpeg", 10);
 
   try {
     // Open the input device
