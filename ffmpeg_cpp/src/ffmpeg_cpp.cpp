@@ -91,6 +91,10 @@ void Frame::transfer_data(Frame *const dst) const {
   }
 }
 
+std::string Frame::format_name() const {
+  return av_get_pix_fmt_name(static_cast<AVPixelFormat>(frame_->format));
+}
+
 void Frame::free_frame(AVFrame *frame) { av_frame_free(&frame); }
 
 // ========================================
@@ -283,69 +287,57 @@ int Parser::parse(const BufferRef &buffer, Decoder *const decoder, Packet *const
   return len;
 }
 
+std::vector<std::string> Parser::codec_names() const {
+  std::vector<std::string> names;
+  for (std::size_t i = 0; i < 7; ++i) {
+    const AVCodecID id = static_cast<AVCodecID>(parser_ctx_->parser->codec_ids[i]);
+    if (id != AV_CODEC_ID_NONE) {
+      names.push_back(avcodec_get_name(id));
+    }
+  }
+  return names;
+}
+
 // =======================================
 // Converter - RAII wrapper for SwsContext
 // =======================================
 
-Converter::Converter(const std::string &dst_format_name)
-    : sws_ctx_(nullptr, &sws_freeContext), ctx_width_(0), ctx_height_(0),
-      ctx_src_format_(AV_PIX_FMT_NONE), ctx_dst_format_(av_get_pix_fmt(dst_format_name.c_str())) {
-  if (ctx_dst_format_ == AV_PIX_FMT_NONE) {
+Converter::Converter(const std::size_t width, const std::size_t height,
+                     const std::string &src_format_name, const std::string &dst_format_name)
+    : sws_ctx_(nullptr, &sws_freeContext), width_(width), height_(height),
+      src_format_(av_get_pix_fmt(src_format_name.c_str())),
+      dst_format_(av_get_pix_fmt(dst_format_name.c_str())) {
+  if (src_format_ == AV_PIX_FMT_NONE) {
+    throw Error("Converter::Converter(): " + src_format_name +
+                " was not recognized as a source pixel format");
+  }
+  if (dst_format_ == AV_PIX_FMT_NONE) {
     throw Error("Converter::Converter(): " + dst_format_name +
                 " was not recognized as a destination pixel format");
+  }
+  sws_ctx_.reset(sws_getContext(
+      // src description
+      width_, height_, src_format_,
+      // dst description
+      width_, height_, dst_format_,
+      // options for scaling and filtering (won't be used as we keep the same size)
+      SWS_BILINEAR, nullptr, nullptr, nullptr));
+  if (!sws_ctx_) {
+    throw Error("Converter::Converter(): Failed to create SwsContext");
   }
 }
 
 void Converter::convert(const Frame &src_frame, std::vector<std::uint8_t> *const dst_data) {
-  // Find the deprecated pixel format of src frame to the corresponding non-deprecated one
-  const AVPixelFormat src_frame_format = [](const AVPixelFormat maybe_deprecated_format) {
-    switch (maybe_deprecated_format) {
-    case AV_PIX_FMT_YUVJ420P:
-      return AV_PIX_FMT_YUV420P;
-    case AV_PIX_FMT_YUVJ411P:
-      return AV_PIX_FMT_YUV411P;
-    case AV_PIX_FMT_YUVJ422P:
-      return AV_PIX_FMT_YUV422P;
-    case AV_PIX_FMT_YUVJ440P:
-      return AV_PIX_FMT_YUV440P;
-    case AV_PIX_FMT_YUVJ444P:
-      return AV_PIX_FMT_YUV444P;
-    default:
-      return maybe_deprecated_format;
-    }
-  }(static_cast<AVPixelFormat>(src_frame->format));
-
-  // Create SwsContext if not created or the source frame has different size or format
-  if (!sws_ctx_                             //
-      || (ctx_width_ != src_frame->width)   //
-      || (ctx_height_ != src_frame->height) //
-      || (ctx_src_format_ != src_frame_format)) {
-    sws_ctx_.reset(sws_getContext(
-        // src description
-        src_frame->width, src_frame->height, src_frame_format,
-        // dst description (keep the same size)
-        src_frame->width, src_frame->height, ctx_dst_format_,
-        // options for scaling and filtering (won't be used)
-        SWS_BILINEAR, nullptr, nullptr, nullptr));
-    if (!sws_ctx_) {
-      throw Error("Converter::convert(): Failed to create SwsContext");
-    }
-    ctx_width_ = src_frame->width;
-    ctx_height_ = src_frame->height;
-    ctx_src_format_ = src_frame_format;
-  }
-
   // Get the layout of the destination image
   // - linesize: bytes per line for each plane
   std::array<int, 4> dst_linesize;
-  if (const int ret = av_image_fill_linesizes(dst_linesize.data(), ctx_dst_format_, ctx_width_);
-      ret < 0) {
+  if (const int ret = av_image_fill_linesizes(dst_linesize.data(), dst_format_, width_); ret < 0) {
     throw Error("Converter::convert(): Failed to get destination linesizes", ret);
   }
   // - plane size: bytes per plane
   std::array<std::size_t, 4> dst_plane_size;
   if (const int ret =
-          av_image_fill_plane_sizes(dst_plane_size.data(), ctx_dst_format_, ctx_height_,
+          av_image_fill_plane_sizes(dst_plane_size.data(), dst_format_, height_,
                                     std::array<std::ptrdiff_t, 4>{dst_linesize[0], dst_linesize[1],
                                                                   dst_linesize[2], dst_linesize[3]}
                                         .data());
@@ -371,6 +363,8 @@ void Converter::convert(const Frame &src_frame, std::vector<std::uint8_t> *const
             dst_linesize.data());
 }
 
-std::string Converter::dst_format_name() const { return av_get_pix_fmt_name(ctx_dst_format_); }
+std::string Converter::src_format_name() const { return av_get_pix_fmt_name(src_format_); }
+
+std::string Converter::dst_format_name() const { return av_get_pix_fmt_name(dst_format_); }
 
 } // namespace ffmpeg_cpp

@@ -44,27 +44,10 @@ int main(int argc, char **argv) {
   // Initialize the deserializer for messages in the bag
   rclcpp::Serialization<sensor_msgs::msg::CompressedImage> serialization;
 
-  // Read the first message to get the decoder name
-  std::string decoder_name;
-  while (decoder_name.empty() && reader->has_next() && rclcpp::ok()) {
-    const auto bag_msg = reader->read_next();
-    if (bag_msg->topic_name == "/image/compressed") {
-      const auto comp_img = deserialize(&serialization, *bag_msg);
-      if (!comp_img->format.empty()) {
-        decoder_name = comp_img->format;
-      }
-    }
-  }
-  RCLCPP_INFO(node->get_logger(), "Read the first message with the decoder name: %s",
-              decoder_name.c_str());
-
-  // Initialize the decoder and converter
-  av::Parser parser(decoder_name);
-  av::Decoder decoder(decoder_name);
-  av::Converter converter("bgr24");
-  RCLCPP_INFO(node->get_logger(), "Initialized decoder (codec: %s, hw: %s) and converter (dst: %s)",
-              decoder.codec_name().c_str(), decoder.hw_device_type().c_str(),
-              converter.dst_format_name().c_str());
+  // Pointers to the parser, decoder, and converter
+  std::unique_ptr<av::Parser> parser;
+  std::unique_ptr<av::Decoder> decoder;
+  std::unique_ptr<av::Converter> converter;
 
   // Decode and convert each message in the bag
   const rclcpp::Time start_time = node->now();
@@ -78,6 +61,18 @@ int main(int argc, char **argv) {
     const auto comp_img = deserialize(&serialization, *bag_msg);
 
     try {
+      // Initialize the parser and decoder if not already done
+      if (!parser) {
+        parser = std::make_unique<av::Parser>(comp_img->format);
+        RCLCPP_INFO(node->get_logger(), "Initialized parser (codec: %s)",
+                    parser->codec_names().front().c_str());
+      }
+      if (!decoder) {
+        decoder = std::make_unique<av::Decoder>(comp_img->format);
+        RCLCPP_INFO(node->get_logger(), "Initialized decoder (codec: %s, hw: %s)",
+                    decoder->codec_name().c_str(), decoder->hw_device_type().c_str());
+      }
+
       // Copy the compressed data to the reference-counted buffer with padding
       const av::BufferRef buffer(comp_img->data.data(), comp_img->data.size());
 
@@ -85,16 +80,16 @@ int main(int argc, char **argv) {
       for (std::size_t pos = 0; pos < buffer.unpadded_size();) {
         // Parse the buffer from the current position and store the data in the packet
         av::Packet packet;
-        pos += parser.parse(buffer, &decoder, &packet, pos);
+        pos += parser->parse(buffer, &(*decoder), &packet, pos);
 
         if (packet->data) {
           // Send the packet to the decoder
-          decoder.send_packet(packet);
+          decoder->send_packet(packet);
           RCLCPP_INFO(node->get_logger(), "Sent packet to the decoder: %d bytes", packet->size);
 
           // Receive and publish the decoded frames
           av::Frame frame;
-          while (decoder.receive_frame(&frame)) {
+          while (decoder->receive_frame(&frame)) {
             RCLCPP_INFO(node->get_logger(), "Decoded frame: %dx%d", frame->width, frame->height);
             // Copy the frame properties to the destination image
             auto image = std::make_unique<sensor_msgs::msg::Image>();
@@ -104,16 +99,26 @@ int main(int argc, char **argv) {
             image->encoding = sensor_msgs::image_encodings::BGR8;
             image->step = 3 * frame->width;
 
-            // Convert the frame to BGR24 image
+            // If the frame data is in a hardware device,
+            // transfer the data to the CPU-accessible memory before conversion
             if (frame.is_hw_frame()) {
-              // If the frame data is in a hardware device,
-              // transfer the data to the CPU-accessible memory before conversion
               av::Frame sw_frame;
               frame.transfer_data(&sw_frame);
-              converter.convert(sw_frame, &image->data);
-            } else {
-              converter.convert(frame, &image->data);
+              frame = std::move(sw_frame);
             }
+
+            // Initialize the image converter if not already done
+            if (!converter) {
+              converter = std::make_unique<av::Converter>(frame->width, frame->height,
+                                                          frame.format_name(), "bgr24");
+              RCLCPP_INFO(
+                  node->get_logger(), "Initialized converter (size: %zdx%zd, src: %s, dst: %s)",
+                  converter->width(), converter->height(), converter->src_format_name().c_str(),
+                  converter->dst_format_name().c_str());
+            }
+
+            // Convert the frame to BGR24 format
+            converter->convert(frame, &image->data);
 
             // Publish the destination image
             publisher->publish(std::move(image));

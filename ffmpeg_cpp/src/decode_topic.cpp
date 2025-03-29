@@ -1,4 +1,3 @@
-#include <future>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -17,35 +16,11 @@ int main(int argc, char *argv[]) {
   rclcpp::init(argc, argv);
   const rclcpp::Node::SharedPtr node = rclcpp::Node::make_shared("decode_topic");
 
-  // Receive one message from the /image/compressed topic to determine the decoder name
-  RCLCPP_INFO(node->get_logger(), "Waiting for the first message to determine the decoder name");
-  const std::string decoder_name = [&node]() {
-    std::promise<std::string> promise;
-    const auto subscription = node->create_subscription<sensor_msgs::msg::CompressedImage>(
-        "image/compressed", 1,
-        [&promise](const sensor_msgs::msg::CompressedImage::SharedPtr packet_data) {
-          if (!packet_data->format.empty()) {
-            promise.set_value(packet_data->format);
-          }
-        });
-    auto future = promise.get_future();
-    rclcpp::spin_until_future_complete(node, future);
-    return future.get();
-  }();
-  RCLCPP_INFO(node->get_logger(), "Received the first message with the decoder name: %s",
-              decoder_name.c_str());
-
   try {
-    // Initialize the decoder, which decompresses H.264 video packets
+    // Pointers to the decoder, which decompresses H.264 video packets
     // and the converter, which converts the decoded frames to BGR24 images
-    av::Packet packet;
-    av::Frame frame, sw_frame;
-    av::Decoder decoder(decoder_name);
-    av::Converter converter("bgr24");
-    RCLCPP_INFO(node->get_logger(),
-                "Initialized decoder (codec: %s, hw: %s) and converter (dst: %s)",
-                decoder.codec_name().c_str(), decoder.hw_device_type().c_str(),
-                converter.dst_format_name().c_str());
+    std::unique_ptr<av::Decoder> decoder;
+    std::unique_ptr<av::Converter> converter;
 
     // Create a publisher to publish the decoded images
     const auto publisher = node->create_publisher<sensor_msgs::msg::Image>("dst_image", 10);
@@ -58,14 +33,23 @@ int main(int argc, char *argv[]) {
             if (packet_data->data.empty()) {
               return;
             }
+            av::Packet packet;
             packet->data = packet_data->data.data();
             packet->size = packet_data->data.size();
 
+            // Initialize the decoder if not already done
+            if (!decoder) {
+              decoder = std::make_unique<av::Decoder>(packet_data->format);
+              RCLCPP_INFO(node->get_logger(), "Initialized decoder (codec: %s, hw: %s)",
+                          decoder->codec_name().c_str(), decoder->hw_device_type().c_str());
+            }
+
             // Send the packet to the decoder
-            decoder.send_packet(packet);
+            decoder->send_packet(packet);
 
             // Receive and publish the decoded frames
-            while (decoder.receive_frame(&frame)) {
+            av::Frame frame;
+            while (decoder->receive_frame(&frame)) {
               // Copy the frame properties to the destination image
               auto image = std::make_unique<sensor_msgs::msg::Image>();
               image->header.stamp = packet_data->header.stamp;
@@ -78,11 +62,23 @@ int main(int argc, char *argv[]) {
               if (frame.is_hw_frame()) {
                 // If the frame data is in a hardware device,
                 // transfer the data to the CPU-accessible memory before conversion
+                av::Frame sw_frame;
                 frame.transfer_data(&sw_frame);
-                converter.convert(sw_frame, &image->data);
-              } else {
-                converter.convert(frame, &image->data);
+                frame = std::move(sw_frame);
               }
+
+              // Initialize the image converter if not already done
+              if (!converter) {
+                converter = std::make_unique<av::Converter>(frame->width, frame->height,
+                                                            frame.format_name(), "bgr24");
+                RCLCPP_INFO(
+                    node->get_logger(), "Initialized converter (size: %zdx%zd, src: %s, dst: %s)",
+                    converter->width(), converter->height(), converter->src_format_name().c_str(),
+                    converter->dst_format_name().c_str());
+              }
+
+              // Convert the frame to BGR24 format
+              converter->convert(frame, &image->data);
 
               // Publish the destination image
               publisher->publish(std::move(image));

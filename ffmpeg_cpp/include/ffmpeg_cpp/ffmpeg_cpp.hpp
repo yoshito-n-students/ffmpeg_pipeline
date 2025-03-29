@@ -44,6 +44,7 @@ public:
   const AVBufferRef *get() const { return buf_.get(); }
   AVBufferRef *operator->() { return buf_.operator->(); }
   const AVBufferRef *operator->() const { return buf_.operator->(); }
+
   std::size_t padded_size() const { return buf_->size; }
   std::size_t unpadded_size() const { return buf_->size - AV_INPUT_BUFFER_PADDING_SIZE; }
 
@@ -97,6 +98,8 @@ public:
   AVFrame *operator->() { return frame_.operator->(); }
   const AVFrame *operator->() const { return frame_.operator->(); }
 
+  std::string format_name() const;
+
 private:
   static void free_frame(AVFrame *frame);
 
@@ -119,6 +122,7 @@ public:
   const AVFormatContext *get() const { return format_ctx_.get(); }
   AVFormatContext *operator->() { return format_ctx_.operator->(); }
   const AVFormatContext *operator->() const { return format_ctx_.operator->(); }
+
   int stream_id() const { return stream_id_; }
 
 private:
@@ -173,6 +177,8 @@ public:
   AVCodecParserContext *operator->() { return parser_ctx_.operator->(); }
   const AVCodecParserContext *operator->() const { return parser_ctx_.operator->(); }
 
+  std::vector<std::string> codec_names() const;
+
 private:
   std::unique_ptr<AVCodecParserContext, decltype(&av_parser_close)> parser_ctx_;
 };
@@ -180,19 +186,23 @@ private:
 // RAII wrapper for SwsContext
 class Converter {
 public:
-  // Initialize the converter with the destination pixel format name
-  Converter(const std::string &dst_format_name);
+  // Initialize the converter
+  Converter(const std::size_t width, const std::size_t height, const std::string &src_format_name,
+            const std::string &dst_format_name);
 
   // Convert the source frame to the destination pixel format
   void convert(const Frame &src_frame, std::vector<std::uint8_t> *const dst_data);
 
+  std::size_t width() const { return width_; }
+  std::size_t height() const { return height_; }
+  std::string src_format_name() const;
   std::string dst_format_name() const;
 
 private:
   std::unique_ptr<SwsContext, decltype(&sws_freeContext)> sws_ctx_;
-  int ctx_width_, ctx_height_;
-  AVPixelFormat ctx_src_format_;
-  const AVPixelFormat ctx_dst_format_;
+  const std::size_t width_, height_;
+  const AVPixelFormat src_format_;
+  const AVPixelFormat dst_format_;
 };
 
 } // namespace ffmpeg_cpp
