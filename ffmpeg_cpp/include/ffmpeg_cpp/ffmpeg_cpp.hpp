@@ -136,8 +136,11 @@ private:
 // RAII wrapper for decoder (a.k.a AVCodecContext)
 class Decoder {
 public:
-  // Initialize the decoder with the given codec name
-  Decoder(const std::string &codec_name);
+  // Check if the codec is supported by the current decoder context
+  bool is_supported(const std::string &codec_name) const;
+
+  // (Re)initialize the decoder with the given codec name
+  void reconfigure(const std::string &codec_name);
 
   // Send a cmpressed packet to the decoder
   void send_packet(const Packet &packet);
@@ -157,14 +160,17 @@ private:
   static void free_context(AVCodecContext *codec_ctx);
 
 private:
-  std::unique_ptr<AVCodecContext, decltype(&free_context)> codec_ctx_;
+  std::unique_ptr<AVCodecContext, decltype(&free_context)> codec_ctx_{nullptr, &free_context};
 };
 
 // RAII wrapper for AVParserContext
 class Parser {
 public:
-  // Initialize the parser with the given codec ID
-  Parser(const std::string &codec_name);
+  // Check if the codec is supported by the current parser context
+  bool is_supported(const std::string &codec_name) const;
+
+  // (Re)initialize the parser with the given codec name
+  void reconfigure(const std::string &codec_name);
 
   // Parse the buffer starting from the pos-th byte, and store the data of one frame in the packet.
   // The data in the packet is managed by reference counting, so its lifetime is guaranteed.
@@ -180,15 +186,21 @@ public:
   std::vector<std::string> codec_names() const;
 
 private:
-  std::unique_ptr<AVCodecParserContext, decltype(&av_parser_close)> parser_ctx_;
+  std::unique_ptr<AVCodecParserContext, decltype(&av_parser_close)> parser_ctx_{nullptr,
+                                                                                &av_parser_close};
 };
 
 // RAII wrapper for SwsContext
 class Converter {
 public:
-  // Initialize the converter
-  Converter(const std::size_t width, const std::size_t height, const std::string &src_format_name,
-            const std::string &dst_format_name);
+  // Check if the conversion from the given source format to the destination format is supported
+  // by the current converter context
+  bool is_supported(const std::size_t width, const std::size_t height,
+                    const std::string &src_format_name, const std::string &dst_format_name) const;
+
+  // (Re)initialize the converter with the given source and destination formats
+  void reconfigure(const std::size_t width, const std::size_t height,
+                   const std::string &src_format_name, const std::string &dst_format_name);
 
   // Convert the source frame to the destination pixel format
   void convert(const Frame &src_frame, std::vector<std::uint8_t> *const dst_data);
@@ -199,10 +211,10 @@ public:
   std::string dst_format_name() const;
 
 private:
-  std::unique_ptr<SwsContext, decltype(&sws_freeContext)> sws_ctx_;
-  const std::size_t width_, height_;
-  const AVPixelFormat src_format_;
-  const AVPixelFormat dst_format_;
+  std::unique_ptr<SwsContext, decltype(&sws_freeContext)> sws_ctx_{nullptr, &sws_freeContext};
+  std::size_t width_ = 0, height_ = 0;
+  AVPixelFormat src_format_ = AV_PIX_FMT_NONE;
+  AVPixelFormat dst_format_ = AV_PIX_FMT_NONE;
 };
 
 } // namespace ffmpeg_cpp

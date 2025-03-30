@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <array>
 #include <cstring> // for std::memset()
 #include <numeric> // for std::partial_sum()
@@ -169,7 +170,12 @@ void Input::close_input(AVFormatContext *format_ctx) { avformat_close_input(&for
 // Decoder - RAII wrapper for AVCodecContext
 // =========================================
 
-Decoder::Decoder(const std::string &codec_name) : codec_ctx_(nullptr, &free_context) {
+bool Decoder::is_supported(const std::string &codec_name) const {
+  const AVCodec *const codec = avcodec_find_decoder_by_name(codec_name.c_str());
+  return codec && codec_ctx_ && (codec->id == codec_ctx_->codec_id);
+}
+
+void Decoder::reconfigure(const std::string &codec_name) {
   // Find the decoder by name
   const AVCodec *const codec = avcodec_find_decoder_by_name(codec_name.c_str());
   if (!codec) {
@@ -245,7 +251,14 @@ void Decoder::free_context(AVCodecContext *codec_ctx) { avcodec_free_context(&co
 // Parser - RAII wrapper for AVCodecParserContext
 // ==============================================
 
-Parser::Parser(const std::string &codec_name) : parser_ctx_(nullptr, &av_parser_close) {
+bool Parser::is_supported(const std::string &codec_name) const {
+  const AVCodec *const codec = avcodec_find_decoder_by_name(codec_name.c_str());
+  return codec && parser_ctx_ &&
+         std::any_of(parser_ctx_->parser->codec_ids, parser_ctx_->parser->codec_ids + 7,
+                     [codec](const int parser_id) { return parser_id == codec->id; });
+}
+
+void Parser::reconfigure(const std::string &codec_name) {
   // Find the codec by name
   const AVCodec *const codec = avcodec_find_decoder_by_name(codec_name.c_str());
   if (!codec) {
@@ -302,29 +315,31 @@ std::vector<std::string> Parser::codec_names() const {
 // Converter - RAII wrapper for SwsContext
 // =======================================
 
-Converter::Converter(const std::size_t width, const std::size_t height,
-                     const std::string &src_format_name, const std::string &dst_format_name)
-    : sws_ctx_(nullptr, &sws_freeContext), width_(width), height_(height),
-      src_format_(av_get_pix_fmt(src_format_name.c_str())),
-      dst_format_(av_get_pix_fmt(dst_format_name.c_str())) {
-  if (src_format_ == AV_PIX_FMT_NONE) {
-    throw Error("Converter::Converter(): " + src_format_name +
-                " was not recognized as a source pixel format");
-  }
-  if (dst_format_ == AV_PIX_FMT_NONE) {
-    throw Error("Converter::Converter(): " + dst_format_name +
-                " was not recognized as a destination pixel format");
-  }
+bool Converter::is_supported(const std::size_t width, const std::size_t height,
+                             const std::string &src_format_name,
+                             const std::string &dst_format_name) const {
+  return sws_ctx_ && (width == width_) && (height == height_) &&
+         (av_get_pix_fmt(src_format_name.c_str()) == src_format_) &&
+         (av_get_pix_fmt(dst_format_name.c_str()) == dst_format_);
+}
+
+void Converter::reconfigure(const std::size_t width, const std::size_t height,
+                            const std::string &src_format_name,
+                            const std::string &dst_format_name) {
+  const AVPixelFormat src_format = av_get_pix_fmt(src_format_name.c_str()),
+                      dst_format = av_get_pix_fmt(dst_format_name.c_str());
   sws_ctx_.reset(sws_getContext(
-      // src description
-      width_, height_, src_format_,
-      // dst description
-      width_, height_, dst_format_,
+      // src & dst descriptions
+      width, height, src_format, width, height, dst_format,
       // options for scaling and filtering (won't be used as we keep the same size)
       SWS_BILINEAR, nullptr, nullptr, nullptr));
   if (!sws_ctx_) {
-    throw Error("Converter::Converter(): Failed to create SwsContext");
+    throw Error("Converter::reconfigure(): Failed to create SwsContext");
   }
+  width_ = width;
+  height_ = height;
+  src_format_ = src_format;
+  dst_format_ = dst_format;
 }
 
 void Converter::convert(const Frame &src_frame, std::vector<std::uint8_t> *const dst_data) {

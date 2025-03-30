@@ -17,10 +17,10 @@ int main(int argc, char *argv[]) {
   const rclcpp::Node::SharedPtr node = rclcpp::Node::make_shared("decode_topic");
 
   try {
-    // Pointers to the decoder, which decompresses H.264 video packets
+    // The decoder, which decompresses H.264 video packets
     // and the converter, which converts the decoded frames to BGR24 images
-    std::unique_ptr<av::Decoder> decoder;
-    std::unique_ptr<av::Converter> converter;
+    av::Decoder decoder;
+    av::Converter converter;
 
     // Create a publisher to publish the decoded images
     const auto publisher = node->create_publisher<sensor_msgs::msg::Image>("dst_image", 10);
@@ -38,18 +38,18 @@ int main(int argc, char *argv[]) {
             packet->size = packet_data->data.size();
 
             // Initialize the decoder if not already done
-            if (!decoder) {
-              decoder = std::make_unique<av::Decoder>(packet_data->format);
-              RCLCPP_INFO(node->get_logger(), "Initialized decoder (codec: %s, hw: %s)",
-                          decoder->codec_name().c_str(), decoder->hw_device_type().c_str());
+            if (!decoder.is_supported(packet_data->format)) {
+              decoder.reconfigure(packet_data->format);
+              RCLCPP_INFO(node->get_logger(), "Configured decoder (codec: %s, hw: %s)",
+                          decoder.codec_name().c_str(), decoder.hw_device_type().c_str());
             }
 
             // Send the packet to the decoder
-            decoder->send_packet(packet);
+            decoder.send_packet(packet);
 
             // Receive and publish the decoded frames
             av::Frame frame;
-            while (decoder->receive_frame(&frame)) {
+            while (decoder.receive_frame(&frame)) {
               // Copy the frame properties to the destination image
               auto image = std::make_unique<sensor_msgs::msg::Image>();
               image->header.stamp = packet_data->header.stamp;
@@ -68,17 +68,17 @@ int main(int argc, char *argv[]) {
               }
 
               // Initialize the image converter if not already done
-              if (!converter) {
-                converter = std::make_unique<av::Converter>(frame->width, frame->height,
-                                                            frame.format_name(), "bgr24");
+              if (!converter.is_supported(frame->width, frame->height, frame.format_name(),
+                                          "bgr24")) {
+                converter.reconfigure(frame->width, frame->height, frame.format_name(), "bgr24");
                 RCLCPP_INFO(
-                    node->get_logger(), "Initialized converter (size: %zdx%zd, src: %s, dst: %s)",
-                    converter->width(), converter->height(), converter->src_format_name().c_str(),
-                    converter->dst_format_name().c_str());
+                    node->get_logger(), "Configured converter (size: %zdx%zd, src: %s, dst: %s)",
+                    converter.width(), converter.height(), converter.src_format_name().c_str(),
+                    converter.dst_format_name().c_str());
               }
 
               // Convert the frame to BGR24 format
-              converter->convert(frame, &image->data);
+              converter.convert(frame, &image->data);
 
               // Publish the destination image
               publisher->publish(std::move(image));
