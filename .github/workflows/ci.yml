@@ -6,7 +6,7 @@ on:
       - jazzy
 
 jobs:
-  build-check-on-ros2:
+  build-check:
     strategy:
       fail-fast: false
     runs-on: ubuntu-latest
