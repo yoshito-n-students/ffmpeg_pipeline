@@ -219,12 +219,20 @@ void Decoder::reconfigure(const std::string &codec_name) {
 }
 
 void Decoder::send_packet(const Packet &packet) {
+  if (!codec_ctx_) {
+    throw Error("Decoder::send_packet(): Decoder context is not configured");
+  }
+
   if (const int ret = avcodec_send_packet(codec_ctx_.get(), packet.get()); ret < 0) {
     throw Error("Decoder::send_packet(): Error sending packet for decoding", ret);
   }
 }
 
 bool Decoder::receive_frame(Frame *const frame) {
+  if (!codec_ctx_) {
+    throw Error("Decoder::receive_frame(): Decoder context is not configured");
+  }
+
   frame->unref();
   if (const int ret = avcodec_receive_frame(codec_ctx_.get(), frame->get()); ret == 0) {
     return true;
@@ -236,13 +244,15 @@ bool Decoder::receive_frame(Frame *const frame) {
   }
 }
 
-std::string Decoder::codec_name() const { return avcodec_get_name(codec_ctx_->codec_id); }
+std::string Decoder::codec_name() const {
+  return avcodec_get_name(codec_ctx_ ? codec_ctx_->codec_id : AV_CODEC_ID_NONE);
+}
 
 std::string Decoder::hw_device_type() const {
-  return codec_ctx_->hw_device_ctx
-             ? av_hwdevice_get_type_name(
-                   reinterpret_cast<AVHWDeviceContext *>(codec_ctx_->hw_device_ctx->data)->type)
-             : "none";
+  return av_hwdevice_get_type_name(
+      (codec_ctx_ && codec_ctx_->hw_device_ctx)
+          ? reinterpret_cast<AVHWDeviceContext *>(codec_ctx_->hw_device_ctx->data)->type
+          : AV_HWDEVICE_TYPE_NONE);
 }
 
 void Decoder::free_context(AVCodecContext *codec_ctx) { avcodec_free_context(&codec_ctx); }
@@ -274,6 +284,10 @@ void Parser::reconfigure(const std::string &codec_name) {
 
 int Parser::parse(const BufferRef &buffer, Decoder *const decoder, Packet *const packet,
                   const std::int64_t pos) {
+  if (!parser_ctx_) {
+    throw Error("Parser::parse(): Parser context is not configured");
+  }
+
   // Parse the buffer starting from the pos-th byte
   std::uint8_t *packet_data;
   int packet_size;
@@ -302,10 +316,11 @@ int Parser::parse(const BufferRef &buffer, Decoder *const decoder, Packet *const
 
 std::vector<std::string> Parser::codec_names() const {
   std::vector<std::string> names;
-  for (std::size_t i = 0; i < 7; ++i) {
-    const AVCodecID id = static_cast<AVCodecID>(parser_ctx_->parser->codec_ids[i]);
-    if (id != AV_CODEC_ID_NONE) {
-      names.push_back(avcodec_get_name(id));
+  if (parser_ctx_) {
+    for (const auto id : parser_ctx_->parser->codec_ids) {
+      if (id != AV_CODEC_ID_NONE) {
+        names.push_back(avcodec_get_name(static_cast<AVCodecID>(id)));
+      }
     }
   }
   return names;
@@ -343,6 +358,10 @@ void Converter::reconfigure(const std::size_t width, const std::size_t height,
 }
 
 void Converter::convert(const Frame &src_frame, std::vector<std::uint8_t> *const dst_data) {
+  if (!sws_ctx_) {
+    throw Error("Converter::convert(): Converter context is not configured");
+  }
+
   // Get the layout of the destination image
   // - linesize: bytes per line for each plane
   std::array<int, 4> dst_linesize;
@@ -378,8 +397,12 @@ void Converter::convert(const Frame &src_frame, std::vector<std::uint8_t> *const
             dst_linesize.data());
 }
 
-std::string Converter::src_format_name() const { return av_get_pix_fmt_name(src_format_); }
+std::string Converter::src_format_name() const {
+  return av_get_pix_fmt_name(sws_ctx_ ? src_format_ : AV_PIX_FMT_NONE);
+}
 
-std::string Converter::dst_format_name() const { return av_get_pix_fmt_name(dst_format_); }
+std::string Converter::dst_format_name() const {
+  return av_get_pix_fmt_name(sws_ctx_ ? dst_format_ : AV_PIX_FMT_NONE);
+}
 
 } // namespace ffmpeg_cpp
