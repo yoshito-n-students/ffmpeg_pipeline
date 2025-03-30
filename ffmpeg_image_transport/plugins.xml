@@ -1,6 +1,6 @@
 <library path="ffmpeg_image_transport">
   <class
-    name="ffmpeg_image_transport/ffmpeg_subscriber"
+    name="image_transport/ffmpeg_sub"
     type="ffmpeg_image_transport::FFmpegSubscriber"
     base_class_type="image_transport::SubscriberPlugin">
     <description>
