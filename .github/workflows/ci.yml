@@ -11,7 +11,7 @@ jobs:
       fail-fast: false
     runs-on: ubuntu-latest
     container:
-      image: ros:${{ github.ref }}-ros-base
+      image: ros:${{ github.ref_name }}-ros-base
     defaults:
       run:
         shell: bash
@@ -26,22 +26,22 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: yoshito-n-students/ffmpeg_pipeline
-          ref: ${{ github.ref }}
+          ref: ${{ github.ref_name }}
           path: src/ffmpeg_pipeline
       # Install dependencies
       - name: Run rosdep-install
         run: |
-          source /opt/ros/${{ github.ref }}/setup.bash
+          source /opt/ros/${{ github.ref_name }}/setup.bash
           sudo apt update
-          rosdep update --rosdistro ${{ github.ref }}
-          sudo rosdep install --default-yes -r --ignore-src --from-paths src --rosdistro ${{ github.ref }}
+          rosdep update --rosdistro ${{ github.ref_name }}
+          sudo rosdep install --default-yes -r --ignore-src --from-paths src --rosdistro ${{ github.ref_name }}
       # colcon build
       - name: Build
         run: |
-          source /opt/ros/${{ github.ref }}/setup.bash
+          source /opt/ros/${{ github.ref_name }}/setup.bash
           colcon build --event-handlers console_cohesion+
       # colcon test
       - name: Test
         run: |
-          source /opt/ros/${{ github.ref }}/setup.bash
+          source /opt/ros/${{ github.ref_name }}/setup.bash
           colcon test --event-handlers console_cohesion+
