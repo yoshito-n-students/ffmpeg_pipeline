@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - jazzy
+
+jobs:
+  build-check-on-ros2:
+    strategy:
+      fail-fast: false
+    runs-on: ubuntu-latest
+    container:
+      image: ros:${{ github.ref }}-ros-base
+    defaults:
+      run:
+        shell: bash
+    steps:
+      # System update
+      - name: Run apt-upgrade
+        run: |
+          sudo apt update
+          sudo apt --yes upgrade
+      # Checkout repository
+      - name: Checkout ffmpeg_pipeline
+        uses: actions/checkout@v4
+        with:
+          repository: yoshito-n-students/ffmpeg_pipeline
+          ref: ${{ github.ref }}
+          path: src/ffmpeg_pipeline
+      # Install dependencies
+      - name: Run rosdep-install
+        run: |
+          source /opt/ros/${{ github.ref }}/setup.bash
+          sudo apt update
+          rosdep update --rosdistro ${{ github.ref }}
+          sudo rosdep install --default-yes -r --ignore-src --from-paths src --rosdistro ${{ github.ref }}
+      # colcon build
+      - name: Build
+        run: |
+          source /opt/ros/${{ github.ref }}/setup.bash
+          colcon build --event-handlers console_cohesion+
+      # colcon test
+      - name: Test
+        run: |
+          source /opt/ros/${{ github.ref }}/setup.bash
+          colcon test --event-handlers console_cohesion+
