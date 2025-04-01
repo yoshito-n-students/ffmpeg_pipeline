@@ -11,6 +11,32 @@ find_package(controller_interface REQUIRED)
 find_package(ffmpeg_cpp REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(realtime_tools REQUIRED)
+find_package(sensor_msgs REQUIRED)
+
+add_library(ffmpeg_controllers SHARED
+  src/ffmpeg_controllers.cpp
+)
+target_include_directories(
+  ffmpeg_controllers PUBLIC
+  $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include/imu_sensor_broadcaster>
+)
+ament_target_dependencies(
+  ffmpeg_controllers PUBLIC 
+  controller_interface
+  ffmpeg_cpp
+  pluginlib
+  rclcpp
+  realtime_tools
+  sensor_msgs)
+
+install(TARGETS ffmpeg_controllers
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin)
+pluginlib_export_plugin_description_file(
+  controller_interface plugins.xml)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
