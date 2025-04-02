@@ -124,6 +124,7 @@ public:
   const AVFormatContext *operator->() const { return format_ctx_.operator->(); }
 
   int stream_id() const { return stream_id_; }
+  std::string codec_name() const;
 
 private:
   static void close_input(AVFormatContext *format_ctx);

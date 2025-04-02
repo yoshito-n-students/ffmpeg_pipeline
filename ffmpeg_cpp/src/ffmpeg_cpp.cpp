@@ -164,6 +164,13 @@ void Input::read_frame(Packet *const packet) {
   } while ((*packet)->stream_index != stream_id_);
 }
 
+std::string Input::codec_name() const {
+  return avcodec_get_name(format_ctx_ && 0 <= stream_id_ &&
+                                  static_cast<unsigned int>(stream_id_) < format_ctx_->nb_streams
+                              ? format_ctx_->streams[stream_id_]->codecpar->codec_id
+                              : AV_CODEC_ID_NONE);
+}
+
 void Input::close_input(AVFormatContext *format_ctx) { avformat_close_input(&format_ctx); }
 
 // =========================================
