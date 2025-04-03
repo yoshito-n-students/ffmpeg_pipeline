@@ -66,6 +66,8 @@ public:
     // Configure the input with the parameters
     try {
       input_.reconfigure(url, input_format, options);
+      RCLCPP_INFO(get_logger(), "Configured the input (URL: %s, format: %s)", url.c_str(),
+                  input_format.c_str());
     } catch (const std::runtime_error &error) {
       RCLCPP_ERROR(get_logger(), "Failed to configure the input: %s", error.what());
       return CallbackReturn::ERROR;
@@ -106,6 +108,12 @@ public:
 
   hardware_interface::return_type read(const rclcpp::Time & /*time*/,
                                        const rclcpp::Duration & /*period*/) override {
+    const auto &sensor_name = info_.sensors[0].name;
+
+    // Set the codec name to the state interface
+    codec_name_ = input_.codec_name();
+    set_state_from_pointer(sensor_name + "/codec", &codec_name_);
+
     // Move the write packet to the read packet if the fomer is newer than the latter.
     // However, this step will be skipped if the write side thread locks the write packet.
     // This procedure avoids blocking on the read side while obtaining the latest packet.
@@ -113,8 +121,9 @@ public:
         try_lock.owns_lock() && read_packet_->pts < write_packet_->pts) {
       std::swap(read_packet_, write_packet_);
     }
+    // Set the read packet to the state interface
+    set_state_from_pointer(sensor_name + "/packet", &read_packet_);
 
-    set_state_from_pointer(info_.sensors[0].name + "/packet", &read_packet_);
     return hardware_interface::return_type::OK;
   }
 
@@ -146,7 +155,8 @@ protected:
     }
   }
 
-  template <typename T> void set_state_from_pointer(const std::string &iface_name, const T *const value) {
+  template <typename T>
+  void set_state_from_pointer(const std::string &iface_name, const T *const value) {
     // Due to the constraints of hardware_interfae::StateInterface,
     // the state can only be set as a double type value.
     // Therefore, the pointer type is converted to double type at the value level and set.
@@ -157,6 +167,7 @@ protected:
 
 protected:
   ffmpeg_cpp::Input input_;
+  std::string codec_name_;
 
   std::thread write_thread_;
   std::atomic_bool stop_requested_;
