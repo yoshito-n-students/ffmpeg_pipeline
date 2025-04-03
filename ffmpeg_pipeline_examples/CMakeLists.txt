@@ -13,7 +13,7 @@ find_package(ffmpeg_hardware REQUIRED)
 find_package(ffmpeg_image_transport REQUIRED)
 
 install(
-  DIRECTORY h264_stream
+  DIRECTORY h264_stream image_stream
   DESTINATION share/ffmpeg_pipeline_examples)
 
 if(BUILD_TESTING)

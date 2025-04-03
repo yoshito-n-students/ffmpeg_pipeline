@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<robot name="robot">
+
+    <link name="body">
+    </link>
+
+    <ros2_control name="FFmpegHardware" type="system">
+        <hardware>
+            <plugin>ffmpeg_hardware/FFmpegHardware</plugin>
+        </hardware>
+        <sensor name="image_reader">
+            <state_interface name="codec" data_type="std::string*"/>
+            <state_interface name="packet" data_type="ffmpeg_cpp::Packet*"/>
+            <param name="url">/root/v4l2_sandbox_ws/src/ffmpeg_pipeline/ffmpeg_pipeline_examples/image_stream/example_image.png</param>
+            <param name="input_format">image2</param>
+            <param name="options">
+                framerate: 10
+                loop: 1
+            </param>
+        </sensor>
+    </ros2_control>
+
+</robot>
