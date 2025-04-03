@@ -2,6 +2,7 @@
 #define FFMPEG_CPP_FFMPEG_CPP_HPP
 
 #include <algorithm>
+#include <chrono>
 #include <cstdint>
 #include <map>
 #include <memory>
@@ -116,7 +117,11 @@ public:
         const std::map<std::string, std::string> &option_map);
 
   // Read the next frame from the video stream of interest
-  void read_frame(Packet *const packet);
+  template <typename Rep, typename Period>
+  void read_frame(Packet *const packet, const std::chrono::duration<Rep, Period> &timeout) {
+    read_frame_impl(packet,
+                    std::chrono::duration_cast<std::chrono::steady_clock::duration>(timeout));
+  }
 
   AVFormatContext *get() { return format_ctx_.get(); }
   const AVFormatContext *get() const { return format_ctx_.get(); }
@@ -127,11 +132,14 @@ public:
   std::string codec_name() const;
 
 private:
+  void read_frame_impl(Packet *const packet, const std::chrono::steady_clock::duration &timeout);
+
   static void close_input(AVFormatContext *format_ctx);
 
 private:
-  std::unique_ptr<AVFormatContext, decltype(&close_input)> format_ctx_;
-  int stream_id_;
+  std::unique_ptr<AVFormatContext, decltype(&close_input)> format_ctx_{nullptr, &close_input};
+  int stream_id_ = -1;
+  std::chrono::steady_clock::time_point deadline_ = std::chrono::steady_clock::time_point::max();
 };
 
 // RAII wrapper for decoder (a.k.a AVCodecContext)

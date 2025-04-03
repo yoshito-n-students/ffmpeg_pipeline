@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <array>
+#include <chrono>
 #include <cstring> // for std::memset()
 #include <numeric> // for std::partial_sum()
 
@@ -108,10 +109,25 @@ Input::Input(const std::string &url, const std::string &format_name,
   // Register all the input format types
   avdevice_register_all();
 
+  // Allocate the format context
+  AVFormatContext *format_ctx = avformat_alloc_context();
+  if (!format_ctx) {
+    throw Error("Input::Input(): Failed to allocate AVFormatContext");
+  }
+
+  // Set a callback function to return 1 if the deadline time is exceeded
+  // to limit the blocking time of read_frame() and other functions.
+  format_ctx->interrupt_callback.callback = [](void *deadline) {
+    using Clock = std::chrono::steady_clock;
+    return Clock::now() < *static_cast<Clock::time_point *>(deadline) ? 0 : 1;
+  };
+  format_ctx->interrupt_callback.opaque = &deadline_;
+
   // Find the input format by name
   const AVInputFormat *format =
       (format_name.empty() ? nullptr : av_find_input_format(format_name.c_str()));
   if (!format_name.empty() && format == nullptr) {
+    avformat_free_context(format_ctx);
     throw Error("Input::Input(): " + format_name + " was not recognized as an input format");
   }
 
@@ -119,15 +135,17 @@ Input::Input(const std::string &url, const std::string &format_name,
   AVDictionary *option_dict = nullptr;
   for (const auto &[key, value] : option_map) {
     if (const int ret = av_dict_set(&option_dict, key.c_str(), value.c_str(), 0); ret < 0) {
+      avformat_free_context(format_ctx);
       av_dict_free(&option_dict);
       throw Error("Input::Input(): Failed to pack option [" + key + ", " + value + "]", ret);
     }
   }
 
   // Open the input with the URL, format and options
-  AVFormatContext *format_ctx = nullptr;
   if (const int ret = avformat_open_input(&format_ctx, url.c_str(), format, &option_dict);
       ret < 0) {
+    avformat_free_context(format_ctx);
+    av_dict_free(&option_dict);
     throw Error("Input::Input(): Failed to open input " + url, ret);
   }
   format_ctx_.reset(format_ctx);
@@ -155,20 +173,26 @@ Input::Input(const std::string &url, const std::string &format_name,
   }
 }
 
-void Input::read_frame(Packet *const packet) {
-  packet->unref();
-  do {
-    if (const int ret = av_read_frame(format_ctx_.get(), packet->get()); ret < 0) {
-      throw Error("Input::read_frame(): Failed to read frame", ret);
-    }
-  } while ((*packet)->stream_index != stream_id_);
-}
-
 std::string Input::codec_name() const {
   return avcodec_get_name(format_ctx_ && 0 <= stream_id_ &&
                                   static_cast<unsigned int>(stream_id_) < format_ctx_->nb_streams
                               ? format_ctx_->streams[stream_id_]->codecpar->codec_id
                               : AV_CODEC_ID_NONE);
+}
+
+void Input::read_frame_impl(Packet *const packet,
+                            const std::chrono::steady_clock::duration &timeout) {
+  if (!format_ctx_) {
+    throw Error("Input::read_frame(): Input context is not configured");
+  }
+  
+  packet->unref();
+  deadline_ = std::chrono::steady_clock::now() + timeout;
+  do {
+    if (const int ret = av_read_frame(format_ctx_.get(), packet->get()); ret < 0) {
+      throw Error("Input::read_frame(): Failed to read frame", ret);
+    }
+  } while ((*packet)->stream_index != stream_id_);
 }
 
 void Input::close_input(AVFormatContext *format_ctx) { avformat_close_input(&format_ctx); }
