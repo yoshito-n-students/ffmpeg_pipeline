@@ -1,3 +1,4 @@
+#include <chrono>
 #include <map>
 #include <memory>
 #include <stdexcept>
@@ -8,6 +9,7 @@
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/compressed_image.hpp>
 
+using namespace std::chrono_literals;
 namespace av = ffmpeg_cpp;
 
 int main(int argc, char *argv[]) {
@@ -29,34 +31,21 @@ int main(int argc, char *argv[]) {
 
   try {
     // Open the input device
-    av::Input input(url, "v4l2", option_map);
-    av::Packet packet;
-
-    // Determine the format name for the message based on the codec ID of the input stream
-    const std::string msg_format = [&](const AVCodecID codec_id) -> std::string {
-      if (codec_id == AV_CODEC_ID_MJPEG) {
-        return "jpeg"; // ROS 2 expects "jpeg" instead of "mjpeg"
-      } else {
-        const std::string codec_name = avcodec_get_name(codec_id);
-        RCLCPP_INFO(node->get_logger(),
-                    "Using the codec name from libav (%s) as the format name for messages",
-                    codec_name.c_str());
-        return codec_name;
-      }
-    }(input->streams[input.stream_id()]->codecpar->codec_id);
+    av::Input input;
+    input.reconfigure(url, "v4l2", option_map);
 
     // Continuously read frames from the input device and publish them
     while (rclcpp::ok()) {
       // Read a packet from the input device
-      // (TODO: enable timeout or break on !rclcpp::ok())
-      input.read_frame(&packet);
+      av::Packet packet;
+      input.read_frame(&packet, 1'000ms);
 
       // Copy the packet data to a ROS 2 message
       auto msg = std::make_unique<sensor_msgs::msg::CompressedImage>();
       // packet->pts is timestamp in kernel time, in microseconds
       msg->header.stamp.sec = packet->pts / 1'000'000;
       msg->header.stamp.nanosec = (packet->pts % 1'000'000) * 1'000;
-      msg->format = msg_format;
+      msg->format = input.codec_name();
       msg->data.assign(packet->data, packet->data + packet->size);
 
       // Publish the message
