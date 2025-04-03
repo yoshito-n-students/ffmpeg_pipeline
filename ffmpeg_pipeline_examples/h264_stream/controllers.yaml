@@ -1,0 +1,8 @@
+controller_manager:
+  ros__parameters:
+    update_rate: 100  # Hz
+
+ffmpeg_packet_broadcaster:
+  ros__parameters:
+    type: ffmpeg_controllers/FFmpegPacketBroadcaster
+    sensor_name: h264_camera

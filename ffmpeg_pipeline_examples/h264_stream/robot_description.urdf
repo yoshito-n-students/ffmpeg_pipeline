@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<robot name="h264_camera">
+
+    <link name="body">
+    </link>
+
+    <ros2_control name="FFmpegHardware" type="system">
+        <hardware>
+            <plugin>ffmpeg_hardware/FFmpegHardware</plugin>
+        </hardware>
+        <sensor name="h264_camera">
+            <state_interface name="codec" data_type="std::string*"/>
+            <state_interface name="packet" data_type="ffmpeg_cpp::Packet*"/>
+            <param name="url">/dev/v4l/by-id/...</param>
+            <param name="input_format">v4l2</param>
+            <param name="options">
+                input_format: h264
+                video_size: 1920x1080
+                framerate: 30
+                timestamps: abs
+            </param>
+        </sensor>
+    </ros2_control>
+
+</robot>
