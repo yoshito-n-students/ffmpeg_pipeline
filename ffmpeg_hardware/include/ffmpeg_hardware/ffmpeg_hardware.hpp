@@ -48,21 +48,16 @@ public:
       return CallbackReturn::ERROR;
     }
 
-    // TODO: Read parameters from hardware_info, and do some initialization
-    info_.hardware_parameters["url"];
-    info_.hardware_parameters["input_format"];
-    info_.hardware_parameters["options"];
-
     return CallbackReturn::SUCCESS;
   }
 
   CallbackReturn on_activate(const rclcpp_lifecycle::State & /*previous_state*/) override {
     // Try to get the parameters for the input from the hardware_info, or use default values
-    const auto url = get_parameter_as<std::string>(info_.hardware_parameters, "url", "/dev/video0");
-    const auto input_format =
-        get_parameter_as<std::string>(info_.hardware_parameters, "input_format", "v4l2");
+    const auto &sensor_params = info_.sensors[0].parameters;
+    const auto url = get_parameter_as<std::string>(sensor_params, "url", "/dev/video0"),
+               input_format = get_parameter_as<std::string>(sensor_params, "input_format", "v4l2");
     const auto options =
-        get_parameter_as<std::map<std::string, std::string>>(info_.hardware_parameters, "options",
+        get_parameter_as<std::map<std::string, std::string>>(sensor_params, "options",
                                                              {{"input_format", "h264"},
                                                               {"video_size", "1920x1080"},
                                                               {"framerate", "30"},
@@ -93,6 +88,7 @@ public:
                      error.what());
       }
     });
+
     return CallbackReturn::SUCCESS;
   }
 
@@ -129,19 +125,19 @@ public:
   }
 
 protected:
-  template <typename T>
-  T get_parameter_as(const std::unordered_map<std::string, std::string> &params,
-                     const std::string &key, T &&default_value) {
+  template <typename T, class Map>
+  T get_parameter_as(const Map &params, const std::string &key, T &&default_value) {
     // Try to find the parameter with the given key
     const auto found_it = params.find(key);
     if (found_it != params.end()) {
       // If the parameter is found, try to convert it to the desired type
       try {
-        return YAML::Load(found_it->second).as<T>();
+        return YAML::Load(found_it->second).template as<T>();
       } catch (const YAML::Exception &error) {
         // If the conversion fails, log an error and return the default value
-        RCLCPP_ERROR(get_logger(), "Failed to convert parameter '%s' to the desired type: %s",
-                     key.c_str(), error.what());
+        RCLCPP_ERROR(get_logger(),
+                     "Failed to convert parameter '%s' (value: '%s') to the desired type: %s",
+                     found_it->first.c_str(), found_it->second.c_str(), error.what());
         return std::move(default_value);
       }
     } else {
