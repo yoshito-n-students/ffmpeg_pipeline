@@ -113,8 +113,8 @@ class Input {
 public:
   // Open the input device by avformat_open_input() with the given URL, format and options
   // and find the best video stream
-  Input(const std::string &url, const std::string &format_name,
-        const std::map<std::string, std::string> &option_map);
+  void reconfigure(const std::string &url, const std::string &format_name,
+                   const std::map<std::string, std::string> &option_map);
 
   // Read the next frame from the video stream of interest
   template <typename Rep, typename Period>

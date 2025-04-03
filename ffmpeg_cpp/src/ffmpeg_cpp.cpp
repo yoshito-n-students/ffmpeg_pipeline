@@ -103,9 +103,8 @@ void Frame::free_frame(AVFrame *frame) { av_frame_free(&frame); }
 // Input - RAII wrapper for AVFormatContext
 // ========================================
 
-Input::Input(const std::string &url, const std::string &format_name,
-             const std::map<std::string, std::string> &option_map)
-    : format_ctx_(nullptr, &close_input) {
+void Input::reconfigure(const std::string &url, const std::string &format_name,
+                        const std::map<std::string, std::string> &option_map) {
   // Register all the input format types
   avdevice_register_all();
 
