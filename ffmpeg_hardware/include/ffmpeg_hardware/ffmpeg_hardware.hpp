@@ -38,12 +38,13 @@ public:
                    "Exactly two sensor state interfaces are required while %zd are found",
                    sensor_state_interfaces_.size());
       return CallbackReturn::ERROR;
-    } else if (sensor_state_interfaces_.count(info_.sensors[0].name + "/codec") == 0 ||
-               sensor_state_interfaces_.count(info_.sensors[0].name + "/packet") == 0) {
+    } else if (const auto &sensor_name = info_.sensors[0].name;
+               sensor_state_interfaces_.count(sensor_name + "/codec") == 0 ||
+               sensor_state_interfaces_.count(sensor_name + "/packet") == 0) {
       RCLCPP_ERROR(get_logger(),
                    "Sensor state interfaces must belong to the first sensor component '%s' "
                    "and be named 'codec' and 'packet'",
-                   info_.sensors[0].name.c_str());
+                   sensor_name.c_str());
       return CallbackReturn::ERROR;
     }
 
