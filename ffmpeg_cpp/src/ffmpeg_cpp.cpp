@@ -179,14 +179,13 @@ std::string Input::codec_name() const {
                               : AV_CODEC_ID_NONE);
 }
 
-void Input::read_frame_impl(Packet *const packet,
-                            const std::chrono::steady_clock::duration &timeout) {
+void Input::read_frame_impl(Packet *const packet, const Clock::duration &timeout) {
   if (!format_ctx_) {
     throw Error("Input::read_frame(): Input context is not configured");
   }
-  
+
   packet->unref();
-  deadline_ = std::chrono::steady_clock::now() + timeout;
+  deadline_ = Clock::now() + timeout;
   do {
     if (const int ret = av_read_frame(format_ctx_.get(), packet->get()); ret < 0) {
       throw Error("Input::read_frame(): Failed to read frame", ret);

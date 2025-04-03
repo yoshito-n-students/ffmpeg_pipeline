@@ -110,6 +110,9 @@ private:
 
 // RAII wrapper for input decice (a.k.a. AVFormatContext)
 class Input {
+private:
+  using Clock = std::chrono::steady_clock;
+
 public:
   // Open the input device by avformat_open_input() with the given URL, format and options
   // and find the best video stream
@@ -119,8 +122,7 @@ public:
   // Read the next frame from the video stream of interest
   template <typename Rep, typename Period>
   void read_frame(Packet *const packet, const std::chrono::duration<Rep, Period> &timeout) {
-    read_frame_impl(packet,
-                    std::chrono::duration_cast<std::chrono::steady_clock::duration>(timeout));
+    read_frame_impl(packet, std::chrono::duration_cast<Clock::duration>(timeout));
   }
 
   AVFormatContext *get() { return format_ctx_.get(); }
@@ -132,14 +134,14 @@ public:
   std::string codec_name() const;
 
 private:
-  void read_frame_impl(Packet *const packet, const std::chrono::steady_clock::duration &timeout);
+  void read_frame_impl(Packet *const packet, const Clock::duration &timeout);
 
   static void close_input(AVFormatContext *format_ctx);
 
 private:
   std::unique_ptr<AVFormatContext, decltype(&close_input)> format_ctx_{nullptr, &close_input};
   int stream_id_ = -1;
-  std::chrono::steady_clock::time_point deadline_ = std::chrono::steady_clock::time_point::max();
+  Clock::time_point deadline_ = Clock::time_point::max();
 };
 
 // RAII wrapper for decoder (a.k.a AVCodecContext)
