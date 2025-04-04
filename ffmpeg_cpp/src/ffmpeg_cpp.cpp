@@ -274,14 +274,19 @@ bool Decoder::receive_frame(Frame *const frame) {
 }
 
 std::string Decoder::codec_name() const {
+  // avcodec_get_name(AV_CODEC_ID_NONE) returns "none",
+  // so std::string can be constructed without any problem.
   return avcodec_get_name(codec_ctx_ ? codec_ctx_->codec_id : AV_CODEC_ID_NONE);
 }
 
 std::string Decoder::hw_device_type() const {
-  return av_hwdevice_get_type_name(
-      (codec_ctx_ && codec_ctx_->hw_device_ctx)
-          ? reinterpret_cast<AVHWDeviceContext *>(codec_ctx_->hw_device_ctx->data)->type
-          : AV_HWDEVICE_TYPE_NONE);
+  // av_hwdevice_get_type_name(AV_HWDEVICE_TYPE_NONE) returns nullptr,
+  // so std::string CANNOT be constructed and std::logic_error is thrown.
+  // To avoid this, return "none" in the case of no hardware.
+  return (codec_ctx_ && codec_ctx_->hw_device_ctx)
+             ? av_hwdevice_get_type_name(
+                   reinterpret_cast<AVHWDeviceContext *>(codec_ctx_->hw_device_ctx->data)->type)
+             : "none";
 }
 
 void Decoder::free_context(AVCodecContext *codec_ctx) { avcodec_free_context(&codec_ctx); }
