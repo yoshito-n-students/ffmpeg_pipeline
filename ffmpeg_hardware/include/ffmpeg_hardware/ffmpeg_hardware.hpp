@@ -73,6 +73,14 @@ public:
       return CallbackReturn::ERROR;
     }
 
+    // Initialize the read packet with the first frame from the input
+    try {
+      input_.read_frame(&read_packet_, std::chrono::milliseconds(5000));
+    } catch (const std::runtime_error &error) {
+      RCLCPP_ERROR(get_logger(), "Failed to read the first frame from the input: %s", error.what());
+      return CallbackReturn::ERROR;
+    }
+
     // Start reading packets from the input
     stop_requested_ = false;
     write_thread_ = std::thread([this]() {
@@ -102,7 +110,7 @@ public:
     }
 
     // TODO: Close the input device
-    
+
     return CallbackReturn::SUCCESS;
   }
 
