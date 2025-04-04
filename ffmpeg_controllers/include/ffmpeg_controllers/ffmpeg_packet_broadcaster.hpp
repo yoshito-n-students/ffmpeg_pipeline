@@ -19,6 +19,7 @@ public:
   CallbackReturn on_init() override {
     // Load parameters
     sensor_name_ = get_node()->declare_parameter("sensor_name", "camera");
+    prev_pts_ = 0;
     return CallbackReturn::SUCCESS;
   }
 
@@ -59,6 +60,12 @@ public:
       return controller_interface::return_type::OK;
     }
 
+    // Skip publishing if the packet is not new
+    if ((*packet)->pts <= prev_pts_) {
+      return controller_interface::return_type::OK;
+    }
+
+    // Try to publish the packet
     if (async_publisher_->trylock()) {
       // Transfer data from the packet to the message
       async_publisher_->msg_.header.stamp.sec = (*packet)->pts / 1'000'000;
@@ -67,7 +74,9 @@ public:
       async_publisher_->msg_.data.assign((*packet)->data, (*packet)->data + (*packet)->size);
       // Trigger the message to be published
       async_publisher_->unlockAndPublish();
+      prev_pts_ = (*packet)->pts;
     }
+
     return controller_interface::return_type::OK;
   }
 
@@ -108,6 +117,8 @@ protected:
   rclcpp::Publisher<sensor_msgs::msg::CompressedImage>::SharedPtr underlying_publisher_;
   std::unique_ptr<realtime_tools::RealtimePublisher<sensor_msgs::msg::CompressedImage>>
       async_publisher_;
+
+  decltype(ffmpeg_cpp::Packet()->pts) prev_pts_;
 };
 
 } // namespace ffmpeg_controllers
