@@ -1,11 +1,7 @@
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, RegisterEventHandler
-from launch.conditions import IfCondition
-from launch.event_handlers import OnProcessExit
-from launch.substitutions import Command, FindExecutable, LaunchConfiguration, PathJoinSubstitution
+from launch.substitutions import Command, FindExecutable, PathJoinSubstitution
 
 from launch_ros.actions import Node
-from launch_ros.descriptions import ParameterValue
 from launch_ros.substitutions import FindPackageShare
 
 
@@ -18,7 +14,7 @@ def generate_launch_description():
             PathJoinSubstitution(
                 [
                     FindPackageShare("ffmpeg_pipeline_examples"),
-                    "image_stream",
+                    "h264_camera",
                     "robot_description.urdf",
                 ]
             ),
@@ -31,7 +27,7 @@ def generate_launch_description():
     robot_controllers = PathJoinSubstitution(
         [
             FindPackageShare("ffmpeg_pipeline_examples"),
-            "image_stream",
+            "h264_camera",
             "controllers.yaml",
         ]
     )
