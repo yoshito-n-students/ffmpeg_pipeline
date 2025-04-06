@@ -16,7 +16,7 @@ def generate_launch_description():
                 [
                     FindPackageShare("ffmpeg_pipeline_examples"),
                     "webp_file",
-                    "robot_description.urdf",
+                    "robot_description.urdf.xacro",
                 ]
             ),
         ]

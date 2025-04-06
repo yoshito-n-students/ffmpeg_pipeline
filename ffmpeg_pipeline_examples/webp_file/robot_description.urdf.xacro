@@ -11,7 +11,7 @@
         <sensor name="image_reader">
             <state_interface name="codec" data_type="std::string*"/>
             <state_interface name="packet" data_type="ffmpeg_cpp::Packet*"/>
-            <param name="url">.../ffmpeg_pipeline/ffmpeg_pipeline_examples/webp_file/example_image.webp</param>
+            <param name="url">$(find ffmpeg_pipeline_examples)/webp_file/example_image.webp</param>
             <param name="input_format">image2</param>
             <param name="options">
                 loop: 1
