@@ -15,7 +15,7 @@ def generate_launch_description():
                 [
                     FindPackageShare("ffmpeg_pipeline_examples"),
                     "h264_camera",
-                    "robot_description.urdf",
+                    "robot_description.urdf.xacro",
                 ]
             ),
         ]
