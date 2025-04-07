@@ -11,12 +11,12 @@
         <sensor name="h264_camera">
             <state_interface name="codec" data_type="std::string*"/>
             <state_interface name="packet" data_type="ffmpeg_cpp::Packet*"/>
-            <param name="url">/dev/v4l/by-id/...</param>
+            <param name="url">/dev/v4l/by-id/usb-Insta360_Insta360_Link_2C-video-index0</param>
             <param name="input_format">v4l2</param>
             <param name="options">
                 input_format: h264
-                video_size: 1920x1080
-                framerate: 30
+                video_size: 1270x720
+                framerate: 24
                 timestamps: abs
             </param>
         </sensor>
