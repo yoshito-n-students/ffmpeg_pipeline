@@ -27,7 +27,7 @@ public:
     try {
       // Configure the publisher
       underlying_publisher_ = get_node()->create_publisher<sensor_msgs::msg::CompressedImage>(
-          "~/ffmpeg", rclcpp::SystemDefaultsQoS());
+          "~/image/ffmpeg", rclcpp::SystemDefaultsQoS());
       async_publisher_ =
           std::make_unique<realtime_tools::RealtimePublisher<sensor_msgs::msg::CompressedImage>>(
               underlying_publisher_);
