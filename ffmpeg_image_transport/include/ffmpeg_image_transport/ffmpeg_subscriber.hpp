@@ -86,11 +86,15 @@ protected:
               std::memcpy(image->data.data(), frame->data[0], data_size);
             } else {
               // If the frame format is not supported in ROS, convert it to BGR
+              static const std::string dst_encoding = sensor_msgs::image_encodings::BGR8;
+              static const std::string dst_format_name =
+                  ffmpeg_cpp::to_ffmpeg_format_name(dst_encoding);
 
               // Configure the image converter for this frame if needed
               if (!converter_.is_supported(frame->width, frame->height, frame.format_name(),
-                                           "bgr24")) {
-                converter_.reconfigure(frame->width, frame->height, frame.format_name(), "bgr24");
+                                           dst_format_name)) {
+                converter_.reconfigure(frame->width, frame->height, frame.format_name(),
+                                       dst_format_name);
                 RCLCPP_INFO(
                     node_->get_logger(), "Initialized converter (src: %s, dst: %s, size: %zdx%zd)",
                     converter_.src_format_name().c_str(), converter_.dst_format_name().c_str(),
@@ -99,9 +103,9 @@ protected:
 
               // Make the destination image
               // by copying the frame properties and converting the pixel data
-              image->encoding = sensor_msgs::image_encodings::BGR8;
-              image->step = 3 * frame->width;
+              image->encoding = dst_encoding;
               converter_.convert(frame, &image->data);
+              image->step = image->data.size() / image->height;
             }
 
             // Invoke the callback with the converted image

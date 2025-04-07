@@ -109,13 +109,14 @@ public:
         // Build and trigger publishing the image message
         if (async_publisher_->trylock()) {
           // Fill the message properties
-          async_publisher_->msg_.header.stamp.sec = (*packet)->pts / 1'000'000;
-          async_publisher_->msg_.header.stamp.nanosec = ((*packet)->pts % 1'000'000) * 1'000;
-          async_publisher_->msg_.height = frame->height;
-          async_publisher_->msg_.width = frame->width;
-          async_publisher_->msg_.encoding = dst_encoding_;
-          async_publisher_->msg_.step = 3 * frame->width;
-          converter_.convert(frame, &async_publisher_->msg_.data);
+          auto &msg = async_publisher_->msg_;
+          msg.header.stamp.sec = (*packet)->pts / 1'000'000;
+          msg.header.stamp.nanosec = ((*packet)->pts % 1'000'000) * 1'000;
+          msg.height = frame->height;
+          msg.width = frame->width;
+          msg.encoding = dst_encoding_;
+          converter_.convert(frame, &msg.data);
+          msg.step = msg.data.size() / frame->height;
           // Trigger the message to be published
           async_publisher_->unlockAndPublish();
           prev_pts_ = (*packet)->pts;
