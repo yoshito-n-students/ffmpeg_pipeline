@@ -68,10 +68,11 @@ public:
     // Try to publish the packet
     if (async_publisher_->trylock()) {
       // Transfer data from the packet to the message
-      async_publisher_->msg_.header.stamp.sec = (*packet)->pts / 1'000'000;
-      async_publisher_->msg_.header.stamp.nanosec = ((*packet)->pts % 1'000'000) * 1'000;
-      async_publisher_->msg_.format = *codec_name;
-      async_publisher_->msg_.data.assign((*packet)->data, (*packet)->data + (*packet)->size);
+      auto &msg = async_publisher_->msg_;
+      msg.header.stamp.sec = (*packet)->pts / 1'000'000;
+      msg.header.stamp.nanosec = ((*packet)->pts % 1'000'000) * 1'000;
+      msg.format = *codec_name;
+      msg.data.assign((*packet)->data, (*packet)->data + (*packet)->size);
       // Trigger the message to be published
       async_publisher_->unlockAndPublish();
       prev_pts_ = (*packet)->pts;
