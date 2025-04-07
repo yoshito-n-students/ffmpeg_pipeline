@@ -20,6 +20,13 @@ public:
   CallbackReturn on_init() override {
     // Load parameters
     sensor_name_ = get_node()->declare_parameter("sensor_name", "camera");
+    dst_encoding_ =
+        get_node()->declare_parameter("dst_encoding", sensor_msgs::image_encodings::BGR8);
+    dst_format_name_ = ffmpeg_cpp::to_ffmpeg_format_name(dst_encoding_);
+    if (dst_format_name_.empty()) {
+      RCLCPP_ERROR(get_logger(), "Unsupported destination encoding: %s", dst_encoding_.c_str());
+      return CallbackReturn::ERROR;
+    }
 
     prev_pts_ = 0;
 
@@ -91,11 +98,12 @@ public:
         }
 
         // Ensure the converter is configured for this frame
-        if (const auto src_format_name = frame.format_name();
-            !converter_.is_supported(frame->width, frame->height, src_format_name, "bgr24")) {
-          converter_.reconfigure(frame->width, frame->height, src_format_name, "bgr24");
+        if (const auto src_format_name = frame.format_name(); !converter_.is_supported(
+                frame->width, frame->height, src_format_name, dst_format_name_)) {
+          converter_.reconfigure(frame->width, frame->height, src_format_name, dst_format_name_);
           RCLCPP_INFO(get_logger(), "Configured converter (src: %s, dst: %s, size: %dx%d)",
-                      src_format_name.c_str(), "bgr24", frame->width, frame->height);
+                      src_format_name.c_str(), dst_format_name_.c_str(), frame->width,
+                      frame->height);
         }
 
         // Build and trigger publishing the image message
@@ -105,7 +113,7 @@ public:
           async_publisher_->msg_.header.stamp.nanosec = ((*packet)->pts % 1'000'000) * 1'000;
           async_publisher_->msg_.height = frame->height;
           async_publisher_->msg_.width = frame->width;
-          async_publisher_->msg_.encoding = sensor_msgs::image_encodings::BGR8;
+          async_publisher_->msg_.encoding = dst_encoding_;
           async_publisher_->msg_.step = 3 * frame->width;
           converter_.convert(frame, &async_publisher_->msg_.data);
           // Trigger the message to be published
@@ -153,7 +161,7 @@ protected:
   }
 
 protected:
-  std::string sensor_name_;
+  std::string sensor_name_, dst_format_name_, dst_encoding_;
 
   ffmpeg_cpp::Decoder decoder_;
   ffmpeg_cpp::Converter converter_;
