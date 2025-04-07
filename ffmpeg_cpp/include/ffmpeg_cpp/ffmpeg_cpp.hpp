@@ -19,16 +19,17 @@ extern "C" {
 
 namespace ffmpeg_cpp {
 
+// Utility functions
+std::string err2str(const int errnum);
+std::string to_ros_image_encoding(const std::string &ffmpeg_format_name);
+std::string to_ffmpeg_format_name(const std::string &ros_image_encoding);
+
 // Error with an optional error number from libav
 class Error : public std::runtime_error {
 public:
   Error(const std::string &msg) : std::runtime_error(msg) {}
   Error(const std::string &msg, const int errnum)
       : std::runtime_error(msg + ": " + err2str(errnum)) {}
-
-private:
-  // ex. err2str(EINVAL) -> "Invalid argument"
-  static std::string err2str(const int errnum);
 };
 
 // RAII wrapper for AVBufferRef

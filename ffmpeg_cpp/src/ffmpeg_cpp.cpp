@@ -16,17 +16,136 @@ extern "C" {
 }
 
 #include <ffmpeg_cpp/ffmpeg_cpp.hpp>
+#include <sensor_msgs/image_encodings.hpp>
 
 namespace ffmpeg_cpp {
 
-// =====
-// Error
-// =====
+// =======
+// Utility
+// =======
 
-std::string Error::err2str(const int errnum) {
+std::string err2str(const int errnum) {
   char buf[AV_ERROR_MAX_STRING_SIZE];
   av_strerror(errnum, buf, sizeof(buf));
   return buf;
+}
+
+std::string to_ros_image_encoding(const std::string &ffmpeg_format_name) {
+  switch (av_get_pix_fmt(ffmpeg_format_name.c_str())) {
+  // RGB formats
+  case AV_PIX_FMT_RGB24:
+    return sensor_msgs::image_encodings::RGB8;
+  case AV_PIX_FMT_RGBA:
+    return sensor_msgs::image_encodings::RGBA8;
+  case AV_PIX_FMT_RGB48:
+    return sensor_msgs::image_encodings::RGB16;
+  case AV_PIX_FMT_RGBA64:
+    return sensor_msgs::image_encodings::RGBA16;
+  // BGR formats
+  case AV_PIX_FMT_BGR24:
+    return sensor_msgs::image_encodings::BGR8;
+  case AV_PIX_FMT_BGRA:
+    return sensor_msgs::image_encodings::BGRA8;
+  case AV_PIX_FMT_BGR48:
+    return sensor_msgs::image_encodings::BGR16;
+  case AV_PIX_FMT_BGRA64:
+    return sensor_msgs::image_encodings::BGRA16;
+  // Grayscale formats
+  case AV_PIX_FMT_GRAY8:
+    return sensor_msgs::image_encodings::MONO8;
+  case AV_PIX_FMT_GRAY16:
+    return sensor_msgs::image_encodings::MONO16;
+  // bayer formats
+  case AV_PIX_FMT_BAYER_RGGB8:
+    return sensor_msgs::image_encodings::BAYER_RGGB8;
+  case AV_PIX_FMT_BAYER_RGGB16:
+    return sensor_msgs::image_encodings::BAYER_RGGB16;
+  case AV_PIX_FMT_BAYER_BGGR8:
+    return sensor_msgs::image_encodings::BAYER_BGGR8;
+  case AV_PIX_FMT_BAYER_BGGR16:
+    return sensor_msgs::image_encodings::BAYER_BGGR16;
+  case AV_PIX_FMT_BAYER_GRBG8:
+    return sensor_msgs::image_encodings::BAYER_GRBG8;
+  case AV_PIX_FMT_BAYER_GRBG16:
+    return sensor_msgs::image_encodings::BAYER_GRBG16;
+  case AV_PIX_FMT_BAYER_GBRG8:
+    return sensor_msgs::image_encodings::BAYER_GBRG8;
+  case AV_PIX_FMT_BAYER_GBRG16:
+    return sensor_msgs::image_encodings::BAYER_GBRG16;
+  // YUV formats
+  case AV_PIX_FMT_UYVY422:
+    return sensor_msgs::image_encodings::UYVY;
+  case AV_PIX_FMT_YUYV422:
+    return sensor_msgs::image_encodings::YUYV;
+  case AV_PIX_FMT_NV21:
+    return sensor_msgs::image_encodings::NV21;
+  case AV_PIX_FMT_NV24:
+    return sensor_msgs::image_encodings::NV24;
+  // Other formats
+  default:
+    return "";
+  }
+}
+
+std::string to_ffmpeg_format_name(const std::string &ros_image_encoding) {
+  // RGB formats
+  if (ros_image_encoding == sensor_msgs::image_encodings::RGB8) {
+    return av_get_pix_fmt_name(AV_PIX_FMT_RGB24);
+  } else if (ros_image_encoding == sensor_msgs::image_encodings::RGBA8) {
+    return av_get_pix_fmt_name(AV_PIX_FMT_RGBA);
+  } else if (ros_image_encoding == sensor_msgs::image_encodings::RGB16) {
+    return av_get_pix_fmt_name(AV_PIX_FMT_RGB48);
+  } else if (ros_image_encoding == sensor_msgs::image_encodings::RGBA16) {
+    return av_get_pix_fmt_name(AV_PIX_FMT_RGBA64);
+  }
+  // BGR formats
+  else if (ros_image_encoding == sensor_msgs::image_encodings::BGR8) {
+    return av_get_pix_fmt_name(AV_PIX_FMT_BGR24);
+  } else if (ros_image_encoding == sensor_msgs::image_encodings::BGRA8) {
+    return av_get_pix_fmt_name(AV_PIX_FMT_BGRA);
+  } else if (ros_image_encoding == sensor_msgs::image_encodings::BGR16) {
+    return av_get_pix_fmt_name(AV_PIX_FMT_BGR48);
+  } else if (ros_image_encoding == sensor_msgs::image_encodings::BGRA16) {
+    return av_get_pix_fmt_name(AV_PIX_FMT_BGRA64);
+  }
+  // Grayscale formats
+  else if (ros_image_encoding == sensor_msgs::image_encodings::MONO8) {
+    return av_get_pix_fmt_name(AV_PIX_FMT_GRAY8);
+  } else if (ros_image_encoding == sensor_msgs::image_encodings::MONO16) {
+    return av_get_pix_fmt_name(AV_PIX_FMT_GRAY16);
+  }
+  // Bayer formats
+  else if (ros_image_encoding == sensor_msgs::image_encodings::BAYER_RGGB8) {
+    return av_get_pix_fmt_name(AV_PIX_FMT_BAYER_RGGB8);
+  } else if (ros_image_encoding == sensor_msgs::image_encodings::BAYER_RGGB16) {
+    return av_get_pix_fmt_name(AV_PIX_FMT_BAYER_RGGB16);
+  } else if (ros_image_encoding == sensor_msgs::image_encodings::BAYER_BGGR8) {
+    return av_get_pix_fmt_name(AV_PIX_FMT_BAYER_BGGR8);
+  } else if (ros_image_encoding == sensor_msgs::image_encodings::BAYER_BGGR16) {
+    return av_get_pix_fmt_name(AV_PIX_FMT_BAYER_BGGR16);
+  } else if (ros_image_encoding == sensor_msgs::image_encodings::BAYER_GRBG8) {
+    return av_get_pix_fmt_name(AV_PIX_FMT_BAYER_GRBG8);
+  } else if (ros_image_encoding == sensor_msgs::image_encodings::BAYER_GRBG16) {
+    return av_get_pix_fmt_name(AV_PIX_FMT_BAYER_GRBG16);
+  } else if (ros_image_encoding == sensor_msgs::image_encodings::BAYER_GBRG8) {
+    return av_get_pix_fmt_name(AV_PIX_FMT_BAYER_GBRG8);
+  } else if (ros_image_encoding == sensor_msgs::image_encodings::BAYER_GBRG16) {
+    return av_get_pix_fmt_name(AV_PIX_FMT_BAYER_GBRG16);
+  }
+  // YUV formats
+  else if (ros_image_encoding == sensor_msgs::image_encodings::UYVY) {
+    return av_get_pix_fmt_name(AV_PIX_FMT_UYVY422);
+  } else if (ros_image_encoding == sensor_msgs::image_encodings::YUYV) {
+    return av_get_pix_fmt_name(AV_PIX_FMT_YUYV422);
+  } else if (ros_image_encoding == sensor_msgs::image_encodings::NV21) {
+    return av_get_pix_fmt_name(AV_PIX_FMT_NV21);
+  } else if (ros_image_encoding == sensor_msgs::image_encodings::NV24) {
+    return av_get_pix_fmt_name(AV_PIX_FMT_NV24);
+  }
+  // Other formats
+  else {
+    return "";
+  }
 }
 
 // ========================================

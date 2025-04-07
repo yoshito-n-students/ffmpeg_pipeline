@@ -76,7 +76,8 @@ protected:
             image->width = frame->width;
 
             // Fill the pixel data, maybe converting it to a ROS-compatible format
-            if (const auto ros_encoding = to_ROS_encoding(frame->format); !ros_encoding.empty()) {
+            if (const auto ros_encoding = ffmpeg_cpp::to_ros_image_encoding(frame.format_name());
+                !ros_encoding.empty()) {
               // If the frame format is supported in ROS, just copy the pixel data
               image->encoding = ros_encoding;
               image->step = frame->linesize[0];
@@ -110,62 +111,6 @@ protected:
       }
     } catch (const std::runtime_error &error) {
       RCLCPP_ERROR(node_->get_logger(), "Error: %s", error.what());
-    }
-  }
-
-  static std::string to_ROS_encoding(const int ffmpeg_format) {
-    switch (ffmpeg_format) {
-    // RGB formats
-    case AV_PIX_FMT_RGB24:
-      return sensor_msgs::image_encodings::RGB8;
-    case AV_PIX_FMT_RGBA:
-      return sensor_msgs::image_encodings::RGBA8;
-    case AV_PIX_FMT_RGB48:
-      return sensor_msgs::image_encodings::RGB16;
-    case AV_PIX_FMT_RGBA64:
-      return sensor_msgs::image_encodings::RGBA16;
-    // BGR formats
-    case AV_PIX_FMT_BGR24:
-      return sensor_msgs::image_encodings::BGR8;
-    case AV_PIX_FMT_BGRA:
-      return sensor_msgs::image_encodings::BGRA8;
-    case AV_PIX_FMT_BGR48:
-      return sensor_msgs::image_encodings::BGR16;
-    case AV_PIX_FMT_BGRA64:
-      return sensor_msgs::image_encodings::BGRA16;
-    // Grayscale formats
-    case AV_PIX_FMT_GRAY8:
-      return sensor_msgs::image_encodings::MONO8;
-    case AV_PIX_FMT_GRAY16:
-      return sensor_msgs::image_encodings::MONO16;
-      // bayer formats
-    case AV_PIX_FMT_BAYER_RGGB8:
-      return sensor_msgs::image_encodings::BAYER_RGGB8;
-    case AV_PIX_FMT_BAYER_RGGB16:
-      return sensor_msgs::image_encodings::BAYER_RGGB16;
-    case AV_PIX_FMT_BAYER_BGGR8:
-      return sensor_msgs::image_encodings::BAYER_BGGR8;
-    case AV_PIX_FMT_BAYER_BGGR16:
-      return sensor_msgs::image_encodings::BAYER_BGGR16;
-    case AV_PIX_FMT_BAYER_GRBG8:
-      return sensor_msgs::image_encodings::BAYER_GRBG8;
-    case AV_PIX_FMT_BAYER_GRBG16:
-      return sensor_msgs::image_encodings::BAYER_GRBG16;
-    case AV_PIX_FMT_BAYER_GBRG8:
-      return sensor_msgs::image_encodings::BAYER_GBRG8;
-    case AV_PIX_FMT_BAYER_GBRG16:
-      return sensor_msgs::image_encodings::BAYER_GBRG16;
-    // YUV formats
-    case AV_PIX_FMT_UYVY422:
-      return sensor_msgs::image_encodings::UYVY;
-    case AV_PIX_FMT_YUYV422:
-      return sensor_msgs::image_encodings::YUYV;
-    case AV_PIX_FMT_NV21:
-      return sensor_msgs::image_encodings::NV21;
-    case AV_PIX_FMT_NV24:
-      return sensor_msgs::image_encodings::NV24;
-    default:
-      return "";
     }
   }
 

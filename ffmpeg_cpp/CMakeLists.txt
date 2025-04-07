@@ -21,6 +21,7 @@ target_include_directories(
   "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
   "$<INSTALL_INTERFACE:include>")
 target_link_libraries(ffmpeg_cpp avcodec avdevice avformat avutil swscale)
+ament_target_dependencies(ffmpeg_cpp sensor_msgs)
 
 #
 add_executable(
