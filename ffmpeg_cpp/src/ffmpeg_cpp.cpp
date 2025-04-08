@@ -281,22 +281,18 @@ void Decoder::reconfigure(const std::string &codec_name) {
   // Create a hardware acceleration context supported by the decoder.
   // If multiple hardware devices are supported, the first one is used.
   if (!codec_ctx_->hw_device_ctx) {
-    codec_ctx_->hw_device_ctx = [codec]() {
-      for (int i = 0;; ++i) {
-        if (const AVCodecHWConfig *const hw_config = avcodec_get_hw_config(codec, i);
-            hw_config && (hw_config->methods & AV_CODEC_HW_CONFIG_METHOD_HW_DEVICE_CTX)) {
-          // Return the context of i-th hardware device supported by the decoder, if successful
-          AVBufferRef *hw_device_ctx;
-          if (av_hwdevice_ctx_create(&hw_device_ctx, hw_config->device_type, nullptr, nullptr, 0) ==
-              0) {
-            return hw_device_ctx;
-          }
-        } else if (!hw_config) {
-          // Return nullptr if no more hardware devices are supported by the decoder
-          return static_cast<AVBufferRef *>(nullptr);
-        }
+    for (int i = 0;; ++i) {
+      if (const AVCodecHWConfig *const hw_config = avcodec_get_hw_config(codec, i);
+          hw_config                                                         // HW config exists
+          && (hw_config->methods & AV_CODEC_HW_CONFIG_METHOD_HW_DEVICE_CTX) // HW context supported
+          && av_hwdevice_ctx_create(&codec_ctx_->hw_device_ctx, hw_config->device_type, nullptr,
+                                    nullptr, 0) == 0 // HW context created
+      ) {
+        break; // exit the loop if the HW context is created successfully
+      } else if (!hw_config) {
+        break; // exit the loop if no more HW config is available
       }
-    }();
+    }
   }
 
   // Open the decoder
