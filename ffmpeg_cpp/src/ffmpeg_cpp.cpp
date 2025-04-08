@@ -264,6 +264,18 @@ void Decoder::reconfigure(const std::string &codec_name) {
   codec_ctx_->workaround_bugs = FF_BUG_AUTODETECT;
   codec_ctx_->err_recognition = AV_EF_CRCCHECK;
   codec_ctx_->error_concealment = FF_EC_GUESS_MVS | FF_EC_DEBLOCK;
+  codec_ctx_->get_format = [](AVCodecContext *codec_ctx, const AVPixelFormat *formats) {
+    // Prefer the first pixel formats compatible with ROS image encodings
+    // to avoid unnecessary conversions after decoding
+    for (const AVPixelFormat *format = formats; *format != AV_PIX_FMT_NONE; ++format) {
+      if (std::any_of(std::begin(format_encoding_pairs), std::end(format_encoding_pairs),
+                      [format](const auto &pair) { return pair.first == *format; })) {
+        return *format;
+      }
+    }
+    // If no compatible pixel format is found, defer to the default behavior
+    return avcodec_default_get_format(codec_ctx, formats);
+  };
 
   // Create a hardware acceleration context supported by the decoder.
   // If multiple hardware devices are supported, the first one is used.
