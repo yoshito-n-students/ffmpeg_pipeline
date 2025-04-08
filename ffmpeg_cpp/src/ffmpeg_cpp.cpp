@@ -256,7 +256,8 @@ void Decoder::reconfigure(const std::string &codec_name) {
     throw Error("Decoder::Decoder(): " + codec_name + " was not recognized as a decoder name");
   }
 
-  // Allocate the decoder context and set the options to enable error concealment
+  // Allocate the decoder context and set the options to enable
+  // error concealment and format preference
   codec_ctx_.reset(avcodec_alloc_context3(codec));
   if (!codec_ctx_) {
     throw Error("Decoder::Decoder(): Failed to allocate codec context");
