@@ -282,8 +282,8 @@ void Decoder::reconfigure(const std::string &codec_name) {
   // If multiple hardware devices are supported, the first one is used.
   if (!codec_ctx_->hw_device_ctx) {
     for (int i = 0;; ++i) {
-      if (const AVCodecHWConfig *const hw_config = avcodec_get_hw_config(codec, i);
-          hw_config                                                         // HW config exists
+      const AVCodecHWConfig *const hw_config = avcodec_get_hw_config(codec, i);
+      if (hw_config                                                         // HW config exists
           && (hw_config->methods & AV_CODEC_HW_CONFIG_METHOD_HW_DEVICE_CTX) // HW context supported
           && av_hwdevice_ctx_create(&codec_ctx_->hw_device_ctx, hw_config->device_type, nullptr,
                                     nullptr, 0) == 0 // HW context created
