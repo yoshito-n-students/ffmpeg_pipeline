@@ -32,7 +32,7 @@ int main(int argc, char *argv[]) {
   try {
     // Open the input device
     av::Input input;
-    input.reconfigure(url, "v4l2", option_map);
+    input.reconfigure(url, "v4l2", option_map, "video");
 
     // Continuously read frames from the input device and publish them
     while (rclcpp::ok()) {

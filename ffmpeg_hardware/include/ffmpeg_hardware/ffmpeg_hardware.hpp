@@ -55,7 +55,8 @@ public:
     // Try to get the parameters for the input from the hardware_info, or use default values
     const auto &sensor_params = info_.sensors[0].parameters;
     const auto url = get_parameter_as<std::string>(sensor_params, "url", "/dev/video0"),
-               input_format = get_parameter_as<std::string>(sensor_params, "input_format", "v4l2");
+               input_format = get_parameter_as<std::string>(sensor_params, "input_format", "v4l2"),
+               media_type = get_parameter_as<std::string>(sensor_params, "media_type", "video");
     const auto options =
         get_parameter_as<std::map<std::string, std::string>>(sensor_params, "options",
                                                              {{"input_format", "h264"},
@@ -65,7 +66,7 @@ public:
 
     // Configure the input with the parameters
     try {
-      input_.reconfigure(url, input_format, options);
+      input_.reconfigure(url, input_format, options, media_type);
       RCLCPP_INFO(get_logger(), "Configured the input (URL: %s, format: %s)", url.c_str(),
                   input_format.c_str());
     } catch (const std::runtime_error &error) {

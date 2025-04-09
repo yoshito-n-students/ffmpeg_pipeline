@@ -149,7 +149,8 @@ void Frame::free_frame(AVFrame *frame) { av_frame_free(&frame); }
 // ========================================
 
 void Input::reconfigure(const std::string &url, const std::string &format_name,
-                        const std::map<std::string, std::string> &option_map) {
+                        const std::map<std::string, std::string> &option_map,
+                        const std::string &media_type_name) {
   // Register all the input format types
   avdevice_register_all();
 
@@ -210,10 +211,33 @@ void Input::reconfigure(const std::string &url, const std::string &format_name,
     throw Error("Input::Input(): Failed to find stream information", ret);
   }
 
-  // Find the best video stream
-  stream_id_ = av_find_best_stream(format_ctx, AVMEDIA_TYPE_VIDEO, -1, -1, nullptr, 0);
+  // Identify the media type from the name
+  const AVMediaType media_type = [](const std::string &name) {
+    if (name == av_get_media_type_string(AVMEDIA_TYPE_VIDEO)) {
+      return AVMEDIA_TYPE_VIDEO;
+    } else if (name == av_get_media_type_string(AVMEDIA_TYPE_AUDIO)) {
+      return AVMEDIA_TYPE_AUDIO;
+    } else if (name == av_get_media_type_string(AVMEDIA_TYPE_DATA)) {
+      return AVMEDIA_TYPE_DATA;
+    } else if (name == av_get_media_type_string(AVMEDIA_TYPE_SUBTITLE)) {
+      return AVMEDIA_TYPE_SUBTITLE;
+    } else if (name == av_get_media_type_string(AVMEDIA_TYPE_ATTACHMENT)) {
+      return AVMEDIA_TYPE_ATTACHMENT;
+    } else if (name == av_get_media_type_string(AVMEDIA_TYPE_NB)) {
+      return AVMEDIA_TYPE_NB;
+    } else {
+      return AVMEDIA_TYPE_UNKNOWN;
+    }
+  }(media_type_name);
+  if (media_type == AVMEDIA_TYPE_UNKNOWN) {
+    throw Error("Input::Input(): " + media_type_name + " was not recognized as a media type");
+  }
+
+  // Find the best stream of the given media type
+  stream_id_ = av_find_best_stream(format_ctx, media_type, -1, -1, nullptr, 0);
   if (stream_id_ < 0) {
-    throw Error("Input::Input(): Failed to find video stream", stream_id_);
+    throw Error("Input::Input(): Failed to find the best stream of media type " + media_type_name,
+                stream_id_);
   }
 }
 
@@ -256,12 +280,14 @@ void Decoder::reconfigure(const std::string &codec_name) {
     throw Error("Decoder::Decoder(): " + codec_name + " was not recognized as a decoder name");
   }
 
-  // Allocate the decoder context and set the options to enable
-  // error concealment and format preference
+  // Allocate the decoder context
   codec_ctx_.reset(avcodec_alloc_context3(codec));
   if (!codec_ctx_) {
     throw Error("Decoder::Decoder(): Failed to allocate codec context");
   }
+
+  // Set the options to enable error concealment and format preference.
+  // Some options are for video decoders, but they suppose no problem for other decoders.
   codec_ctx_->workaround_bugs = FF_BUG_AUTODETECT;
   codec_ctx_->err_recognition = AV_EF_CRCCHECK;
   codec_ctx_->error_concealment = FF_EC_GUESS_MVS | FF_EC_DEBLOCK;

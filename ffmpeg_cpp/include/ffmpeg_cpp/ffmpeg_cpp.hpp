@@ -118,7 +118,8 @@ public:
   // Open the input device by avformat_open_input() with the given URL, format and options
   // and find the best video stream
   void reconfigure(const std::string &url, const std::string &format_name,
-                   const std::map<std::string, std::string> &option_map);
+                   const std::map<std::string, std::string> &option_map,
+                   const std::string &media_type_name);
 
   // Read the next frame from the video stream of interest
   template <typename Rep, typename Period>
