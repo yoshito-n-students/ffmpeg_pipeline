@@ -17,6 +17,7 @@
                 sample_rate: 48000
                 channels: 2
             </param>
+            <param name="media_type">audio</param>
         </sensor>
     </ros2_control>
 
