@@ -1,8 +1,9 @@
 #include <algorithm>
 #include <array>
 #include <chrono>
-#include <cstring> // for std::memset()
-#include <numeric> // for std::partial_sum()
+#include <cstring>  // for std::memset()
+#include <iterator> // for std::begin(), std::end()
+#include <numeric>  // for std::partial_sum()
 
 extern "C" {
 #include <libavcodec/avcodec.h>
@@ -378,7 +379,8 @@ void Decoder::free_context(AVCodecContext *codec_ctx) { avcodec_free_context(&co
 bool Parser::is_supported(const std::string &codec_name) const {
   const AVCodec *const codec = avcodec_find_decoder_by_name(codec_name.c_str());
   return codec && parser_ctx_ &&
-         std::any_of(parser_ctx_->parser->codec_ids, parser_ctx_->parser->codec_ids + 7,
+         std::any_of(std::begin(parser_ctx_->parser->codec_ids),
+                     std::end(parser_ctx_->parser->codec_ids),
                      [codec](const int parser_id) { return parser_id == codec->id; });
 }
 
