@@ -1,0 +1,9 @@
+controller_manager:
+  ros__parameters:
+    update_rate: 30  # Hz
+
+# TODO: Implement and use a controller publishing audio_common_msgs::AudioData
+ffmpeg_packet_broadcaster:
+  ros__parameters:
+    type: ffmpeg_controllers/FFmpegPacketBroadcaster
+    sensor_name: pulse_audio
