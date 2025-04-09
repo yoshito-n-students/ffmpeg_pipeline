@@ -60,14 +60,15 @@ install(
   DESTINATION include)
 install(
   TARGETS ffmpeg_cpp
-  EXPORT export_ffmpeg_cpp)
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin)
 install(
   TARGETS decode_bag decode_topic stream_camera
   DESTINATION lib/${PROJECT_NAME})
 
 # export the library for downstream projects
 ament_export_include_directories(include)
-ament_export_targets(export_ffmpeg_cpp)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
