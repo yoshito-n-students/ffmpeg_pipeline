@@ -71,7 +71,6 @@ install(
 # export the library for downstream projects
 ament_export_include_directories(include)
 ament_export_targets(export_ffmpeg_cpp HAS_LIBRARY_TARGET)
-ament_export_dependencies(ffmpeg_pipeline_msgs)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
