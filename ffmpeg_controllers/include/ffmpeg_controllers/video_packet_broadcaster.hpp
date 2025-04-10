@@ -1,5 +1,5 @@
-#ifndef FFMPEG_CONTROLLERS_FFMPEG_PACKET_BROADCASTER_HPP
-#define FFMPEG_CONTROLLERS_FFMPEG_PACKET_BROADCASTER_HPP
+#ifndef FFMPEG_CONTROLLERS_VIDEO_PACKET_BROADCASTER_HPP
+#define FFMPEG_CONTROLLERS_VIDEO_PACKET_BROADCASTER_HPP
 
 #include <algorithm>
 #include <memory>
@@ -14,7 +14,7 @@
 
 namespace ffmpeg_controllers {
 
-class FFmpegPacketBroadcaster : public controller_interface::ControllerInterface {
+class VideoPacketBroadcaster : public controller_interface::ControllerInterface {
 public:
   CallbackReturn on_init() override {
     // Load parameters

@@ -1,5 +1,5 @@
-#ifndef FFMPEG_CONTROLLERS_FFMPEG_DECODER_BROADCASTER_HPP
-#define FFMPEG_CONTROLLERS_FFMPEG_DECODER_BROADCASTER_HPP
+#ifndef FFMPEG_CONTROLLERS_VIDEO_DECODER_BROADCASTER_HPP
+#define FFMPEG_CONTROLLERS_VIDEO_DECODER_BROADCASTER_HPP
 
 #include <algorithm>
 #include <memory>
@@ -15,7 +15,7 @@
 
 namespace ffmpeg_controllers {
 
-class FFmpegDecoderBroadcaster : public controller_interface::ControllerInterface {
+class VideoDecoderBroadcaster : public controller_interface::ControllerInterface {
 public:
   CallbackReturn on_init() override {
     // Load parameters

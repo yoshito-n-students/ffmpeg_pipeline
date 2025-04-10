@@ -1,15 +1,15 @@
 <library path="ffmpeg_controllers">
 
-    <class name="ffmpeg_controllers/FFmpegDecoderBroadcaster"
-            type="ffmpeg_controllers::FFmpegDecoderBroadcaster"
+    <class name="ffmpeg_controllers/VideoDecoderBroadcaster"
+            type="ffmpeg_controllers::VideoDecoderBroadcaster"
             base_class_type="controller_interface::ControllerInterface">
         <description>
             This controller publishes decoded video frames read from the input using ffmpeg.
         </description>
     </class>
 
-    <class name="ffmpeg_controllers/FFmpegPacketBroadcaster"
-            type="ffmpeg_controllers::FFmpegPacketBroadcaster"
+    <class name="ffmpeg_controllers/VideoPacketBroadcaster"
+            type="ffmpeg_controllers::VideoPacketBroadcaster"
             base_class_type="controller_interface::ControllerInterface">
         <description>
             This controller publishes video packets read from the input using ffmpeg.
