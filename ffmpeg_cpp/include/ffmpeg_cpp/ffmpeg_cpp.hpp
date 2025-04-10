@@ -1,7 +1,6 @@
 #ifndef FFMPEG_CPP_FFMPEG_CPP_HPP
 #define FFMPEG_CPP_FFMPEG_CPP_HPP
 
-#include <algorithm>
 #include <chrono>
 #include <cstdint>
 #include <map>
@@ -35,11 +34,7 @@ public:
 // RAII wrapper for AVBufferRef
 class BufferRef {
 public:
-  BufferRef(const std::size_t unpadded_size);
-  BufferRef(const std::uint8_t *const data, const std::size_t unpadded_size)
-      : BufferRef(unpadded_size) {
-    std::copy(data, data + unpadded_size, buf_->data);
-  }
+  BufferRef(const std::uint8_t *const data, const std::size_t unpadded_size);
   BufferRef(const BufferRef &buf);
 
   AVBufferRef *get() { return buf_.get(); }

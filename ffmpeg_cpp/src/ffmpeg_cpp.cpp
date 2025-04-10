@@ -79,12 +79,13 @@ std::string to_ffmpeg_format_name(const std::string &ros_image_encoding) {
 // BufferRef - RAII wrapper for AVBufferRef
 // ========================================
 
-BufferRef::BufferRef(const std::size_t unpadded_size)
+BufferRef::BufferRef(const std::uint8_t *const data, const std::size_t unpadded_size)
     : buf_(av_buffer_alloc(unpadded_size + AV_INPUT_BUFFER_PADDING_SIZE), &unref_buffer) {
   if (!buf_) {
     throw Error("BufferRef::BufferRef(): Failed to allocate AVBufferRef");
   }
-  // Zero the padding area
+  // Copy the given data to the buffer and zero the padding
+  std::copy(data, data + unpadded_size, buf_->data);
   std::memset(buf_->data + unpadded_size, 0, AV_INPUT_BUFFER_PADDING_SIZE);
 }
 
