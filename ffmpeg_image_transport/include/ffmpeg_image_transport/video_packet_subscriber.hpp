@@ -1,5 +1,5 @@
-#ifndef FFMPEG_IMAGE_TRANSPORT_FFMPEG_SUBSCRIBER_HPP
-#define FFMPEG_IMAGE_TRANSPORT_FFMPEG_SUBSCRIBER_HPP
+#ifndef FFMPEG_IMAGE_TRANSPORT_VIDEO_PACKET_SUBSCRIBER_HPP
+#define FFMPEG_IMAGE_TRANSPORT_VIDEO_PACKET_SUBSCRIBER_HPP
 
 #include <memory>
 #include <stdexcept>
@@ -15,7 +15,7 @@
 
 namespace ffmpeg_image_transport {
 
-class FFmpegSubscriber
+class VideoPacketSubscriber
     : public image_transport::SimpleSubscriberPlugin<sensor_msgs::msg::CompressedImage> {
 private:
   using Base = image_transport::SimpleSubscriberPlugin<sensor_msgs::msg::CompressedImage>;

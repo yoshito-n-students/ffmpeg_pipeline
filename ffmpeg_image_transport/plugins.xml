@@ -1,7 +1,7 @@
 <library path="ffmpeg_image_transport">
   <class
     name="image_transport/ffmpeg_sub"
-    type="ffmpeg_image_transport::FFmpegSubscriber"
+    type="ffmpeg_image_transport::VideoPacketSubscriber"
     base_class_type="image_transport::SubscriberPlugin">
     <description>
       This plugin decompresses a CompressedImage topic using FFmpeg.
