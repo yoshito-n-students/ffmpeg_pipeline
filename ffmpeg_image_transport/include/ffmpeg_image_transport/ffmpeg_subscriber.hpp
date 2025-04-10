@@ -40,7 +40,7 @@ protected:
                     parser_.codec_names().front().c_str());
       }
       if (!decoder_.is_supported(fragment->format)) {
-        decoder_.reconfigure(fragment->format);
+        decoder_ = ffmpeg_cpp::Decoder(fragment->format);
         RCLCPP_INFO(node_->get_logger(), "Configured decoder (codec: %s, hw: %s)",
                     decoder_.codec_name().c_str(), decoder_.hw_device_type().c_str());
       }

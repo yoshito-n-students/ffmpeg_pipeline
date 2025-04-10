@@ -78,7 +78,7 @@ public:
     try {
       // Ensure the decoder is configured for the codec
       if (!decoder_.is_supported(*codec_name)) {
-        decoder_.reconfigure(*codec_name);
+        decoder_ = ffmpeg_cpp::Decoder(*codec_name);
         RCLCPP_INFO(get_logger(), "Configured decoder (codec: %s, hw: %s)",
                     decoder_.codec_name().c_str(), decoder_.hw_device_type().c_str());
       }

@@ -71,7 +71,7 @@ int main(int argc, char **argv) {
                     parser.codec_names().front().c_str());
       }
       if (!decoder.is_supported(comp_img->format)) {
-        decoder.reconfigure(comp_img->format);
+        decoder = av::Decoder(comp_img->format);
         RCLCPP_INFO(node->get_logger(), "Configured decoder (codec: %s, hw: %s)",
                     decoder.codec_name().c_str(), decoder.hw_device_type().c_str());
       }

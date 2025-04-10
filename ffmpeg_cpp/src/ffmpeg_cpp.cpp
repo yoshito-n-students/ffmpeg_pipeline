@@ -275,12 +275,13 @@ void Input::close_input(AVFormatContext *format_ctx) { avformat_close_input(&for
 // Decoder - RAII wrapper for AVCodecContext
 // =========================================
 
-bool Decoder::is_supported(const std::string &codec_name) const {
-  const AVCodec *const codec = avcodec_find_decoder_by_name(codec_name.c_str());
-  return codec && codec_ctx_ && (codec->id == codec_ctx_->codec_id);
+Decoder::Decoder() : codec_ctx_(avcodec_alloc_context3(nullptr), &free_context) {
+  if (!codec_ctx_) {
+    throw Error("Decoder::Decoder(): Failed to allocate codec context");
+  }
 }
 
-void Decoder::reconfigure(const std::string &codec_name) {
+Decoder::Decoder(const std::string &codec_name) : codec_ctx_(nullptr, &free_context) {
   // Find the decoder by name
   const AVCodec *const codec = avcodec_find_decoder_by_name(codec_name.c_str());
   if (!codec) {
@@ -334,21 +335,18 @@ void Decoder::reconfigure(const std::string &codec_name) {
   }
 }
 
-void Decoder::send_packet(const Packet &packet) {
-  if (!codec_ctx_) {
-    throw Error("Decoder::send_packet(): Decoder context is not configured");
-  }
+bool Decoder::is_supported(const std::string &codec_name) const {
+  const AVCodec *const codec = avcodec_find_decoder_by_name(codec_name.c_str());
+  return codec && codec->id == codec_ctx_->codec_id;
+}
 
+void Decoder::send_packet(const Packet &packet) {
   if (const int ret = avcodec_send_packet(codec_ctx_.get(), packet.get()); ret < 0) {
     throw Error("Decoder::send_packet(): Error sending packet for decoding", ret);
   }
 }
 
 Frame Decoder::receive_frame() {
-  if (!codec_ctx_) {
-    throw Error("Decoder::receive_frame(): Decoder context is not configured");
-  }
-
   // If the return value of avcodec_receive_frame() is one of the following, return frame
   // - 0: The frame was successfully decoded
   // - AVERROR(EAGAIN): No frame available due to insufficient packets
@@ -362,17 +360,13 @@ Frame Decoder::receive_frame() {
   return frame;
 }
 
-std::string Decoder::codec_name() const {
-  // avcodec_get_name(AV_CODEC_ID_NONE) returns "none",
-  // so std::string can be constructed without any problem.
-  return avcodec_get_name(codec_ctx_ ? codec_ctx_->codec_id : AV_CODEC_ID_NONE);
-}
+std::string Decoder::codec_name() const { return avcodec_get_name(codec_ctx_->codec_id); }
 
 std::string Decoder::hw_device_type() const {
   // av_hwdevice_get_type_name(AV_HWDEVICE_TYPE_NONE) returns nullptr,
   // so std::string CANNOT be constructed and std::logic_error is thrown.
   // To avoid this, return "none" in the case of no hardware.
-  return (codec_ctx_ && codec_ctx_->hw_device_ctx)
+  return codec_ctx_->hw_device_ctx
              ? av_hwdevice_get_type_name(
                    reinterpret_cast<AVHWDeviceContext *>(codec_ctx_->hw_device_ctx->data)->type)
              : "none";

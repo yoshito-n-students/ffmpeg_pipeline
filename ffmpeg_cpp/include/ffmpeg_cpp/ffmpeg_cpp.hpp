@@ -170,11 +170,14 @@ private:
 
 class Decoder {
 public:
-  // Check if the codec is supported by the current decoder context
-  bool is_supported(const std::string &codec_name) const;
+  // Allocate the codec context for no particular codec
+  Decoder();
+  // Allocate the codec context for the given codec name
+  Decoder(const std::string &codec_name);
 
-  // (Re)initialize the decoder with the given codec name
-  void reconfigure(const std::string &codec_name);
+  bool is_supported(const std::string &codec_name) const;
+  std::string codec_name() const;
+  std::string hw_device_type() const;
 
   // Send a cmpressed packet to the decoder
   void send_packet(const Packet &packet);
@@ -183,19 +186,17 @@ public:
   // The frame may be empty if no frame is available.
   Frame receive_frame();
 
+  // Access to the underlying AVCodecContext
   AVCodecContext *get() { return codec_ctx_.get(); }
   const AVCodecContext *get() const { return codec_ctx_.get(); }
   AVCodecContext *operator->() { return codec_ctx_.operator->(); }
   const AVCodecContext *operator->() const { return codec_ctx_.operator->(); }
 
-  std::string codec_name() const;
-  std::string hw_device_type() const;
-
 private:
   static void free_context(AVCodecContext *codec_ctx);
 
 private:
-  std::unique_ptr<AVCodecContext, decltype(&free_context)> codec_ctx_{nullptr, &free_context};
+  std::unique_ptr<AVCodecContext, decltype(&free_context)> codec_ctx_;
 };
 
 // ================================
