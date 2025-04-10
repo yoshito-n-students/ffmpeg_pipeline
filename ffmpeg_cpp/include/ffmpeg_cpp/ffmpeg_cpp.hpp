@@ -16,6 +16,9 @@ extern "C" {
 #include <libswscale/swscale.h>
 }
 
+#include <ffmpeg_pipeline_msgs/msg/frame.hpp>
+#include <ffmpeg_pipeline_msgs/msg/packet.hpp>
+
 namespace ffmpeg_cpp {
 
 // =================
@@ -74,10 +77,15 @@ private:
 
 class Packet {
 public:
+  using Message = ffmpeg_pipeline_msgs::msg::Packet;
+
+public:
   // Allocate the packet and default the fields
   Packet();
   // Create a packet by referencing the given buffer
   Packet(const BufferRef &buf);
+
+  Message::UniquePtr to_msg(const std::string &codec_name) const;
 
   // Access to the underlying AVPacket
   AVPacket *get() { return packet_.get(); }
@@ -98,6 +106,9 @@ private:
 
 class Frame {
 public:
+  using Message = ffmpeg_pipeline_msgs::msg::Frame;
+
+public:
   // Allocate the frame and default the fields
   Frame();
 
@@ -108,6 +119,8 @@ public:
 
   // Copy the frame to the CPU-accessible memory
   Frame transfer_data() const;
+
+  Message::UniquePtr to_msg() const;
 
   // Access to the underlying AVFrame
   AVFrame *get() { return frame_.get(); }

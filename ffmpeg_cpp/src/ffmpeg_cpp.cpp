@@ -116,6 +116,14 @@ Packet::Packet(const BufferRef &buf) : Packet() {
   packet_->size = buf.unpadded_size();
 }
 
+Packet::Message::UniquePtr Packet::to_msg(const std::string &codec_name) const {
+  auto msg = std::make_unique<Message>();
+  // TODO: fill msg->header
+  msg->codec = codec_name;
+  msg->data.assign(packet_->data, packet_->data + packet_->size);
+  return msg;
+}
+
 void Packet::free_packet(AVPacket *packet) { av_packet_free(&packet); }
 
 // ================================
@@ -138,6 +146,17 @@ Frame Frame::transfer_data() const {
 
 std::string Frame::format_name() const {
   return av_get_pix_fmt_name(static_cast<AVPixelFormat>(frame_->format));
+}
+
+Frame::Message::UniquePtr Frame::to_msg() const {
+  auto msg = std::make_unique<Message>();
+  // TODO: fill msg->header
+  msg->format = av_get_pix_fmt_name(static_cast<AVPixelFormat>(frame_->format));
+  msg->width = frame_->width;
+  msg->height = frame_->height;
+  msg->linesize = frame_->linesize[0];
+  msg->data.assign(frame_->data[0], frame_->data[0] + frame_->linesize[0] * frame_->height);
+  return msg;
 }
 
 void Frame::free_frame(AVFrame *frame) { av_frame_free(&frame); }
