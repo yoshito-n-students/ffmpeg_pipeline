@@ -37,8 +37,7 @@ int main(int argc, char *argv[]) {
     // Continuously read frames from the input device and publish them
     while (rclcpp::ok()) {
       // Read a packet from the input device
-      av::Packet packet;
-      input.read_frame(&packet, 1'000ms);
+      const av::Packet packet = input.read_frame(1'000ms);
 
       // Copy the packet data to a ROS 2 message
       auto msg = std::make_unique<sensor_msgs::msg::CompressedImage>();

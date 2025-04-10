@@ -18,12 +18,21 @@ extern "C" {
 
 namespace ffmpeg_cpp {
 
+// =================
 // Utility functions
+// =================
+
+// Convert a ffmpeg's error number to a string
 std::string err2str(const int errnum);
+// Convert a ffmpeg pixel format name to a ROS image encoding, or an empty string if not found
 std::string to_ros_image_encoding(const std::string &ffmpeg_format_name);
+// Convert a ROS image encoding to a ffmpeg pixel format name, or an empty string if not found
 std::string to_ffmpeg_format_name(const std::string &ros_image_encoding);
 
-// Error with an optional error number from libav
+// ==================================================
+// Error class with an optional ffmpeg's error number
+// ==================================================
+
 class Error : public std::runtime_error {
 public:
   Error(const std::string &msg) : std::runtime_error(msg) {}
@@ -31,19 +40,26 @@ public:
       : std::runtime_error(msg + ": " + err2str(errnum)) {}
 };
 
+// ============================
 // RAII wrapper for AVBufferRef
+// ============================
+
 class BufferRef {
 public:
+  // Construct a BufferRef by copying the given data and adding padding
   BufferRef(const std::uint8_t *const data, const std::size_t unpadded_size);
+  // Construct a BufferRef by referencing an existing buffer
   BufferRef(const BufferRef &buf);
 
+  // Get the size of the buffer, with or without padding
+  std::size_t padded_size() const { return buf_->size; }
+  std::size_t unpadded_size() const { return buf_->size - AV_INPUT_BUFFER_PADDING_SIZE; }
+
+  // Access to the underlying AVBufferRef
   AVBufferRef *get() { return buf_.get(); }
   const AVBufferRef *get() const { return buf_.get(); }
   AVBufferRef *operator->() { return buf_.operator->(); }
   const AVBufferRef *operator->() const { return buf_.operator->(); }
-
-  std::size_t padded_size() const { return buf_->size; }
-  std::size_t unpadded_size() const { return buf_->size - AV_INPUT_BUFFER_PADDING_SIZE; }
 
 private:
   static void unref_buffer(AVBufferRef *buf);
@@ -52,17 +68,18 @@ private:
   std::unique_ptr<AVBufferRef, decltype(&unref_buffer)> buf_;
 };
 
+// =========================
 // RAII wrapper for AVPacket
+// =========================
+
 class Packet {
 public:
   // Allocate the packet and default the fields
   Packet();
+  // Create a packet by referencing the given buffer
+  Packet(const BufferRef &buf);
 
-  void ref(const BufferRef &buf);
-
-  // Detach the packet from the data buffer if any, and default the rest of the fields
-  void unref();
-
+  // Access to the underlying AVPacket
   AVPacket *get() { return packet_.get(); }
   const AVPacket *get() const { return packet_.get(); }
   AVPacket *operator->() { return packet_.operator->(); }
@@ -75,7 +92,10 @@ private:
   std::unique_ptr<AVPacket, decltype(&free_packet)> packet_;
 };
 
+// ========================
 // RAII wrapper for AVFrame
+// ========================
+
 class Frame {
 public:
   // Allocate the frame and default the fields
@@ -90,6 +110,7 @@ public:
   // Copy the frame to the CPU-accessible memory
   void transfer_data(Frame *const dst) const;
 
+  // Access to the underlying AVFrame
   AVFrame *get() { return frame_.get(); }
   const AVFrame *get() const { return frame_.get(); }
   AVFrame *operator->() { return frame_.operator->(); }
@@ -104,7 +125,10 @@ private:
   std::unique_ptr<AVFrame, decltype(&free_frame)> frame_;
 };
 
+// ======================================================
 // RAII wrapper for input decice (a.k.a. AVFormatContext)
+// ======================================================
+
 class Input {
 private:
   using Clock = std::chrono::steady_clock;
@@ -118,10 +142,11 @@ public:
 
   // Read the next frame from the video stream of interest
   template <typename Rep, typename Period>
-  void read_frame(Packet *const packet, const std::chrono::duration<Rep, Period> &timeout) {
-    read_frame_impl(packet, std::chrono::duration_cast<Clock::duration>(timeout));
+  Packet read_frame(const std::chrono::duration<Rep, Period> &timeout) {
+    return read_frame_impl(std::chrono::duration_cast<Clock::duration>(timeout));
   }
 
+  // Access to the underlying AVFormatContext
   AVFormatContext *get() { return format_ctx_.get(); }
   const AVFormatContext *get() const { return format_ctx_.get(); }
   AVFormatContext *operator->() { return format_ctx_.operator->(); }
@@ -131,7 +156,7 @@ public:
   std::string codec_name() const;
 
 private:
-  void read_frame_impl(Packet *const packet, const Clock::duration &timeout);
+  Packet read_frame_impl(const Clock::duration &timeout);
 
   static void close_input(AVFormatContext *format_ctx);
 
@@ -141,7 +166,10 @@ private:
   Clock::time_point deadline_ = Clock::time_point::max();
 };
 
+// ===============================================
 // RAII wrapper for decoder (a.k.a AVCodecContext)
+// ===============================================
+
 class Decoder {
 public:
   // Check if the codec is supported by the current decoder context
@@ -171,7 +199,10 @@ private:
   std::unique_ptr<AVCodecContext, decltype(&free_context)> codec_ctx_{nullptr, &free_context};
 };
 
+// ================================
 // RAII wrapper for AVParserContext
+// ================================
+
 class Parser {
 public:
   // Check if the codec is supported by the current parser context

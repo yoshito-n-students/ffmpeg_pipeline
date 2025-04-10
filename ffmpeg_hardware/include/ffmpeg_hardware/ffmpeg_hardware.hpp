@@ -76,7 +76,7 @@ public:
 
     // Initialize the read packet with the first frame from the input
     try {
-      input_.read_frame(&read_packet_, std::chrono::milliseconds(5000));
+      read_packet_ = input_.read_frame(std::chrono::milliseconds(5000));
     } catch (const std::runtime_error &error) {
       RCLCPP_ERROR(get_logger(), "Failed to read the first frame from the input: %s", error.what());
       return CallbackReturn::ERROR;
@@ -87,8 +87,7 @@ public:
     write_thread_ = std::thread([this]() {
       try {
         while (!stop_requested_) {
-          ffmpeg_cpp::Packet packet;
-          input_.read_frame(&packet, std::chrono::milliseconds(500));
+          ffmpeg_cpp::Packet packet = input_.read_frame(std::chrono::milliseconds(500));
           {
             std::unique_lock<std::mutex> lock(write_packet_mutex_);
             write_packet_ = std::move(packet);

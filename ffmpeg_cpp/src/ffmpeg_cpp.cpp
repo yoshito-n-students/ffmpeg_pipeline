@@ -107,17 +107,14 @@ Packet::Packet() : packet_(av_packet_alloc(), free_packet) {
   }
 }
 
-void Packet::ref(const BufferRef &buf) {
-  unref();
+Packet::Packet(const BufferRef &buf) : Packet() {
   packet_->buf = av_buffer_ref(buf.get());
   if (!packet_->buf) {
-    throw Error("Packet::ref(): Failed to create a reference to buffer");
+    throw Error("Packet::Packet(): Failed to create a reference to buffer");
   }
   packet_->data = buf->data;
   packet_->size = buf.unpadded_size();
 }
-
-void Packet::unref() { av_packet_unref(packet_.get()); }
 
 void Packet::free_packet(AVPacket *packet) { av_packet_free(&packet); }
 
@@ -250,18 +247,21 @@ std::string Input::codec_name() const {
                               : AV_CODEC_ID_NONE);
 }
 
-void Input::read_frame_impl(Packet *const packet, const Clock::duration &timeout) {
+Packet Input::read_frame_impl(const Clock::duration &timeout) {
   if (!format_ctx_) {
     throw Error("Input::read_frame(): Input context is not configured");
   }
 
-  packet->unref();
   deadline_ = Clock::now() + timeout;
-  do {
-    if (const int ret = av_read_frame(format_ctx_.get(), packet->get()); ret < 0) {
+  while (true) {
+    Packet packet;
+    const int ret = av_read_frame(format_ctx_.get(), packet.get());
+    if (ret >= 0 && packet->stream_index == stream_id_) {
+      return packet;
+    } else if (ret < 0) {
       throw Error("Input::read_frame(): Failed to read frame", ret);
     }
-  } while ((*packet)->stream_index != stream_id_);
+  }
 }
 
 void Input::close_input(AVFormatContext *format_ctx) { avformat_close_input(&format_ctx); }
@@ -413,19 +413,23 @@ int Parser::parse(const BufferRef &buffer, Decoder *const decoder, Packet *const
                        buffer.unpadded_size(), AV_NOPTS_VALUE, AV_NOPTS_VALUE, pos);
 
   // Set the packet content based on the parser's output
-  packet->unref();
-  if (packet_data && buffer->data + pos <= packet_data &&
-      packet_data + packet_size <= buffer->data + buffer.unpadded_size()) {
-    // If a packet is available and the data is within the input buffer,
-    // refer to the entire buffer from the packet, and set the data to the packet
-    packet->ref(buffer);
-    (*packet)->data = packet_data;
-    (*packet)->size = packet_size;
-  } else if (packet_data) {
-    // If a packet is available but the data is within the parser's internal buffer,
-    // copy the data from the parser's internal buffer to a new buffer
-    // to guarantee the lifetime of the data, and refer to it from the packet
-    packet->ref(BufferRef(packet_data, packet_size));
+  if (packet_data) {
+    if (buffer->data + pos <= packet_data &&
+        packet_data + packet_size <= buffer->data + buffer.unpadded_size()) {
+      // If a packet is available and the data is within the input buffer,
+      // refer to the entire buffer from the packet, and set the data to the packet
+      *packet = Packet(buffer);
+      (*packet)->data = packet_data;
+      (*packet)->size = packet_size;
+    } else {
+      // If a packet is available but the data is within the parser's internal buffer,
+      // copy the data from the parser's internal buffer to a new buffer
+      // to guarantee the lifetime of the data, and refer to it from the packet
+      *packet = Packet(BufferRef(packet_data, packet_size));
+    }
+  } else {
+    // If no packet is available, create an empty packet
+    *packet = Packet();
   }
 
   return len;
