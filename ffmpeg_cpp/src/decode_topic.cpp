@@ -48,8 +48,12 @@ int main(int argc, char *argv[]) {
             decoder.send_packet(packet);
 
             // Receive and publish the decoded frames
-            av::Frame frame;
-            while (decoder.receive_frame(&frame)) {
+            while (true) {
+              av::Frame frame = decoder.receive_frame();
+              if (!frame->data[0]) {
+                break; // No more frames available
+              }
+
               // Copy the frame properties to the destination image
               auto image = std::make_unique<sensor_msgs::msg::Image>();
               image->header.stamp = packet_data->header.stamp;
@@ -62,9 +66,7 @@ int main(int argc, char *argv[]) {
               if (frame.is_hw_frame()) {
                 // If the frame data is in a hardware device,
                 // transfer the data to the CPU-accessible memory before conversion
-                av::Frame sw_frame;
-                frame.transfer_data(&sw_frame);
-                frame = std::move(sw_frame);
+                frame = frame.transfer_data();
               }
 
               // Initialize the image converter if not already done

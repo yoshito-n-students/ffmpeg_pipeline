@@ -91,8 +91,12 @@ int main(int argc, char **argv) {
           RCLCPP_INFO(node->get_logger(), "Sent packet to the decoder: %d bytes", packet->size);
 
           // Receive and publish the decoded frames
-          av::Frame frame;
-          while (decoder.receive_frame(&frame)) {
+          while (true) {
+            av::Frame frame = decoder.receive_frame();
+            if (!frame->data[0]) {
+              break; // No more frames available
+            }
+
             RCLCPP_INFO(node->get_logger(), "Decoded frame: %dx%d", frame->width, frame->height);
             // Copy the frame properties to the destination image
             auto image = std::make_unique<sensor_msgs::msg::Image>();
@@ -105,9 +109,7 @@ int main(int argc, char **argv) {
             // If the frame data is in a hardware device,
             // transfer the data to the CPU-accessible memory before conversion
             if (frame.is_hw_frame()) {
-              av::Frame sw_frame;
-              frame.transfer_data(&sw_frame);
-              frame = std::move(sw_frame);
+              frame = frame.transfer_data();
             }
 
             // Initialize the image converter if not already done

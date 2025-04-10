@@ -128,13 +128,12 @@ Frame::Frame() : frame_(av_frame_alloc(), free_frame) {
   }
 }
 
-void Frame::unref() { av_frame_unref(frame_.get()); }
-
-void Frame::transfer_data(Frame *const dst) const {
-  dst->unref();
-  if (const int ret = av_hwframe_transfer_data(dst->get(), frame_.get(), 0); ret < 0) {
+Frame Frame::transfer_data() const {
+  Frame dst;
+  if (const int ret = av_hwframe_transfer_data(dst.get(), frame_.get(), 0); ret < 0) {
     throw Error("Frame::transfer_data(): Error transferring data", ret);
   }
+  return dst;
 }
 
 std::string Frame::format_name() const {
@@ -339,20 +338,22 @@ void Decoder::send_packet(const Packet &packet) {
   }
 }
 
-bool Decoder::receive_frame(Frame *const frame) {
+Frame Decoder::receive_frame() {
   if (!codec_ctx_) {
     throw Error("Decoder::receive_frame(): Decoder context is not configured");
   }
 
-  frame->unref();
-  if (const int ret = avcodec_receive_frame(codec_ctx_.get(), frame->get()); ret == 0) {
-    return true;
-  } else if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
-    // The decoder is in an OK state, but no frame is currently available
-    return false;
-  } else {
+  // If the return value of avcodec_receive_frame() is one of the following, return frame
+  // - 0: The frame was successfully decoded
+  // - AVERROR(EAGAIN): No frame available due to insufficient packets
+  // - AVERROR_EOF: No frame available because the decoder has finished successfully
+  // TODO: Notify the reason for the empty frame to the caller
+  Frame frame;
+  if (const int ret = avcodec_receive_frame(codec_ctx_.get(), frame.get());
+      ret < 0 && ret != AVERROR(EAGAIN) && ret != AVERROR_EOF) {
     throw Error("Decoder::receive_frame(): Error during decoding", ret);
   }
+  return frame;
 }
 
 std::string Decoder::codec_name() const {

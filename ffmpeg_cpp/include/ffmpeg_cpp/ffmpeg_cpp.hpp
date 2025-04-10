@@ -101,22 +101,19 @@ public:
   // Allocate the frame and default the fields
   Frame();
 
-  // Detach the frame from the data buffers if any, and default the rest of the fields
-  void unref();
+  std::string format_name() const;
 
   // True if the frame is on a hardware memory, which is not accessible by the CPU
   bool is_hw_frame() const { return frame_->hw_frames_ctx != nullptr; }
 
   // Copy the frame to the CPU-accessible memory
-  void transfer_data(Frame *const dst) const;
+  Frame transfer_data() const;
 
   // Access to the underlying AVFrame
   AVFrame *get() { return frame_.get(); }
   const AVFrame *get() const { return frame_.get(); }
   AVFrame *operator->() { return frame_.operator->(); }
   const AVFrame *operator->() const { return frame_.operator->(); }
-
-  std::string format_name() const;
 
 private:
   static void free_frame(AVFrame *frame);
@@ -181,8 +178,9 @@ public:
   // Send a cmpressed packet to the decoder
   void send_packet(const Packet &packet);
 
-  // True if a decoded frame is received, false if no more frames are available
-  bool receive_frame(Frame *const frame);
+  // Receive a decoded frame from the decoder.
+  // The frame may be empty if no frame is available.
+  Frame receive_frame();
 
   AVCodecContext *get() { return codec_ctx_.get(); }
   const AVCodecContext *get() const { return codec_ctx_.get(); }

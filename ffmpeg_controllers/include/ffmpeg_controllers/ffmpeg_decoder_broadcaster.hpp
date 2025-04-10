@@ -87,14 +87,16 @@ public:
       decoder_.send_packet(*packet);
 
       // Repeatedly receive uncompressed frames from the decoder
-      ffmpeg_cpp::Frame frame;
-      while (decoder_.receive_frame(&frame)) {
+      while (true) {
+        ffmpeg_cpp::Frame frame = decoder_.receive_frame();
+        if (!frame->data[0]) {
+          break; // No more frames available
+        }
+
         // If the frame data is in a hardware device,
         // transfer the data to the CPU-accessible memory before conversion
         if (frame.is_hw_frame()) {
-          ffmpeg_cpp::Frame sw_frame;
-          frame.transfer_data(&sw_frame);
-          frame = std::move(sw_frame);
+          frame = frame.transfer_data();
         }
 
         // Ensure the converter is configured for this frame
