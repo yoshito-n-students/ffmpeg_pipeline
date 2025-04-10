@@ -19,8 +19,8 @@ add_library(ffmpeg_controllers SHARED
 )
 target_include_directories(
   ffmpeg_controllers PUBLIC
-  $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
-  $<INSTALL_INTERFACE:include/imu_sensor_broadcaster>
+  "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
+  "$<INSTALL_INTERFACE:include>"
 )
 ament_target_dependencies(
   ffmpeg_controllers PUBLIC 
