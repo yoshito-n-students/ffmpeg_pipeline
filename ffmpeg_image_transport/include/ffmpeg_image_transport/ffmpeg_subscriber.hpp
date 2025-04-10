@@ -35,7 +35,7 @@ protected:
     try {
       // Configure the parser and decoder for this fragment if needed
       if (!parser_.is_supported(fragment->format)) {
-        parser_.reconfigure(fragment->format);
+        parser_ = ffmpeg_cpp::Parser(fragment->format);
         RCLCPP_INFO(node_->get_logger(), "Configured parser (codec: %s)",
                     parser_.codec_names().front().c_str());
       }

@@ -205,11 +205,13 @@ private:
 
 class Parser {
 public:
-  // Check if the codec is supported by the current parser context
-  bool is_supported(const std::string &codec_name) const;
+  // Allocate the parser context for no particular codec
+  Parser();
+  // Allocate the parser context for the given codec name
+  Parser(const std::string &codec_name);
 
-  // (Re)initialize the parser with the given codec name
-  void reconfigure(const std::string &codec_name);
+  bool is_supported(const std::string &codec_name) const;
+  std::vector<std::string> codec_names() const;
 
   // Parse the buffer starting from the pos-th byte, and store the data of one frame in the packet.
   // The data in the packet is managed by reference counting, so its lifetime is guaranteed.
@@ -222,11 +224,8 @@ public:
   AVCodecParserContext *operator->() { return parser_ctx_.operator->(); }
   const AVCodecParserContext *operator->() const { return parser_ctx_.operator->(); }
 
-  std::vector<std::string> codec_names() const;
-
 private:
-  std::unique_ptr<AVCodecParserContext, decltype(&av_parser_close)> parser_ctx_{nullptr,
-                                                                                &av_parser_close};
+  std::unique_ptr<AVCodecParserContext, decltype(&av_parser_close)> parser_ctx_;
 };
 
 // RAII wrapper for SwsContext

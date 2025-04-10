@@ -378,15 +378,9 @@ void Decoder::free_context(AVCodecContext *codec_ctx) { avcodec_free_context(&co
 // Parser - RAII wrapper for AVCodecParserContext
 // ==============================================
 
-bool Parser::is_supported(const std::string &codec_name) const {
-  const AVCodec *const codec = avcodec_find_decoder_by_name(codec_name.c_str());
-  return codec && parser_ctx_ &&
-         std::any_of(std::begin(parser_ctx_->parser->codec_ids),
-                     std::end(parser_ctx_->parser->codec_ids),
-                     [codec](const int parser_id) { return parser_id == codec->id; });
-}
+Parser::Parser() : parser_ctx_(nullptr, &av_parser_close) {}
 
-void Parser::reconfigure(const std::string &codec_name) {
+Parser::Parser(const std::string &codec_name) : parser_ctx_(nullptr, &av_parser_close) {
   // Find the codec by name
   const AVCodec *const codec = avcodec_find_decoder_by_name(codec_name.c_str());
   if (!codec) {
@@ -434,6 +428,14 @@ int Parser::parse(const BufferRef &buffer, Decoder *const decoder, Packet *const
   }
 
   return len;
+}
+
+bool Parser::is_supported(const std::string &codec_name) const {
+  const AVCodec *const codec = avcodec_find_decoder_by_name(codec_name.c_str());
+  return codec && parser_ctx_ &&
+         std::any_of(std::begin(parser_ctx_->parser->codec_ids),
+                     std::end(parser_ctx_->parser->codec_ids),
+                     [codec](const int parser_id) { return parser_id == codec->id; });
 }
 
 std::vector<std::string> Parser::codec_names() const {
