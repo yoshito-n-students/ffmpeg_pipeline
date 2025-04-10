@@ -7,7 +7,6 @@ endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
-find_package(ffmpeg_pipeline_msgs REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rosbag2_storage REQUIRED)
 find_package(rosbag2_transport REQUIRED)
@@ -22,7 +21,7 @@ target_include_directories(
   "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
   "$<INSTALL_INTERFACE:include>")
 target_link_libraries(ffmpeg_cpp avcodec avdevice avformat avutil swscale)
-ament_target_dependencies(ffmpeg_cpp ffmpeg_pipeline_msgs sensor_msgs)
+ament_target_dependencies(ffmpeg_cpp sensor_msgs)
 
 #
 add_executable(
