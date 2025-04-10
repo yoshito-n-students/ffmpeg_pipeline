@@ -123,7 +123,7 @@ private:
 };
 
 // ======================================================
-// RAII wrapper for input decice (a.k.a. AVFormatContext)
+// RAII wrapper for input device (a.k.a. AVFormatContext)
 // ======================================================
 
 class Input {
@@ -131,13 +131,17 @@ private:
   using Clock = std::chrono::steady_clock;
 
 public:
-  // Open the input device by avformat_open_input() with the given URL, format and options
-  // and find the best video stream
-  void reconfigure(const std::string &url, const std::string &format_name,
-                   const std::map<std::string, std::string> &option_map,
-                   const std::string &media_type_name);
+  // Just allocate the format context
+  Input();
+  // Open the input device by avformat_open_input() with the given URL, format name, and options,
+  // and find the best stream of the given media type
+  Input(const std::string &url, const std::string &format_name,
+        const std::map<std::string, std::string> &option_map, const std::string &media_type_name);
 
-  // Read the next frame from the video stream of interest
+  int stream_id() const { return stream_id_; }
+  std::string codec_name() const;
+
+  // Read the next frame from the stream of interest
   template <typename Rep, typename Period>
   Packet read_frame(const std::chrono::duration<Rep, Period> &timeout) {
     return read_frame_impl(std::chrono::duration_cast<Clock::duration>(timeout));
@@ -149,18 +153,15 @@ public:
   AVFormatContext *operator->() { return format_ctx_.operator->(); }
   const AVFormatContext *operator->() const { return format_ctx_.operator->(); }
 
-  int stream_id() const { return stream_id_; }
-  std::string codec_name() const;
-
 private:
   Packet read_frame_impl(const Clock::duration &timeout);
 
   static void close_input(AVFormatContext *format_ctx);
 
 private:
-  std::unique_ptr<AVFormatContext, decltype(&close_input)> format_ctx_{nullptr, &close_input};
-  int stream_id_ = -1;
-  Clock::time_point deadline_ = Clock::time_point::max();
+  std::unique_ptr<AVFormatContext, decltype(&close_input)> format_ctx_;
+  int stream_id_;
+  Clock::time_point deadline_;
 };
 
 // ===============================================

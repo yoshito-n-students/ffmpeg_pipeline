@@ -64,9 +64,9 @@ public:
                                                               {"framerate", "30"},
                                                               {"timestamps", "abs"}});
 
-    // Configure the input with the parameters
+    // Reset the input with the parameters
     try {
-      input_.reconfigure(url, input_format, options, media_type);
+      input_ = ffmpeg_cpp::Input(url, input_format, options, media_type);
       RCLCPP_INFO(get_logger(), "Configured the input (URL: %s, format: %s)", url.c_str(),
                   input_format.c_str());
     } catch (const std::runtime_error &error) {

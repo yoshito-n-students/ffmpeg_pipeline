@@ -146,9 +146,18 @@ void Frame::free_frame(AVFrame *frame) { av_frame_free(&frame); }
 // Input - RAII wrapper for AVFormatContext
 // ========================================
 
-void Input::reconfigure(const std::string &url, const std::string &format_name,
-                        const std::map<std::string, std::string> &option_map,
-                        const std::string &media_type_name) {
+Input::Input()
+    : format_ctx_(avformat_alloc_context(), &close_input), stream_id_(-1),
+      deadline_(Clock::time_point::max()) {
+  if (!format_ctx_) {
+    throw Error("Input::Input(): Failed to allocate AVFormatContext");
+  }
+}
+
+Input::Input(const std::string &url, const std::string &format_name,
+             const std::map<std::string, std::string> &option_map,
+             const std::string &media_type_name)
+    : format_ctx_(nullptr, &close_input), stream_id_(-1), deadline_(Clock::time_point::max()) {
   // Register all the input format types
   avdevice_register_all();
 
@@ -184,10 +193,11 @@ void Input::reconfigure(const std::string &url, const std::string &format_name,
     }
   }
 
-  // Open the input with the URL, format and options
+  // Open the input with the URL, format and options.
+  // If avformat_open_input() fails, it frees format_ctx.
+  // So, we put format_ctx into unique_ptr after open succeeds.
   if (const int ret = avformat_open_input(&format_ctx, url.c_str(), format, &option_dict);
       ret < 0) {
-    avformat_free_context(format_ctx);
     av_dict_free(&option_dict);
     throw Error("Input::Input(): Failed to open input " + url, ret);
   }
@@ -240,22 +250,18 @@ void Input::reconfigure(const std::string &url, const std::string &format_name,
 }
 
 std::string Input::codec_name() const {
-  return avcodec_get_name(format_ctx_ && 0 <= stream_id_ &&
+  return avcodec_get_name(0 <= stream_id_ &&
                                   static_cast<unsigned int>(stream_id_) < format_ctx_->nb_streams
                               ? format_ctx_->streams[stream_id_]->codecpar->codec_id
                               : AV_CODEC_ID_NONE);
 }
 
 Packet Input::read_frame_impl(const Clock::duration &timeout) {
-  if (!format_ctx_) {
-    throw Error("Input::read_frame(): Input context is not configured");
-  }
-
   deadline_ = Clock::now() + timeout;
   while (true) {
     Packet packet;
-    const int ret = av_read_frame(format_ctx_.get(), packet.get());
-    if (ret >= 0 && packet->stream_index == stream_id_) {
+    if (const int ret = av_read_frame(format_ctx_.get(), packet.get());
+        ret >= 0 && packet->stream_index == stream_id_) {
       return packet;
     } else if (ret < 0) {
       throw Error("Input::read_frame(): Failed to read frame", ret);
