@@ -46,13 +46,12 @@ protected:
       }
 
       // Copy the data fragment to the reference-counted buffer with padding
-      const ffmpeg_cpp::BufferRef buffer(fragment->data.data(), fragment->data.size());
+      ffmpeg_cpp::BufferRef buffer(fragment->data.data(), fragment->data.size());
 
       // Parse the buffer and decode the compressed data
-      for (std::size_t pos = 0; pos < buffer.unpadded_size();) {
+      while (buffer.unpadded_size() > 0) {
         // Parse the buffer from the current position and store the data in the packet
-        ffmpeg_cpp::Packet packet;
-        pos += parser_.parse(buffer, &decoder_, &packet, pos);
+        const ffmpeg_cpp::Packet packet = parser_.parse(&buffer, &decoder_);
 
         if (packet->data) {
           // Send the packet to the decoder

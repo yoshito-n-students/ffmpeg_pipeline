@@ -77,13 +77,12 @@ int main(int argc, char **argv) {
       }
 
       // Copy the compressed data to the reference-counted buffer with padding
-      const av::BufferRef buffer(comp_img->data.data(), comp_img->data.size());
+      av::BufferRef buffer(comp_img->data.data(), comp_img->data.size());
 
       // Parse the buffer and decode the compressed data
-      for (std::size_t pos = 0; pos < buffer.unpadded_size();) {
-        // Parse the buffer from the current position and store the data in the packet
-        av::Packet packet;
-        pos += parser.parse(buffer, &decoder, &packet, pos);
+      while (buffer.unpadded_size() > 0) {
+        // Parse the buffer and store the data in the packet
+        const av::Packet packet = parser.parse(&buffer, &decoder);
 
         if (packet->data) {
           // Send the packet to the decoder

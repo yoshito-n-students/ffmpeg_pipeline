@@ -213,11 +213,10 @@ public:
   bool is_supported(const std::string &codec_name) const;
   std::vector<std::string> codec_names() const;
 
-  // Parse the buffer starting from the pos-th byte, and store the data of one frame in the packet.
-  // The data in the packet is managed by reference counting, so its lifetime is guaranteed.
-  // Return the number of bytes successfully parsed.
-  int parse(const BufferRef &buffer, Decoder *const decoder, Packet *const packet,
-            const std::int64_t pos);
+  // Parse the given buffer and advance the data pointer by the number of bytes parsed.
+  // If a packet is found, return it; otherwise, return an empty packet.
+  // The decoder may be tuned based on the parsing result.
+  Packet parse(BufferRef *const buffer, Decoder *const decoder);
 
   AVCodecParserContext *get() { return parser_ctx_.get(); }
   const AVCodecParserContext *get() const { return parser_ctx_.get(); }
