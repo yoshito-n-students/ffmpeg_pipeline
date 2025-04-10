@@ -454,31 +454,28 @@ std::vector<std::string> Parser::codec_names() const {
 // Converter - RAII wrapper for SwsContext
 // =======================================
 
-bool Converter::is_supported(const std::size_t width, const std::size_t height,
-                             const std::string &src_format_name,
-                             const std::string &dst_format_name) const {
-  return sws_ctx_ && (width == width_) && (height == height_) &&
-         (av_get_pix_fmt(src_format_name.c_str()) == src_format_) &&
-         (av_get_pix_fmt(dst_format_name.c_str()) == dst_format_);
-}
+Converter::Converter()
+    : sws_ctx_(nullptr, &sws_freeContext), width_(0), height_(0), src_format_(AV_PIX_FMT_NONE),
+      dst_format_(AV_PIX_FMT_NONE) {}
 
-void Converter::reconfigure(const std::size_t width, const std::size_t height,
-                            const std::string &src_format_name,
-                            const std::string &dst_format_name) {
-  const AVPixelFormat src_format = av_get_pix_fmt(src_format_name.c_str()),
-                      dst_format = av_get_pix_fmt(dst_format_name.c_str());
-  sws_ctx_.reset(sws_getContext(
-      // src & dst descriptions
-      width, height, src_format, width, height, dst_format,
-      // options for scaling and filtering (won't be used as we keep the same size)
-      SWS_BILINEAR, nullptr, nullptr, nullptr));
+Converter::Converter(const std::size_t width, const std::size_t height,
+                     const std::string &src_format_name, const std::string &dst_format_name)
+    : sws_ctx_(nullptr, &sws_freeContext), width_(width), height_(height),
+      src_format_(av_get_pix_fmt(src_format_name.c_str())),
+      dst_format_(av_get_pix_fmt(dst_format_name.c_str())) {
+  sws_ctx_.reset(sws_getContext(width_, height_, src_format_, width_, height_, dst_format_,
+                                SWS_BILINEAR, nullptr, nullptr, nullptr));
   if (!sws_ctx_) {
     throw Error("Converter::reconfigure(): Failed to create SwsContext");
   }
-  width_ = width;
-  height_ = height;
-  src_format_ = src_format;
-  dst_format_ = dst_format;
+}
+
+bool Converter::is_supported(const std::size_t width, const std::size_t height,
+                             const std::string &src_format_name,
+                             const std::string &dst_format_name) const {
+  return sws_ctx_ && (width_ == width) && (height_ == height) &&
+         (src_format_ == av_get_pix_fmt(src_format_name.c_str())) &&
+         (dst_format_ == av_get_pix_fmt(dst_format_name.c_str()));
 }
 
 void Converter::convert(const Frame &src_frame, std::vector<std::uint8_t> *const dst_data) {
@@ -521,12 +518,8 @@ void Converter::convert(const Frame &src_frame, std::vector<std::uint8_t> *const
             dst_linesize.data());
 }
 
-std::string Converter::src_format_name() const {
-  return av_get_pix_fmt_name(sws_ctx_ ? src_format_ : AV_PIX_FMT_NONE);
-}
+std::string Converter::src_format_name() const { return av_get_pix_fmt_name(src_format_); }
 
-std::string Converter::dst_format_name() const {
-  return av_get_pix_fmt_name(sws_ctx_ ? dst_format_ : AV_PIX_FMT_NONE);
-}
+std::string Converter::dst_format_name() const { return av_get_pix_fmt_name(dst_format_); }
 
 } // namespace ffmpeg_cpp

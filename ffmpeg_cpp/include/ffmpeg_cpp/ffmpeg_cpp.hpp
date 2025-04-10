@@ -227,17 +227,21 @@ private:
   std::unique_ptr<AVCodecParserContext, decltype(&av_parser_close)> parser_ctx_;
 };
 
+// ===========================
 // RAII wrapper for SwsContext
+// ===========================
+
 class Converter {
 public:
+  Converter();
+  // Initialize the converter with the given source and destination formats
+  Converter(const std::size_t width, const std::size_t height, const std::string &src_format_name,
+            const std::string &dst_format_name);
+
   // Check if the conversion from the given source format to the destination format is supported
   // by the current converter context
   bool is_supported(const std::size_t width, const std::size_t height,
                     const std::string &src_format_name, const std::string &dst_format_name) const;
-
-  // (Re)initialize the converter with the given source and destination formats
-  void reconfigure(const std::size_t width, const std::size_t height,
-                   const std::string &src_format_name, const std::string &dst_format_name);
 
   // Convert the source frame to the destination pixel format
   void convert(const Frame &src_frame, std::vector<std::uint8_t> *const dst_data);
@@ -248,10 +252,9 @@ public:
   std::string dst_format_name() const;
 
 private:
-  std::unique_ptr<SwsContext, decltype(&sws_freeContext)> sws_ctx_{nullptr, &sws_freeContext};
-  std::size_t width_ = 0, height_ = 0;
-  AVPixelFormat src_format_ = AV_PIX_FMT_NONE;
-  AVPixelFormat dst_format_ = AV_PIX_FMT_NONE;
+  std::unique_ptr<SwsContext, decltype(&sws_freeContext)> sws_ctx_;
+  std::size_t width_, height_;
+  AVPixelFormat src_format_, dst_format_;
 };
 
 } // namespace ffmpeg_cpp

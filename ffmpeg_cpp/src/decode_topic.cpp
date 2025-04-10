@@ -72,7 +72,8 @@ int main(int argc, char *argv[]) {
               // Initialize the image converter if not already done
               if (!converter.is_supported(frame->width, frame->height, frame.format_name(),
                                           "bgr24")) {
-                converter.reconfigure(frame->width, frame->height, frame.format_name(), "bgr24");
+                converter =
+                    av::Converter(frame->width, frame->height, frame.format_name(), "bgr24");
                 RCLCPP_INFO(
                     node->get_logger(), "Configured converter (size: %zdx%zd, src: %s, dst: %s)",
                     converter.width(), converter.height(), converter.src_format_name().c_str(),

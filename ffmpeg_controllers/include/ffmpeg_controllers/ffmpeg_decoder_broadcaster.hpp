@@ -102,7 +102,8 @@ public:
         // Ensure the converter is configured for this frame
         if (const auto src_format_name = frame.format_name(); !converter_.is_supported(
                 frame->width, frame->height, src_format_name, dst_format_name_)) {
-          converter_.reconfigure(frame->width, frame->height, src_format_name, dst_format_name_);
+          converter_ =
+              ffmpeg_cpp::Converter(frame->width, frame->height, src_format_name, dst_format_name_);
           RCLCPP_INFO(get_logger(), "Configured converter (src: %s, dst: %s, size: %dx%d)",
                       src_format_name.c_str(), dst_format_name_.c_str(), frame->width,
                       frame->height);
