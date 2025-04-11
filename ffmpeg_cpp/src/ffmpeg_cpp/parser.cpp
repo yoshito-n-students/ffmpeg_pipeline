@@ -1,23 +1,11 @@
 #include <algorithm>
-#include <array>
-#include <chrono>
-#include <cstring>  // for std::memset()
 #include <iterator> // for std::begin(), std::end()
-#include <numeric>  // for std::partial_sum()
 
 extern "C" {
 #include <libavcodec/avcodec.h>
-#include <libavdevice/avdevice.h>
-#include <libavformat/avformat.h>
-#include <libavutil/avutil.h>
-#include <libavutil/hwcontext.h>
-#include <libavutil/imgutils.h>
-#include <libavutil/pixdesc.h>
-#include <libswscale/swscale.h>
 }
 
 #include <ffmpeg_cpp/ffmpeg_cpp.hpp>
-#include <sensor_msgs/image_encodings.hpp>
 
 namespace ffmpeg_cpp {
 

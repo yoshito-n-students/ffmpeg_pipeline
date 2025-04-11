@@ -1,22 +1,14 @@
 #include <algorithm>
-#include <chrono>
-#include <cstring>  // for std::memset()
 #include <iterator> // for std::begin(), std::end()
-#include <numeric>  // for std::partial_sum()
 
 extern "C" {
 #include <libavcodec/avcodec.h>
-#include <libavdevice/avdevice.h>
-#include <libavformat/avformat.h>
-#include <libavutil/avutil.h>
 #include <libavutil/hwcontext.h>
-#include <libavutil/imgutils.h>
-#include <libavutil/pixdesc.h>
-#include <libswscale/swscale.h>
 }
 
 #include <ffmpeg_cpp/ffmpeg_cpp.hpp>
-#include <sensor_msgs/image_encodings.hpp>
+
+#include "format_encoding_pairs.hpp"
 
 namespace ffmpeg_cpp {
 
@@ -52,7 +44,8 @@ Decoder::Decoder(const std::string &codec_name) : codec_ctx_(nullptr, &free_cont
     // Prefer the first pixel formats compatible with ROS image encodings
     // to avoid unnecessary conversions after decoding
     for (const AVPixelFormat *format = formats; *format != AV_PIX_FMT_NONE; ++format) {
-      if (!to_ros_image_encoding(av_get_pix_fmt_name(*format)).empty()) {
+      if (std::any_of(std::begin(format_encoding_pairs), std::end(format_encoding_pairs),
+                      [format](const auto &pair) { return pair.first == *format; })) {
         return *format;
       }
     }

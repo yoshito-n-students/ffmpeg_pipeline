@@ -1,12 +1,10 @@
 #include <array>
-#include <numeric>  // for std::partial_sum()
+#include <cstdint> // for UINT64_C macro suppressing errors from libavutil
+#include <numeric> // for std::partial_sum()
 
 extern "C" {
-#include <libavcodec/avcodec.h>
-#include <libavformat/avformat.h>
 #include <libavutil/avutil.h>
 #include <libavutil/imgutils.h>
-#include <libavutil/pixdesc.h>
 #include <libswscale/swscale.h>
 }
 
