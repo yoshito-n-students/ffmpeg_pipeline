@@ -1,0 +1,125 @@
+#include <algorithm>
+#include <chrono>
+#include <cstring>  // for std::memset()
+#include <iterator> // for std::begin(), std::end()
+#include <numeric>  // for std::partial_sum()
+
+extern "C" {
+#include <libavcodec/avcodec.h>
+#include <libavdevice/avdevice.h>
+#include <libavformat/avformat.h>
+#include <libavutil/avutil.h>
+#include <libavutil/hwcontext.h>
+#include <libavutil/imgutils.h>
+#include <libavutil/pixdesc.h>
+#include <libswscale/swscale.h>
+}
+
+#include <ffmpeg_cpp/ffmpeg_cpp.hpp>
+#include <sensor_msgs/image_encodings.hpp>
+
+namespace ffmpeg_cpp {
+
+// =========================================
+// Decoder - RAII wrapper for AVCodecContext
+// =========================================
+
+Decoder::Decoder() : codec_ctx_(avcodec_alloc_context3(nullptr), &free_context) {
+  if (!codec_ctx_) {
+    throw Error("Decoder::Decoder(): Failed to allocate codec context");
+  }
+}
+
+Decoder::Decoder(const std::string &codec_name) : codec_ctx_(nullptr, &free_context) {
+  // Find the decoder by name
+  const AVCodec *const codec = avcodec_find_decoder_by_name(codec_name.c_str());
+  if (!codec) {
+    throw Error("Decoder::Decoder(): " + codec_name + " was not recognized as a decoder name");
+  }
+
+  // Allocate the decoder context
+  codec_ctx_.reset(avcodec_alloc_context3(codec));
+  if (!codec_ctx_) {
+    throw Error("Decoder::Decoder(): Failed to allocate codec context");
+  }
+
+  // Set the options to enable error concealment and format preference.
+  // Some options are for video decoders, but they suppose no problem for other decoders.
+  codec_ctx_->workaround_bugs = FF_BUG_AUTODETECT;
+  codec_ctx_->err_recognition = AV_EF_CRCCHECK;
+  codec_ctx_->error_concealment = FF_EC_GUESS_MVS | FF_EC_DEBLOCK;
+  codec_ctx_->get_format = [](AVCodecContext *codec_ctx, const AVPixelFormat *formats) {
+    // Prefer the first pixel formats compatible with ROS image encodings
+    // to avoid unnecessary conversions after decoding
+    for (const AVPixelFormat *format = formats; *format != AV_PIX_FMT_NONE; ++format) {
+      if (!to_ros_image_encoding(av_get_pix_fmt_name(*format)).empty()) {
+        return *format;
+      }
+    }
+    // If no compatible pixel format is found, defer to the default behavior
+    return avcodec_default_get_format(codec_ctx, formats);
+  };
+
+  // Create a hardware acceleration context supported by the decoder.
+  // If multiple hardware devices are supported, the first one is used.
+  if (!codec_ctx_->hw_device_ctx) {
+    for (int i = 0;; ++i) {
+      const AVCodecHWConfig *const hw_config = avcodec_get_hw_config(codec, i);
+      if (hw_config                                                         // HW config exists
+          && (hw_config->methods & AV_CODEC_HW_CONFIG_METHOD_HW_DEVICE_CTX) // HW context supported
+          && av_hwdevice_ctx_create(&codec_ctx_->hw_device_ctx, hw_config->device_type, nullptr,
+                                    nullptr, 0) == 0 // HW context created
+      ) {
+        break; // exit the loop if the HW context is created successfully
+      } else if (!hw_config) {
+        break; // exit the loop if no more HW config is available
+      }
+    }
+  }
+
+  // Open the decoder
+  if (const int ret = avcodec_open2(codec_ctx_.get(), codec, nullptr); ret < 0) {
+    throw Error("Decoder::Decoder(): Failed to open codec", ret);
+  }
+}
+
+bool Decoder::is_supported(const std::string &codec_name) const {
+  const AVCodec *const codec = avcodec_find_decoder_by_name(codec_name.c_str());
+  return codec && codec->id == codec_ctx_->codec_id;
+}
+
+void Decoder::send_packet(const Packet &packet) {
+  if (const int ret = avcodec_send_packet(codec_ctx_.get(), packet.get()); ret < 0) {
+    throw Error("Decoder::send_packet(): Error sending packet for decoding", ret);
+  }
+}
+
+Frame Decoder::receive_frame() {
+  // If the return value of avcodec_receive_frame() is one of the following, return frame
+  // - 0: The frame was successfully decoded
+  // - AVERROR(EAGAIN): No frame available due to insufficient packets
+  // - AVERROR_EOF: No frame available because the decoder has finished successfully
+  // TODO: Notify the reason for the empty frame to the caller
+  Frame frame;
+  if (const int ret = avcodec_receive_frame(codec_ctx_.get(), frame.get());
+      ret < 0 && ret != AVERROR(EAGAIN) && ret != AVERROR_EOF) {
+    throw Error("Decoder::receive_frame(): Error during decoding", ret);
+  }
+  return frame;
+}
+
+std::string Decoder::codec_name() const { return avcodec_get_name(codec_ctx_->codec_id); }
+
+std::string Decoder::hw_device_type() const {
+  // av_hwdevice_get_type_name(AV_HWDEVICE_TYPE_NONE) returns nullptr,
+  // so std::string CANNOT be constructed and std::logic_error is thrown.
+  // To avoid this, return "none" in the case of no hardware.
+  return codec_ctx_->hw_device_ctx
+             ? av_hwdevice_get_type_name(
+                   reinterpret_cast<AVHWDeviceContext *>(codec_ctx_->hw_device_ctx->data)->type)
+             : "none";
+}
+
+void Decoder::free_context(AVCodecContext *codec_ctx) { avcodec_free_context(&codec_ctx); }
+
+} // namespace ffmpeg_cpp

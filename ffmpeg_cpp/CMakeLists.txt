@@ -15,7 +15,14 @@ find_package(sensor_msgs REQUIRED)
 # ffmpeg_cpp as an interface library (i.e. no compilation, only headers)
 add_library(
   ffmpeg_cpp SHARED
-  src/ffmpeg_cpp.cpp)
+  src/ffmpeg_cpp/converter.cpp
+  src/ffmpeg_cpp/datatypes.cpp
+  src/ffmpeg_cpp/decoder.cpp
+  # src/ffmpeg_cpp/encoder.cpp
+  src/ffmpeg_cpp/input.cpp
+  # src/ffmpeg_cpp/output.cpp
+  src/ffmpeg_cpp/parser.cpp
+  src/ffmpeg_cpp/utility.cpp)
 target_include_directories(
   ffmpeg_cpp PUBLIC
   "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
