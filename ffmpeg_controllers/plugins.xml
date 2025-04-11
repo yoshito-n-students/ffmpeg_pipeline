@@ -1,26 +1,26 @@
 <library path="ffmpeg_controllers">
 
-    <class name="ffmpeg_controllers/AudioPacketBroadcaster"
-           type="ffmpeg_controllers::AudioPacketBroadcaster"
+    <class name="ffmpeg_controllers/CompressedImageBroadcaster"
+           type="ffmpeg_controllers::CompressedImageBroadcaster"
            base_class_type="controller_interface::ControllerInterface">
         <description>
-            This controller publishes audio packets read from the input using ffmpeg.
+            This controller publishes video packets as sensor_msgs::CompressedImage read from the input.
+        </description>
+    </class>
+    
+    <class name="ffmpeg_controllers/ImageBroadcaster"
+           type="ffmpeg_controllers::ImageBroadcaster"
+           base_class_type="controller_interface::ControllerInterface">
+        <description>
+            This controller publishes decoded video frames as sensor_msgs::Image read from the input.
         </description>
     </class>
 
-    <class name="ffmpeg_controllers/VideoDecoderBroadcaster"
-           type="ffmpeg_controllers::VideoDecoderBroadcaster"
+    <class name="ffmpeg_controllers/PacketBroadcaster"
+           type="ffmpeg_controllers::PacketBroadcaster"
            base_class_type="controller_interface::ControllerInterface">
         <description>
-            This controller publishes decoded video frames read from the input using ffmpeg.
-        </description>
-    </class>
-
-    <class name="ffmpeg_controllers/VideoPacketBroadcaster"
-           type="ffmpeg_controllers::VideoPacketBroadcaster"
-           base_class_type="controller_interface::ControllerInterface">
-        <description>
-            This controller publishes video packets read from the input using ffmpeg.
+            This controller publishes general packets as ffmpeg_pipeline_msgs::Packet read from the input.
         </description>
     </class>
 

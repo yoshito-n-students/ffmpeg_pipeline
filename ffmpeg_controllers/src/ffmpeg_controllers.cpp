@@ -1,12 +1,12 @@
 #include <controller_interface/controller_interface.hpp>
-#include <ffmpeg_controllers/audio_packet_broadcaster.hpp>
-#include <ffmpeg_controllers/video_decoder_broadcaster.hpp>
-#include <ffmpeg_controllers/video_packet_broadcaster.hpp>
+#include <ffmpeg_controllers/compressed_image_broadcaster.hpp>
+#include <ffmpeg_controllers/image_broadcaster.hpp>
+#include <ffmpeg_controllers/packet_broadcaster.hpp>
 #include <pluginlib/class_list_macros.hpp>
 
-PLUGINLIB_EXPORT_CLASS(ffmpeg_controllers::AudioPacketBroadcaster,
+PLUGINLIB_EXPORT_CLASS(ffmpeg_controllers::CompressedImageBroadcaster,
                        controller_interface::ControllerInterface)
-PLUGINLIB_EXPORT_CLASS(ffmpeg_controllers::VideoDecoderBroadcaster,
+PLUGINLIB_EXPORT_CLASS(ffmpeg_controllers::ImageBroadcaster,
                        controller_interface::ControllerInterface)
-PLUGINLIB_EXPORT_CLASS(ffmpeg_controllers::VideoPacketBroadcaster,
+PLUGINLIB_EXPORT_CLASS(ffmpeg_controllers::PacketBroadcaster,
                        controller_interface::ControllerInterface)

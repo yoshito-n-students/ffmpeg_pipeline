@@ -1,7 +1,8 @@
-#ifndef FFMPEG_CONTROLLERS_VIDEO_DECODER_BROADCASTER_HPP
-#define FFMPEG_CONTROLLERS_VIDEO_DECODER_BROADCASTER_HPP
+#ifndef FFMPEG_CONTROLLERS_IMAGE_BROADCASTER_HPP
+#define FFMPEG_CONTROLLERS_IMAGE_BROADCASTER_HPP
 
 #include <optional>
+#include <stdexcept>
 #include <string>
 
 #include <ffmpeg_controllers/broadcaster_base.hpp>
@@ -12,16 +13,13 @@
 
 namespace ffmpeg_controllers {
 
-class VideoDecoderBroadcaster : public BroadcasterBase<sensor_msgs::msg::Image> {
+class ImageBroadcaster : public BroadcasterBase<sensor_msgs::msg::Image> {
 public:
-  VideoDecoderBroadcaster()
-      : BroadcasterBase<sensor_msgs::msg::Image>(/* default_sensor_name = */ "camera",
-                                                 /* topic = */ "~/image") {}
+  ImageBroadcaster() : Base(/* default_sensor_name = */ "camera", /* topic = */ "~/image") {}
 
   CallbackReturn on_init() override {
     // Call the base class on_init
-    if (const auto ret = BroadcasterBase<sensor_msgs::msg::Image>::on_init();
-        ret != CallbackReturn::SUCCESS) {
+    if (const auto ret = Base::on_init(); ret != CallbackReturn::SUCCESS) {
       return ret;
     }
 
@@ -37,10 +35,10 @@ public:
     return CallbackReturn::SUCCESS;
   }
 
-  std::optional<sensor_msgs::msg::Image> on_update(const rclcpp::Time & /*time*/,
-                                                   const rclcpp::Duration & /*period*/,
-                                                   const std::string &codec_name,
-                                                   const ffmpeg_cpp::Packet &packet) override {
+  std::optional<Message> on_update(const rclcpp::Time & /*time*/,
+                                   const rclcpp::Duration & /*period*/,
+                                   const std::string &codec_name,
+                                   const ffmpeg_cpp::Packet &packet) override {
     try {
       // Ensure the decoder is configured for the codec
       if (!decoder_.is_supported(codec_name)) {
@@ -86,7 +84,7 @@ public:
       }
 
       // Build the image message
-      sensor_msgs::msg::Image msg;
+      Message msg;
       msg.header.stamp.sec = packet->pts / 1'000'000;
       msg.header.stamp.nanosec = (packet->pts % 1'000'000) * 1'000;
       msg.height = frame->height;

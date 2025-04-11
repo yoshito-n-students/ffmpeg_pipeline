@@ -13,13 +13,16 @@
 
 namespace ffmpeg_controllers {
 
-template <typename Message>
+template <typename MessageT>
 class BroadcasterBase : public controller_interface::ControllerInterface {
 public:
   BroadcasterBase(const std::string &default_sensor_name, const std::string &topic)
       : default_sensor_name_(default_sensor_name), topic_(topic) {}
 
 protected:
+  using Base = BroadcasterBase<MessageT>;
+  using Message = MessageT;
+
   // ===================
   // AS a lifecycle node
   // ===================
