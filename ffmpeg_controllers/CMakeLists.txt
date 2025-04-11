@@ -9,6 +9,7 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(controller_interface REQUIRED)
 find_package(ffmpeg_cpp REQUIRED)
+find_package(ffmpeg_pipeline_msgs REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(realtime_tools REQUIRED)
@@ -26,6 +27,7 @@ ament_target_dependencies(
   ffmpeg_controllers PUBLIC 
   controller_interface
   ffmpeg_cpp
+  ffmpeg_pipeline_msgs
   pluginlib
   rclcpp
   realtime_tools

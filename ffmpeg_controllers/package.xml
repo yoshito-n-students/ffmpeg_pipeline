@@ -11,6 +11,7 @@
 
   <depend>controller_interface</depend>
   <depend>ffmpeg_cpp</depend>
+  <depend>ffmpeg_pipeline_msgs</depend>
   <depend>pluginlib</depend>
   <depend>rclcpp</depend>
   <depend>realtime_tools</depend>
