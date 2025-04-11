@@ -1,25 +1,31 @@
 #ifndef FFMPEG_CONTROLLERS_VIDEO_DECODER_BROADCASTER_HPP
 #define FFMPEG_CONTROLLERS_VIDEO_DECODER_BROADCASTER_HPP
 
-#include <algorithm>
-#include <memory>
 #include <optional>
 #include <string>
 
-#include <controller_interface/controller_interface.hpp>
+#include <ffmpeg_controllers/broadcaster_base.hpp>
 #include <ffmpeg_cpp/ffmpeg_cpp.hpp>
 #include <rclcpp/logging.hpp>
-#include <realtime_tools/realtime_publisher.hpp>
 #include <sensor_msgs/image_encodings.hpp>
 #include <sensor_msgs/msg/image.hpp>
 
 namespace ffmpeg_controllers {
 
-class VideoDecoderBroadcaster : public controller_interface::ControllerInterface {
+class VideoDecoderBroadcaster : public BroadcasterBase<sensor_msgs::msg::Image> {
 public:
+  VideoDecoderBroadcaster()
+      : BroadcasterBase<sensor_msgs::msg::Image>(/* default_sensor_name = */ "camera",
+                                                 /* topic = */ "~/image") {}
+
   CallbackReturn on_init() override {
-    // Load parameters
-    sensor_name_ = get_node()->declare_parameter("sensor_name", "camera");
+    // Call the base class on_init
+    if (const auto ret = BroadcasterBase<sensor_msgs::msg::Image>::on_init();
+        ret != CallbackReturn::SUCCESS) {
+      return ret;
+    }
+
+    // Load additional parameters
     dst_encoding_ =
         get_node()->declare_parameter("dst_encoding", sensor_msgs::image_encodings::BGR8);
     dst_format_name_ = ffmpeg_cpp::to_ffmpeg_format_name(dst_encoding_);
@@ -28,152 +34,78 @@ public:
       return CallbackReturn::ERROR;
     }
 
-    prev_pts_ = 0;
-
     return CallbackReturn::SUCCESS;
   }
 
-  CallbackReturn on_configure(const rclcpp_lifecycle::State & /*previous_state*/) override {
-    try {
-      // Configure the publisher
-      underlying_publisher_ = get_node()->create_publisher<sensor_msgs::msg::Image>(
-          "~/image", rclcpp::SystemDefaultsQoS());
-      async_publisher_ =
-          std::make_unique<realtime_tools::RealtimePublisher<sensor_msgs::msg::Image>>(
-              underlying_publisher_);
-    } catch (const std::exception &error) {
-      RCLCPP_ERROR(get_logger(), "Error while creating publishers: %s", error.what());
-      return CallbackReturn::ERROR;
-    }
-
-    return CallbackReturn::SUCCESS;
-  }
-
-  controller_interface::InterfaceConfiguration command_interface_configuration() const override {
-    // No command interfaces needed as this controller is only for broadcasting
-    return {controller_interface::interface_configuration_type::NONE, {}};
-  }
-
-  controller_interface::InterfaceConfiguration state_interface_configuration() const override {
-    // Request "foo_camera/packet" state interface
-    return {controller_interface::interface_configuration_type::INDIVIDUAL,
-            {sensor_name_ + "/codec", sensor_name_ + "/packet"}};
-  }
-
-  controller_interface::return_type update(const rclcpp::Time & /*time*/,
-                                           const rclcpp::Duration & /*period*/) override {
-    // Try to get the packet and codec name from the state interfaces
-    const auto packet = get_state_as_pointer<ffmpeg_cpp::Packet>(sensor_name_, "packet");
-    const auto codec_name = get_state_as_pointer<std::string>(sensor_name_, "codec");
-    if (!packet || !codec_name) {
-      RCLCPP_WARN(get_logger(), "Failed to get packet or codec name. Will skip this update.");
-      return controller_interface::return_type::OK;
-    }
-
-    // Skip publishing if the packet is not new
-    if ((*packet)->pts <= prev_pts_) {
-      return controller_interface::return_type::OK;
-    }
-
+  std::optional<sensor_msgs::msg::Image> on_update(const rclcpp::Time & /*time*/,
+                                                   const rclcpp::Duration & /*period*/,
+                                                   const std::string &codec_name,
+                                                   const ffmpeg_cpp::Packet &packet) override {
     try {
       // Ensure the decoder is configured for the codec
-      if (!decoder_.is_supported(*codec_name)) {
-        decoder_ = ffmpeg_cpp::Decoder(*codec_name);
+      if (!decoder_.is_supported(codec_name)) {
+        decoder_ = ffmpeg_cpp::Decoder(codec_name);
         RCLCPP_INFO(get_logger(), "Configured decoder (codec: %s, hw: %s)",
                     decoder_.codec_name().c_str(), decoder_.hw_device_type().c_str());
       }
 
       // Put the compressed data into the decoder
-      decoder_.send_packet(*packet);
+      decoder_.send_packet(packet);
 
-      // Repeatedly receive uncompressed frames from the decoder
+      // Extract as many frames as possible from the decoder and keep only the latest frame.
+      // According to the ffmpeg's reference, there should be only one frame per video packet
+      // so no frames should be dropped.
+      ffmpeg_cpp::Frame frame;
       while (true) {
-        ffmpeg_cpp::Frame frame = decoder_.receive_frame();
-        if (!frame->data[0]) {
+        ffmpeg_cpp::Frame tmp_frame = decoder_.receive_frame();
+        if (tmp_frame->data[0]) {
+          frame = std::move(tmp_frame); // Keep the latest frame
+        } else {
           break; // No more frames available
         }
-
-        // If the frame data is in a hardware device,
-        // transfer the data to the CPU-accessible memory before conversion
-        if (frame.is_hw_frame()) {
-          frame = frame.transfer_data();
-        }
-
-        // Ensure the converter is configured for this frame
-        if (const auto src_format_name = frame.format_name(); !converter_.is_supported(
-                frame->width, frame->height, src_format_name, dst_format_name_)) {
-          converter_ =
-              ffmpeg_cpp::Converter(frame->width, frame->height, src_format_name, dst_format_name_);
-          RCLCPP_INFO(get_logger(), "Configured converter (src: %s, dst: %s, size: %dx%d)",
-                      src_format_name.c_str(), dst_format_name_.c_str(), frame->width,
-                      frame->height);
-        }
-
-        // Build and trigger publishing the image message
-        if (async_publisher_->trylock()) {
-          // Fill the message properties
-          auto &msg = async_publisher_->msg_;
-          msg.header.stamp.sec = (*packet)->pts / 1'000'000;
-          msg.header.stamp.nanosec = ((*packet)->pts % 1'000'000) * 1'000;
-          msg.height = frame->height;
-          msg.width = frame->width;
-          msg.encoding = dst_encoding_;
-          converter_.convert(frame, &msg.data);
-          msg.step = msg.data.size() / frame->height;
-          // Trigger the message to be published
-          async_publisher_->unlockAndPublish();
-          prev_pts_ = (*packet)->pts;
-        }
       }
+      if (!frame->data[0]) {
+        RCLCPP_WARN(get_logger(), "No frames available after decoding packet");
+        return std::nullopt;
+      }
+
+      // If the frame data is in a hardware device,
+      // transfer the data to the CPU-accessible memory before conversion
+      if (frame.is_hw_frame()) {
+        frame = frame.transfer_data();
+      }
+
+      // Ensure the converter is configured for this frame
+      if (!converter_.is_supported(frame->width, frame->height, frame.format_name(),
+                                   dst_format_name_)) {
+        converter_ = ffmpeg_cpp::Converter(frame->width, frame->height, frame.format_name(),
+                                           dst_format_name_);
+        RCLCPP_INFO(get_logger(), "Configured converter (src: %s, dst: %s, size: %zdx%zd)",
+                    converter_.src_format_name().c_str(), converter_.dst_format_name().c_str(),
+                    converter_.width(), converter_.height());
+      }
+
+      // Build the image message
+      sensor_msgs::msg::Image msg;
+      msg.header.stamp.sec = packet->pts / 1'000'000;
+      msg.header.stamp.nanosec = (packet->pts % 1'000'000) * 1'000;
+      msg.height = frame->height;
+      msg.width = frame->width;
+      msg.encoding = dst_encoding_;
+      converter_.convert(frame, &msg.data);
+      msg.step = msg.data.size() / frame->height;
+      return msg;
     } catch (const std::runtime_error &error) {
       RCLCPP_ERROR(get_logger(), "Error while decoding packet: %s", error.what());
-      return controller_interface::return_type::ERROR;
+      return std::nullopt;
     }
-
-    return controller_interface::return_type::OK;
   }
 
 protected:
-  rclcpp::Logger get_logger() const { return get_node()->get_logger(); }
-
-  // Read the value from the state_interface specified by prefix_name and interface_name,
-  // cast it to a pointer type, and return it. Or return nullptr on failure.
-  template <typename T>
-  const T *get_state_as_pointer(const std::string &prefix_name,
-                                const std::string &iface_name) const {
-    // Find the state interface with the given keys
-    const auto iface_it =
-        std::find_if(state_interfaces_.begin(), state_interfaces_.end(), [&](const auto &iface) {
-          return iface.get_prefix_name() == prefix_name && iface.get_interface_name() == iface_name;
-        });
-    if (iface_it == state_interfaces_.end()) {
-      return nullptr;
-    }
-
-    // Try to read the raw state value from the interface.
-    // Due to the limitations of hardware_interface::StateInterface,
-    // the value is stored as a double.
-    const auto double_value = iface_it->template get_optional<double>();
-    if (double_value == std::nullopt) {
-      return nullptr;
-    }
-
-    // Reconstruct the pointer from the raw state value.
-    // The double type has 53 bits of precision, while the Linux user memory space has 47 bits,
-    // so the former can be safely converted to the latter.
-    return reinterpret_cast<const T *>(static_cast<std::uintptr_t>(*double_value));
-  }
-
-protected:
-  std::string sensor_name_, dst_format_name_, dst_encoding_;
+  std::string dst_format_name_, dst_encoding_;
 
   ffmpeg_cpp::Decoder decoder_;
   ffmpeg_cpp::Converter converter_;
-
-  rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr underlying_publisher_;
-  std::unique_ptr<realtime_tools::RealtimePublisher<sensor_msgs::msg::Image>> async_publisher_;
-
-  decltype(ffmpeg_cpp::Packet()->pts) prev_pts_;
 };
 
 } // namespace ffmpeg_controllers
