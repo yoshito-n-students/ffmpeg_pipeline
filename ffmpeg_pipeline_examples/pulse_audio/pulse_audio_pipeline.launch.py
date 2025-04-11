@@ -50,7 +50,7 @@ def generate_launch_description():
     packet_broadcaster_spawner = Node(
         package="controller_manager",
         executable="spawner",
-        arguments=["audio_packet_broadcaster", "--param-file", robot_controllers],
+        arguments=["packet_broadcaster", "--param-file", robot_controllers],
     )
 
     nodes = [

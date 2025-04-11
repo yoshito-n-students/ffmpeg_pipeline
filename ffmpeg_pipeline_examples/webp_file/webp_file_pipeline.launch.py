@@ -47,16 +47,16 @@ def generate_launch_description():
         parameters=[robot_description],
     )
 
-    packet_broadcaster_spawner = Node(
+    compressed_image_broadcaster_spawner = Node(
         package="controller_manager",
         executable="spawner",
-        arguments=["video_packet_broadcaster", "--param-file", robot_controllers],
+        arguments=["compressed_image_broadcaster", "--param-file", robot_controllers],
     )
 
     nodes = [
         control_node,
         robot_description_pub_node,
-        packet_broadcaster_spawner,
+        compressed_image_broadcaster_spawner,
     ]
 
     return LaunchDescription(nodes)

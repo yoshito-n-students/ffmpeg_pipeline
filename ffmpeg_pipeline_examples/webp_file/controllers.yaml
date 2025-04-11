@@ -2,7 +2,7 @@ controller_manager:
   ros__parameters:
     update_rate: 10  # Hz
 
-video_packet_broadcaster:
+compressed_image_broadcaster:
   ros__parameters:
-    type: ffmpeg_controllers/VideoPacketBroadcaster
+    type: ffmpeg_controllers/CompressedImageBroadcaster
     sensor_name: image_reader
