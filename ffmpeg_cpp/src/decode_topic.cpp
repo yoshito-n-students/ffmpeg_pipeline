@@ -50,7 +50,7 @@ int main(int argc, char *argv[]) {
             // Receive and publish the decoded frames
             while (true) {
               av::Frame frame = decoder.receive_frame();
-              if (!frame->data[0]) {
+              if (frame.empty()) {
                 break; // No more frames available
               }
 

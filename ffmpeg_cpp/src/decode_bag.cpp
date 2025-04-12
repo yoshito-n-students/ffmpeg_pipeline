@@ -84,7 +84,7 @@ int main(int argc, char **argv) {
         // Parse the buffer and store the data in the packet
         const av::Packet packet = parser.parse(&buffer, &decoder);
 
-        if (packet->data) {
+        if (!packet.empty()) {
           // Send the packet to the decoder
           decoder.send_packet(packet);
           RCLCPP_INFO(node->get_logger(), "Sent packet to the decoder: %d bytes", packet->size);
@@ -92,7 +92,7 @@ int main(int argc, char **argv) {
           // Receive and publish the decoded frames
           while (true) {
             av::Frame frame = decoder.receive_frame();
-            if (!frame->data[0]) {
+            if (frame.empty()) {
               break; // No more frames available
             }
 
