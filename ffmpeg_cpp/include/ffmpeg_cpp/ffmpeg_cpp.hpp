@@ -79,6 +79,9 @@ public:
   // Create a packet by referencing the given buffer
   Packet(const BufferRef &buf);
 
+  // True if the packet data is empty or invalid
+  bool empty() const;
+
   // Access to the underlying AVPacket
   AVPacket *get() { return packet_.get(); }
   const AVPacket *get() const { return packet_.get(); }
@@ -100,6 +103,9 @@ class Frame {
 public:
   // Allocate the frame and default the fields
   Frame();
+
+  // True if the packet data is empty or invalid
+  bool empty() const;
 
   std::string format_name() const;
 

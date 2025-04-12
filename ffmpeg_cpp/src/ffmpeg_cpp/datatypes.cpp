@@ -54,6 +54,8 @@ Packet::Packet(const BufferRef &buf) : Packet() {
   packet_->size = buf.unpadded_size();
 }
 
+bool Packet::empty() const { return !packet_ || !packet_->data || packet_->size == 0; }
+
 void Packet::free_packet(AVPacket *packet) { av_packet_free(&packet); }
 
 // ================================
@@ -65,6 +67,8 @@ Frame::Frame() : frame_(av_frame_alloc(), free_frame) {
     throw Error("Frame::Frame(): Failed to allocate AVFrame");
   }
 }
+
+bool Frame::empty() const { return !frame_ || !frame_->data[0]; }
 
 Frame Frame::transfer_data() const {
   Frame dst;
