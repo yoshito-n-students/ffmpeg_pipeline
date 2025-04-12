@@ -56,13 +56,13 @@ public:
       ffmpeg_cpp::Frame frame;
       while (true) {
         ffmpeg_cpp::Frame tmp_frame = decoder_.receive_frame();
-        if (tmp_frame->data[0]) {
+        if (!tmp_frame.empty()) {
           frame = std::move(tmp_frame); // Keep the latest frame
         } else {
           break; // No more frames available
         }
       }
-      if (!frame->data[0]) {
+      if (frame.empty()) {
         RCLCPP_WARN(get_logger(), "No frames available after decoding packet");
         return std::nullopt;
       }

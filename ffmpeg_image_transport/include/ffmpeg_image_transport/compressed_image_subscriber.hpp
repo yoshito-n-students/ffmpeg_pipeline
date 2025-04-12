@@ -53,14 +53,14 @@ protected:
         // Parse the buffer from the current position and store the data in the packet
         const ffmpeg_cpp::Packet packet = parser_.parse(&buffer, &decoder_);
 
-        if (packet->data) {
+        if (!packet.empty()) {
           // Send the packet to the decoder
           decoder_.send_packet(packet);
 
           // Receive and publish the decoded frames
           while (true) {
             ffmpeg_cpp::Frame frame = decoder_.receive_frame();
-            if (!frame->data[0]) {
+            if (frame.empty()) {
               break; // No more frames available
             }
 
