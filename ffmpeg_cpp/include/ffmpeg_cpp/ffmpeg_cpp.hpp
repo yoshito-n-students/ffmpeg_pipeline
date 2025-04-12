@@ -1,7 +1,6 @@
 #ifndef FFMPEG_CPP_FFMPEG_CPP_HPP
 #define FFMPEG_CPP_FFMPEG_CPP_HPP
 
-#include <chrono>
 #include <cstdint>
 #include <map>
 #include <memory>
@@ -133,9 +132,6 @@ private:
 // ======================================================
 
 class Input {
-private:
-  using Clock = std::chrono::steady_clock;
-
 public:
   // Just allocate the format context
   Input();
@@ -147,11 +143,9 @@ public:
   int stream_id() const { return stream_id_; }
   std::string codec_name() const;
 
-  // Read the next frame from the stream of interest
-  template <typename Rep, typename Period>
-  Packet read_frame(const std::chrono::duration<Rep, Period> &timeout) {
-    return read_frame_impl(std::chrono::duration_cast<Clock::duration>(timeout));
-  }
+  // Get a frame from the stream of interest in a NON-BLOCKING way.
+  // If the next frame is not available for some temporary reason, return an empty frame.
+  Packet read_frame();
 
   // Access to the underlying AVFormatContext
   AVFormatContext *get() { return format_ctx_.get(); }
@@ -160,14 +154,11 @@ public:
   const AVFormatContext *operator->() const { return format_ctx_.operator->(); }
 
 private:
-  Packet read_frame_impl(const Clock::duration &timeout);
-
   static void close_input(AVFormatContext *format_ctx);
 
 private:
   std::unique_ptr<AVFormatContext, decltype(&close_input)> format_ctx_;
   int stream_id_;
-  Clock::time_point deadline_;
 };
 
 // ===============================================

@@ -3,6 +3,7 @@
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <thread>
 #include <utility> // for std::move()
 
 #include <ffmpeg_cpp/ffmpeg_cpp.hpp>
@@ -35,8 +36,12 @@ int main(int argc, char *argv[]) {
 
     // Continuously read frames from the input device and publish them
     while (rclcpp::ok()) {
-      // Read a packet from the input device
-      const av::Packet packet = input.read_frame(1'000ms);
+      // Try to read a packet from the input device
+      const av::Packet packet = input.read_frame();
+      if (packet.empty()) {
+        std::this_thread::sleep_for(25ms);
+        continue;
+      }
 
       // Copy the packet data to a ROS 2 message
       auto msg = std::make_unique<sensor_msgs::msg::CompressedImage>();

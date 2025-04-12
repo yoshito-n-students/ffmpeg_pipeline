@@ -1,11 +1,11 @@
 #ifndef FFMPEG_HARDWARE_FFMPEG_HARDWARE_HPP
 #define FFMPEG_HARDWARE_FFMPEG_HARDWARE_HPP
 
+#include <chrono>
 #include <memory>
-#include <mutex>
 #include <string>
 #include <thread>
-#include <utility> // for std::swap()
+#include <utility> // for std::move()
 #include <vector>
 
 #include <ffmpeg_cpp/ffmpeg_cpp.hpp>
@@ -74,63 +74,43 @@ public:
       return CallbackReturn::ERROR;
     }
 
-    // Initialize the read packet with the first frame from the input
+    // Initialize the codec name and packet
     try {
-      read_packet_ = input_.read_frame(std::chrono::milliseconds(5000));
+      codec_name_ = input_.codec_name();
+      while (true) {
+        packet_ = input_.read_frame();
+        if (!packet_.empty()) {
+          break;
+        }
+        RCLCPP_INFO(get_logger(), "Waiting for the first packet...");
+        std::this_thread::sleep_for(std::chrono::milliseconds(250));
+      }
     } catch (const std::runtime_error &error) {
-      RCLCPP_ERROR(get_logger(), "Failed to read the first frame from the input: %s", error.what());
+      RCLCPP_ERROR(get_logger(), "Failed to initialize codec name: %s", error.what());
       return CallbackReturn::ERROR;
     }
 
-    // Start reading packets from the input
-    stop_requested_ = false;
-    write_thread_ = std::thread([this]() {
-      try {
-        while (!stop_requested_) {
-          ffmpeg_cpp::Packet packet = input_.read_frame(std::chrono::milliseconds(500));
-          {
-            std::unique_lock<std::mutex> lock(write_packet_mutex_);
-            write_packet_ = std::move(packet);
-          }
-        }
-      } catch (const std::runtime_error &error) {
-        RCLCPP_ERROR(get_logger(), "Stopped reading packets from the input because of error: %s",
-                     error.what());
-      }
-    });
+    // Set the codec name and packet to the state interface
+    const auto &sensor_name = info_.sensors[0].name;
+    set_state_from_pointer(sensor_name + "/codec", &codec_name_);
+    set_state_from_pointer(sensor_name + "/packet", &packet_);
 
     return CallbackReturn::SUCCESS;
   }
 
   CallbackReturn on_deactivate(const rclcpp_lifecycle::State & /*previous_state*/) override {
-    // Stop reading packets from the camera
-    stop_requested_ = true;
-    if (write_thread_.joinable()) {
-      write_thread_.join();
-    }
-
-    // TODO: Close the input device
+    // Close the input device
+    input_ = ffmpeg_cpp::Input();
 
     return CallbackReturn::SUCCESS;
   }
 
   hardware_interface::return_type read(const rclcpp::Time & /*time*/,
                                        const rclcpp::Duration & /*period*/) override {
-    const auto &sensor_name = info_.sensors[0].name;
-
-    // Set the codec name to the state interface
-    codec_name_ = input_.codec_name();
-    set_state_from_pointer(sensor_name + "/codec", &codec_name_);
-
-    // Move the write packet to the read packet if the fomer is newer than the latter.
-    // However, this step will be skipped if the write side thread locks the write packet.
-    // This procedure avoids blocking on the read side while obtaining the latest packet.
-    if (const std::unique_lock<std::mutex> try_lock(write_packet_mutex_, std::try_to_lock);
-        try_lock.owns_lock() && read_packet_->pts < write_packet_->pts) {
-      std::swap(read_packet_, write_packet_);
+    // Update the packet
+    if (ffmpeg_cpp::Packet packet = input_.read_frame(); !packet.empty()) {
+      packet_ = std::move(packet);
     }
-    // Set the read packet to the state interface
-    set_state_from_pointer(sensor_name + "/packet", &read_packet_);
 
     return hardware_interface::return_type::OK;
   }
@@ -176,11 +156,7 @@ protected:
 protected:
   ffmpeg_cpp::Input input_;
   std::string codec_name_;
-
-  std::thread write_thread_;
-  std::atomic_bool stop_requested_;
-  ffmpeg_cpp::Packet write_packet_, read_packet_;
-  std::mutex write_packet_mutex_;
+  ffmpeg_cpp::Packet packet_;
 };
 
 } // namespace ffmpeg_hardware

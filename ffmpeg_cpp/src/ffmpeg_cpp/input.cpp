@@ -1,5 +1,3 @@
-#include <chrono>
-
 extern "C" {
 #include <libavcodec/avcodec.h>
 #include <libavdevice/avdevice.h>
@@ -15,9 +13,7 @@ namespace ffmpeg_cpp {
 // Input - RAII wrapper for AVFormatContext
 // ========================================
 
-Input::Input()
-    : format_ctx_(avformat_alloc_context(), &close_input), stream_id_(-1),
-      deadline_(Clock::time_point::max()) {
+Input::Input() : format_ctx_(avformat_alloc_context(), &close_input), stream_id_(-1) {
   if (!format_ctx_) {
     throw Error("Input::Input(): Failed to allocate AVFormatContext");
   }
@@ -26,23 +22,16 @@ Input::Input()
 Input::Input(const std::string &url, const std::string &format_name,
              const std::map<std::string, std::string> &option_map,
              const std::string &media_type_name)
-    : format_ctx_(nullptr, &close_input), stream_id_(-1), deadline_(Clock::time_point::max()) {
+    : format_ctx_(nullptr, &close_input), stream_id_(-1) {
   // Register all the input format types
   avdevice_register_all();
 
-  // Allocate the format context
+  // Allocate the format context and set the non-blocking flag
   AVFormatContext *format_ctx = avformat_alloc_context();
   if (!format_ctx) {
     throw Error("Input::Input(): Failed to allocate AVFormatContext");
   }
-
-  // Set a callback function to return 1 if the deadline time is exceeded
-  // to limit the blocking time of read_frame() and other functions.
-  format_ctx->interrupt_callback.callback = [](void *deadline) {
-    using Clock = std::chrono::steady_clock;
-    return Clock::now() < *static_cast<Clock::time_point *>(deadline) ? 0 : 1;
-  };
-  format_ctx->interrupt_callback.opaque = &deadline_;
+  format_ctx->flags |= AVFMT_FLAG_NONBLOCK;
 
   // Find the input format by name
   const AVInputFormat *format =
@@ -125,12 +114,11 @@ std::string Input::codec_name() const {
                               : AV_CODEC_ID_NONE);
 }
 
-Packet Input::read_frame_impl(const Clock::duration &timeout) {
-  deadline_ = Clock::now() + timeout;
+Packet Input::read_frame() {
   while (true) {
     Packet packet;
     if (const int ret = av_read_frame(format_ctx_.get(), packet.get());
-        ret >= 0 && packet->stream_index == stream_id_) {
+        (ret >= 0 || ret == AVERROR(EAGAIN)) && packet->stream_index == stream_id_) {
       return packet;
     } else if (ret < 0) {
       throw Error("Input::read_frame(): Failed to read frame", ret);
