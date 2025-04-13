@@ -79,7 +79,7 @@ public:
   Packet(const BufferRef &buf);
 
   // True if the packet data is empty or invalid
-  bool empty() const;
+  bool empty() const { return !packet_ || !packet_->data || packet_->size == 0; }
 
   // Access to the underlying AVPacket
   AVPacket *get() { return packet_.get(); }
@@ -104,7 +104,7 @@ public:
   Frame();
 
   // True if the packet data is empty or invalid
-  bool empty() const;
+  bool empty() const { return !frame_ || !frame_->data[0]; }
 
   std::string format_name() const;
 
