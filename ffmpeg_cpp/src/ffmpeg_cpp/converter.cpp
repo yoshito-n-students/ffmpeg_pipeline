@@ -37,10 +37,6 @@ bool Converter::is_supported(const std::size_t width, const std::size_t height,
 }
 
 void Converter::convert(const Frame &src_frame, std::vector<std::uint8_t> *const dst_data) {
-  if (!sws_ctx_) {
-    throw Error("Converter::convert(): Converter context is not configured");
-  }
-
   // Get the layout of the destination image
   // - linesize: bytes per line for each plane
   std::array<int, 4> dst_linesize;

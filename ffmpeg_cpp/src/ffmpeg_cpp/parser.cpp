@@ -28,10 +28,6 @@ Parser::Parser(const std::string &codec_name) : parser_ctx_(nullptr, &av_parser_
 }
 
 Packet Parser::parse(BufferRef *const buffer, Decoder *const decoder) {
-  if (!parser_ctx_) {
-    throw Error("Parser::parse(): Parser context is not configured");
-  }
-
   // Parse and advance the buffer
   std::uint8_t *packet_data;
   int packet_size;
@@ -73,11 +69,9 @@ bool Parser::is_supported(const std::string &codec_name) const {
 
 std::vector<std::string> Parser::codec_names() const {
   std::vector<std::string> names;
-  if (parser_ctx_) {
-    for (const auto id : parser_ctx_->parser->codec_ids) {
-      if (id != AV_CODEC_ID_NONE) {
-        names.push_back(avcodec_get_name(static_cast<AVCodecID>(id)));
-      }
+  for (const auto id : parser_ctx_->parser->codec_ids) {
+    if (id != AV_CODEC_ID_NONE) {
+      names.push_back(avcodec_get_name(static_cast<AVCodecID>(id)));
     }
   }
   return names;
