@@ -39,11 +39,11 @@ public:
                    sensor_state_interfaces_.size());
       return CallbackReturn::ERROR;
     } else if (const auto &sensor_name = info_.sensors[0].name;
-               sensor_state_interfaces_.count(sensor_name + "/codec") == 0 ||
+               sensor_state_interfaces_.count(sensor_name + "/codec_parameters") == 0 ||
                sensor_state_interfaces_.count(sensor_name + "/packet") == 0) {
       RCLCPP_ERROR(get_logger(),
                    "Sensor state interfaces must belong to the first sensor component '%s' "
-                   "and be named 'codec' and 'packet'",
+                   "and be named 'codec_parameters' and 'packet'",
                    sensor_name.c_str());
       return CallbackReturn::ERROR;
     }
@@ -74,9 +74,9 @@ public:
       return CallbackReturn::ERROR;
     }
 
-    // Initialize the codec name and packet
+    // Initialize the codec params and packet
     try {
-      codec_name_ = input_.codec_name();
+      codec_params_ = input_.codec_parameters();
       while (true) {
         packet_ = input_.read_frame();
         if (!packet_.empty()) {
@@ -92,7 +92,7 @@ public:
 
     // Set the codec name and packet to the state interface
     const auto &sensor_name = info_.sensors[0].name;
-    set_state_from_pointer(sensor_name + "/codec", &codec_name_);
+    set_state_from_pointer(sensor_name + "/codec_parameters", &codec_params_);
     set_state_from_pointer(sensor_name + "/packet", &packet_);
 
     return CallbackReturn::SUCCESS;
@@ -155,7 +155,7 @@ protected:
 
 protected:
   ffmpeg_cpp::Input input_;
-  std::string codec_name_;
+  ffmpeg_cpp::CodecParameters codec_params_;
   ffmpeg_cpp::Packet packet_;
 };
 

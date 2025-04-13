@@ -9,7 +9,7 @@
             <plugin>ffmpeg_hardware/FFmpegHardware</plugin>
         </hardware>
         <sensor name="pulse_audio">
-            <state_interface name="codec" data_type="std::string*"/>
+            <state_interface name="codec_parameters" data_type="ffmpeg_cpp::CodecParameters*"/>
             <state_interface name="packet" data_type="ffmpeg_cpp::Packet*"/>
             <param name="url">default</param>
             <param name="input_format">pulse</param>

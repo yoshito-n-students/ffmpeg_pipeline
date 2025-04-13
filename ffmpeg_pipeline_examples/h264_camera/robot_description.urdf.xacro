@@ -9,7 +9,7 @@
             <plugin>ffmpeg_hardware/FFmpegHardware</plugin>
         </hardware>
         <sensor name="h264_camera">
-            <state_interface name="codec" data_type="std::string*"/>
+            <state_interface name="codec_parameters" data_type="ffmpeg_cpp::CodecParameters*"/>
             <state_interface name="packet" data_type="ffmpeg_cpp::Packet*"/>
             <param name="url">/dev/v4l/by-id/usb-Insta360_Insta360_Link_2C-video-index0</param>
             <param name="input_format">v4l2</param>

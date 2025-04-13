@@ -37,12 +37,12 @@ public:
 
   std::optional<Message> on_update(const rclcpp::Time & /*time*/,
                                    const rclcpp::Duration & /*period*/,
-                                   const std::string &codec_name,
+                                   const ffmpeg_cpp::CodecParameters &codec_params,
                                    const ffmpeg_cpp::Packet &packet) override {
     try {
       // Ensure the decoder is configured for the codec
       if (!decoder_.valid()) {
-        decoder_ = ffmpeg_cpp::Decoder(codec_name);
+        decoder_ = ffmpeg_cpp::Decoder(codec_params);
         RCLCPP_INFO(get_logger(), "Configured decoder (codec: %s, hw: %s)",
                     decoder_.codec_name().c_str(), decoder_.hw_device_type().c_str());
       }

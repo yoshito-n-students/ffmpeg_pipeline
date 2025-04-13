@@ -58,18 +58,19 @@ protected:
   }
 
   controller_interface::InterfaceConfiguration state_interface_configuration() const override {
-    // Request "foo_sensor/codec" and "foo_sensor/packet" state interfaces
+    // Request "foo_sensor/codec_parameters" and "foo_sensor/packet" state interfaces
     return {controller_interface::interface_configuration_type::INDIVIDUAL,
-            {sensor_name_ + "/codec", sensor_name_ + "/packet"}};
+            {sensor_name_ + "/codec_parameters", sensor_name_ + "/packet"}};
   }
 
   controller_interface::return_type update(const rclcpp::Time &time,
                                            const rclcpp::Duration &period) override {
-    // Try to get the packet and codec name from the state interfaces
-    const auto codec_name = get_state_as_pointer<std::string>(sensor_name_, "codec");
+    // Try to get the codec params and packet from the state interfaces
+    const auto codec_params =
+        get_state_as_pointer<ffmpeg_cpp::CodecParameters>(sensor_name_, "codec_parameters");
     const auto packet = get_state_as_pointer<ffmpeg_cpp::Packet>(sensor_name_, "packet");
-    if (!packet || !codec_name) {
-      RCLCPP_WARN(get_logger(), "Failed to get codec name or packet. Will skip this update.");
+    if (!codec_params || !packet) {
+      RCLCPP_WARN(get_logger(), "Failed to get codec parameters or packet. Will skip this update.");
       return controller_interface::return_type::OK;
     }
 
@@ -79,7 +80,7 @@ protected:
     }
 
     // Try to build the message based on the codec name and packet
-    std::optional<Message> msg = on_update(time, period, *codec_name, *packet);
+    std::optional<Message> msg = on_update(time, period, *codec_params, *packet);
     if (!msg) {
       return controller_interface::return_type::OK;
     }
@@ -95,7 +96,7 @@ protected:
   }
 
   virtual std::optional<Message> on_update(const rclcpp::Time &time, const rclcpp::Duration &period,
-                                           const std::string &codec_name,
+                                           const ffmpeg_cpp::CodecParameters &codec_params,
                                            const ffmpeg_cpp::Packet &packet) = 0;
 
   // =================

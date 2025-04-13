@@ -18,12 +18,12 @@ public:
 protected:
   std::optional<Message> on_update(const rclcpp::Time & /*time*/,
                                    const rclcpp::Duration & /*period*/,
-                                   const std::string &codec_name,
+                                   const ffmpeg_cpp::CodecParameters &codec_params,
                                    const ffmpeg_cpp::Packet &packet) override {
     Message msg;
     msg.header.stamp.sec = packet->pts / 1'000'000;
     msg.header.stamp.nanosec = (packet->pts % 1'000'000) * 1'000;
-    msg.format = codec_name;
+    msg.format = codec_params.codec_name();
     msg.data.assign(packet->data, packet->data + packet->size);
     return msg;
   }
