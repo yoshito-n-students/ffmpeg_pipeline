@@ -127,6 +127,28 @@ private:
   std::unique_ptr<AVFrame, decltype(&free_frame)> frame_;
 };
 
+// ==================================
+// RAII wrapper for AVCodecParameters
+// ==================================
+
+class CodecParameters {
+public:
+  // Allocate the codec parameters and default the fields
+  CodecParameters();
+
+  // Access to the underlying AVPacket
+  AVCodecParameters *get() { return params_.get(); }
+  const AVCodecParameters *get() const { return params_.get(); }
+  AVCodecParameters *operator->() { return params_.operator->(); }
+  const AVCodecParameters *operator->() const { return params_.operator->(); }
+
+private:
+  static void free_parameters(AVCodecParameters *params);
+
+private:
+  std::unique_ptr<AVCodecParameters, decltype(&free_parameters)> params_;
+};
+
 // ======================================================
 // RAII wrapper for input device (a.k.a. AVFormatContext)
 // ======================================================
@@ -142,6 +164,7 @@ public:
 
   int stream_id() const { return stream_id_; }
   std::string codec_name() const;
+  CodecParameters codec_parameters() const;
 
   // Get a frame from the stream of interest in a NON-BLOCKING way.
   // If the next frame is not available for some temporary reason, return an empty frame.

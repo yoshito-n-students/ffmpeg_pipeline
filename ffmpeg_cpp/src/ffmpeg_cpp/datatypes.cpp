@@ -84,4 +84,18 @@ std::string Frame::format_name() const {
 
 void Frame::free_frame(AVFrame *frame) { av_frame_free(&frame); }
 
+// ====================================================
+// CodecParameters - RAII wrapper for AVCodecParameters
+// ====================================================
+
+CodecParameters::CodecParameters() : params_(avcodec_parameters_alloc(), free_parameters) {
+  if (!params_) {
+    throw Error("CodecParameters::CodecParameters(): Failed to allocate AVCodecParameters");
+  }
+}
+
+void CodecParameters::free_parameters(AVCodecParameters *params) {
+  avcodec_parameters_free(&params);
+}
+
 } // namespace ffmpeg_cpp
