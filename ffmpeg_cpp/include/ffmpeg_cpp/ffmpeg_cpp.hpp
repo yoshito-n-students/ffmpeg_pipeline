@@ -204,7 +204,7 @@ public:
   std::string codec_name() const;
   std::string hw_type_name() const;
 
-  // Send a cmpressed packet to the decoder
+  // Send a compressed packet to the decoder
   void send_packet(const Packet &packet);
 
   // Receive a decoded frame from the decoder.
