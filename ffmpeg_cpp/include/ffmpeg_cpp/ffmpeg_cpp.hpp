@@ -148,6 +148,7 @@ public:
   Packet read_frame();
 
   // Access to the underlying AVFormatContext
+  bool valid() const { return format_ctx_.get(); }
   AVFormatContext *get() { return format_ctx_.get(); }
   const AVFormatContext *get() const { return format_ctx_.get(); }
   AVFormatContext *operator->() { return format_ctx_.operator->(); }
@@ -184,6 +185,7 @@ public:
   Frame receive_frame();
 
   // Access to the underlying AVCodecContext
+  bool valid() const { return codec_ctx_.get(); }
   AVCodecContext *get() { return codec_ctx_.get(); }
   const AVCodecContext *get() const { return codec_ctx_.get(); }
   AVCodecContext *operator->() { return codec_ctx_.operator->(); }
@@ -215,6 +217,8 @@ public:
   // The decoder may be tuned based on the parsing result.
   Packet parse(BufferRef *const buffer, Decoder *const decoder);
 
+  // Access to the underlying AVCodecParserContext
+  bool valid() const { return parser_ctx_.get(); }
   AVCodecParserContext *get() { return parser_ctx_.get(); }
   const AVCodecParserContext *get() const { return parser_ctx_.get(); }
   AVCodecParserContext *operator->() { return parser_ctx_.operator->(); }
@@ -247,6 +251,13 @@ public:
   std::size_t height() const { return height_; }
   std::string src_format_name() const;
   std::string dst_format_name() const;
+
+  // Access to the underlying SwsContext
+  bool valid() const { return sws_ctx_.get(); }
+  SwsContext *get() { return sws_ctx_.get(); }
+  const SwsContext *get() const { return sws_ctx_.get(); }
+  SwsContext *operator->() { return sws_ctx_.operator->(); }
+  const SwsContext *operator->() const { return sws_ctx_.operator->(); }
 
 private:
   std::unique_ptr<SwsContext, decltype(&sws_freeContext)> sws_ctx_;
