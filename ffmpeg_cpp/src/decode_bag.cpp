@@ -64,13 +64,13 @@ int main(int argc, char **argv) {
     const auto comp_img = deserialize(&serialization, *bag_msg);
 
     try {
-      // Initialize the parser and decoder if not already done
-      if (!parser.is_supported(comp_img->format)) {
+      // Initialize the parser with the image format if not already done
+      if (!parser.valid()) {
         parser = av::Parser(comp_img->format);
         RCLCPP_INFO(node->get_logger(), "Configured parser (codec: %s)",
                     parser.codec_names().front().c_str());
       }
-      if (!decoder.is_supported(comp_img->format)) {
+      if (!decoder.valid()) {
         decoder = av::Decoder(comp_img->format);
         RCLCPP_INFO(node->get_logger(), "Configured decoder (codec: %s, hw: %s)",
                     decoder.codec_name().c_str(), decoder.hw_device_type().c_str());
@@ -95,15 +95,7 @@ int main(int argc, char **argv) {
             if (frame.empty()) {
               break; // No more frames available
             }
-
             RCLCPP_INFO(node->get_logger(), "Decoded frame: %dx%d", frame->width, frame->height);
-            // Copy the frame properties to the destination image
-            auto image = std::make_unique<sensor_msgs::msg::Image>();
-            image->header.stamp = comp_img->header.stamp;
-            image->height = frame->height;
-            image->width = frame->width;
-            image->encoding = sensor_msgs::image_encodings::BGR8;
-            image->step = 3 * frame->width;
 
             // If the frame data is in a hardware device,
             // transfer the data to the CPU-accessible memory before conversion
@@ -112,8 +104,7 @@ int main(int argc, char **argv) {
             }
 
             // Initialize the image converter if not already done
-            if (!converter.is_supported(frame->width, frame->height, frame.format_name(),
-                                        "bgr24")) {
+            if (!converter.valid()) {
               converter = av::Converter(frame->width, frame->height, frame.format_name(), "bgr24");
               RCLCPP_INFO(node->get_logger(),
                           "Configured converter (size: %zdx%zd, src: %s, dst: %s)",
@@ -121,7 +112,13 @@ int main(int argc, char **argv) {
                           converter.src_format_name().c_str(), converter.dst_format_name().c_str());
             }
 
-            // Convert the frame to BGR24 format
+            // Copy the frame properties to the destination image
+            auto image = std::make_unique<sensor_msgs::msg::Image>();
+            image->header.stamp = comp_img->header.stamp;
+            image->height = frame->height;
+            image->width = frame->width;
+            image->encoding = sensor_msgs::image_encodings::BGR8;
+            image->step = 3 * frame->width;
             converter.convert(frame, &image->data);
 
             // Publish the destination image

@@ -38,7 +38,7 @@ int main(int argc, char *argv[]) {
             packet->size = packet_data->data.size();
 
             // Initialize the decoder if not already done
-            if (!decoder.is_supported(packet_data->format)) {
+            if (!decoder.valid()) {
               decoder = av::Decoder(packet_data->format);
               RCLCPP_INFO(node->get_logger(), "Configured decoder (codec: %s, hw: %s)",
                           decoder.codec_name().c_str(), decoder.hw_device_type().c_str());
@@ -70,8 +70,7 @@ int main(int argc, char *argv[]) {
               }
 
               // Initialize the image converter if not already done
-              if (!converter.is_supported(frame->width, frame->height, frame.format_name(),
-                                          "bgr24")) {
+              if (!converter.valid()) {
                 converter =
                     av::Converter(frame->width, frame->height, frame.format_name(), "bgr24");
                 RCLCPP_INFO(
