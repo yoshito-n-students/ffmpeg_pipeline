@@ -101,10 +101,6 @@ Input::Input(const std::string &url, const std::string &format_name,
   }
 }
 
-std::string Input::codec_name() const {
-  return avcodec_get_name(format_ctx_->streams[stream_id_]->codecpar->codec_id);
-}
-
 CodecParameters Input::codec_parameters() const {
   CodecParameters params;
   if (const int ret =

@@ -33,6 +33,7 @@ int main(int argc, char *argv[]) {
   try {
     // Open the input device
     av::Input input(url, "v4l2", option_map, "video");
+    const std::string codec_name = input.codec_parameters().codec_name();
 
     // Continuously read frames from the input device and publish them
     while (rclcpp::ok()) {
@@ -48,7 +49,7 @@ int main(int argc, char *argv[]) {
       // packet->pts is timestamp in kernel time, in microseconds
       msg->header.stamp.sec = packet->pts / 1'000'000;
       msg->header.stamp.nanosec = (packet->pts % 1'000'000) * 1'000;
-      msg->format = input.codec_name();
+      msg->format = codec_name;
       msg->data.assign(packet->data, packet->data + packet->size);
 
       // Publish the message
