@@ -166,7 +166,6 @@ public:
   Input(const std::string &url, const std::string &format_name,
         const std::map<std::string, std::string> &option_map, const std::string &media_type_name);
 
-  int stream_id() const { return stream_id_; }
   std::string codec_name() const;
   CodecParameters codec_parameters() const;
 
