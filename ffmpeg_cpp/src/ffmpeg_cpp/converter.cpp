@@ -28,14 +28,6 @@ Converter::Converter(const std::size_t width, const std::size_t height,
   }
 }
 
-bool Converter::is_supported(const std::size_t width, const std::size_t height,
-                             const std::string &src_format_name,
-                             const std::string &dst_format_name) const {
-  return sws_ctx_ && (width_ == width) && (height_ == height) &&
-         (src_format_ == av_get_pix_fmt(src_format_name.c_str())) &&
-         (dst_format_ == av_get_pix_fmt(dst_format_name.c_str()));
-}
-
 void Converter::convert(const Frame &src_frame, std::vector<std::uint8_t> *const dst_data) {
   // Get the layout of the destination image
   // - linesize: bytes per line for each plane

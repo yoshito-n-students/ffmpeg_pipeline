@@ -202,7 +202,6 @@ public:
   // Allocate the codec context for the given codec parameters
   Decoder(const CodecParameters &params);
 
-  bool is_supported(const std::string &codec_name) const;
   std::string codec_name() const;
   std::string hw_device_type() const;
 
@@ -238,7 +237,6 @@ public:
   // Allocate the parser context for the given codec name
   Parser(const std::string &codec_name);
 
-  bool is_supported(const std::string &codec_name) const;
   std::vector<std::string> codec_names() const;
 
   // Parse the given buffer and advance the data pointer by the number of bytes parsed.
@@ -270,11 +268,6 @@ public:
   // Initialize the converter with the given source and destination formats
   Converter(const std::size_t width, const std::size_t height, const std::string &src_format_name,
             const std::string &dst_format_name);
-
-  // Check if the conversion from the given source format to the destination format is supported
-  // by the current converter context
-  bool is_supported(const std::size_t width, const std::size_t height,
-                    const std::string &src_format_name, const std::string &dst_format_name) const;
 
   // Convert the source frame to the destination pixel format
   void convert(const Frame &src_frame, std::vector<std::uint8_t> *const dst_data);

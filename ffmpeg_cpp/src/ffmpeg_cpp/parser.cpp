@@ -1,6 +1,3 @@
-#include <algorithm>
-#include <iterator> // for std::begin(), std::end()
-
 extern "C" {
 #include <libavcodec/avcodec.h>
 }
@@ -57,14 +54,6 @@ Packet Parser::parse(BufferRef *const buffer, Decoder *const decoder) {
     // If no packet is available, create an empty packet
     return Packet();
   }
-}
-
-bool Parser::is_supported(const std::string &codec_name) const {
-  const AVCodec *const codec = avcodec_find_decoder_by_name(codec_name.c_str());
-  return codec && parser_ctx_ &&
-         std::any_of(std::begin(parser_ctx_->parser->codec_ids),
-                     std::end(parser_ctx_->parser->codec_ids),
-                     [codec](const int parser_id) { return parser_id == codec->id; });
 }
 
 std::vector<std::string> Parser::codec_names() const {

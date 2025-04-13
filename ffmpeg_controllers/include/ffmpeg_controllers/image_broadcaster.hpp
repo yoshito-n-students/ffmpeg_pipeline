@@ -41,7 +41,7 @@ public:
                                    const ffmpeg_cpp::Packet &packet) override {
     try {
       // Ensure the decoder is configured for the codec
-      if (!decoder_.is_supported(codec_name)) {
+      if (!decoder_.valid()) {
         decoder_ = ffmpeg_cpp::Decoder(codec_name);
         RCLCPP_INFO(get_logger(), "Configured decoder (codec: %s, hw: %s)",
                     decoder_.codec_name().c_str(), decoder_.hw_device_type().c_str());
@@ -74,8 +74,7 @@ public:
       }
 
       // Ensure the converter is configured for this frame
-      if (!converter_.is_supported(frame->width, frame->height, frame.format_name(),
-                                   dst_format_name_)) {
+      if (!converter_.valid()) {
         converter_ = ffmpeg_cpp::Converter(frame->width, frame->height, frame.format_name(),
                                            dst_format_name_);
         RCLCPP_INFO(get_logger(), "Configured converter (src: %s, dst: %s, size: %zdx%zd)",

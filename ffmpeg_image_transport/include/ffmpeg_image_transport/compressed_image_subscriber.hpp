@@ -34,12 +34,12 @@ protected:
                         const Callback &image_cb) override {
     try {
       // Configure the parser and decoder for this fragment if needed
-      if (!parser_.is_supported(fragment->format)) {
+      if (!parser_.valid()) {
         parser_ = ffmpeg_cpp::Parser(fragment->format);
         RCLCPP_INFO(node_->get_logger(), "Configured parser (codec: %s)",
                     parser_.codec_names().front().c_str());
       }
-      if (!decoder_.is_supported(fragment->format)) {
+      if (!decoder_.valid()) {
         decoder_ = ffmpeg_cpp::Decoder(fragment->format);
         RCLCPP_INFO(node_->get_logger(), "Configured decoder (codec: %s, hw: %s)",
                     decoder_.codec_name().c_str(), decoder_.hw_device_type().c_str());
@@ -92,8 +92,7 @@ protected:
                   ffmpeg_cpp::to_ffmpeg_format_name(dst_encoding);
 
               // Configure the image converter for this frame if needed
-              if (!converter_.is_supported(frame->width, frame->height, frame.format_name(),
-                                           dst_format_name)) {
+              if (!converter_.valid()) {
                 converter_ = ffmpeg_cpp::Converter(frame->width, frame->height, frame.format_name(),
                                                    dst_format_name);
                 RCLCPP_INFO(

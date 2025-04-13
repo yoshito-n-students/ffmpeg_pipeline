@@ -96,11 +96,6 @@ Decoder::Decoder(const CodecParameters &params) : codec_ctx_(nullptr, &free_cont
   }
 }
 
-bool Decoder::is_supported(const std::string &codec_name) const {
-  const AVCodec *const codec = avcodec_find_decoder_by_name(codec_name.c_str());
-  return codec && codec->id == codec_ctx_->codec_id;
-}
-
 void Decoder::send_packet(const Packet &packet) {
   if (const int ret = avcodec_send_packet(codec_ctx_.get(), packet.get()); ret < 0) {
     throw Error("Decoder::send_packet(): Error sending packet for decoding", ret);
