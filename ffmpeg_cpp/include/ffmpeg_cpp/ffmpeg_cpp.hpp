@@ -196,8 +196,11 @@ class Decoder {
 public:
   // Construct without underlying AVCodecContext
   Decoder() : codec_ctx_(nullptr, &free_context) {}
-  // Allocate the codec context for the given codec name
+  // Allocate the codec context for the given codec name.
+  // Parameters can be filled with Parser::parse().
   Decoder(const std::string &codec_name);
+  // Allocate the codec context for the given codec parameters
+  Decoder(const CodecParameters &params);
 
   bool is_supported(const std::string &codec_name) const;
   std::string codec_name() const;
