@@ -79,8 +79,13 @@ Frame Frame::transfer_data() const {
 }
 
 std::string Frame::format_name() const {
-  // TODO: return sample format name if the frame is audio
-  return av_get_pix_fmt_name(static_cast<AVPixelFormat>(frame_->format));
+  // There is no field in AVFrame to indicate the data type, so we use heuristics to determine it
+  if (frame_->width > 0 && frame_->height > 0) {
+    return av_get_pix_fmt_name(static_cast<AVPixelFormat>(frame_->format));
+  } else if (frame_->nb_samples > 0) {
+    return av_get_sample_fmt_name(static_cast<AVSampleFormat>(frame_->format));
+  }
+  return "";
 }
 
 void Frame::free_frame(AVFrame *frame) { av_frame_free(&frame); }
