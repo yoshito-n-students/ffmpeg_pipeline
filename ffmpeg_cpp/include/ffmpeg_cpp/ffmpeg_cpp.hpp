@@ -136,6 +136,10 @@ public:
   // Allocate the codec parameters and default the fields
   CodecParameters();
 
+  std::string codec_type_name() const;
+  std::string codec_name() const;
+  std::string format_name() const;
+
   // Access to the underlying AVPacket
   AVCodecParameters *get() { return params_.get(); }
   const AVCodecParameters *get() const { return params_.get(); }

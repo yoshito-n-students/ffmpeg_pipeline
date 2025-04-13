@@ -94,6 +94,23 @@ CodecParameters::CodecParameters() : params_(avcodec_parameters_alloc(), free_pa
   }
 }
 
+std::string CodecParameters::codec_type_name() const {
+  return av_get_media_type_string(params_->codec_type);
+}
+
+std::string CodecParameters::codec_name() const { return avcodec_get_name(params_->codec_id); }
+
+std::string CodecParameters::format_name() const {
+  switch (params_->codec_type) {
+  case AVMEDIA_TYPE_VIDEO:
+    return av_get_pix_fmt_name(static_cast<AVPixelFormat>(params_->format));
+  case AVMEDIA_TYPE_AUDIO:
+    return av_get_sample_fmt_name(static_cast<AVSampleFormat>(params_->format));
+  default:
+    return "";
+  }
+}
+
 void CodecParameters::free_parameters(AVCodecParameters *params) {
   avcodec_parameters_free(&params);
 }
