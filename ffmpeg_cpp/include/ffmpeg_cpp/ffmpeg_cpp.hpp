@@ -109,7 +109,7 @@ public:
   std::string format_name() const;
 
   // True if the frame is on a hardware memory, which is not accessible by the CPU
-  bool is_hw_frame() const { return frame_->hw_frames_ctx != nullptr; }
+  bool is_hw_frame() const { return frame_ && frame_->hw_frames_ctx; }
 
   // Copy the frame to the CPU-accessible memory
   Frame transfer_data() const;
