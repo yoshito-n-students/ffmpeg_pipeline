@@ -13,8 +13,6 @@ namespace ffmpeg_cpp {
 // Parser - RAII wrapper for AVCodecParserContext
 // ==============================================
 
-Parser::Parser() : parser_ctx_(nullptr, &av_parser_close) {}
-
 Parser::Parser(const std::string &codec_name) : parser_ctx_(nullptr, &av_parser_close) {
   // Find the codec by name
   const AVCodec *const codec = avcodec_find_decoder_by_name(codec_name.c_str());

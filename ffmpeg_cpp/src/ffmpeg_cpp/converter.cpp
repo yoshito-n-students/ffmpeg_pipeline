@@ -16,10 +16,6 @@ namespace ffmpeg_cpp {
 // Converter - RAII wrapper for SwsContext
 // =======================================
 
-Converter::Converter()
-    : sws_ctx_(nullptr, &sws_freeContext), width_(0), height_(0), src_format_(AV_PIX_FMT_NONE),
-      dst_format_(AV_PIX_FMT_NONE) {}
-
 Converter::Converter(const std::size_t width, const std::size_t height,
                      const std::string &src_format_name, const std::string &dst_format_name)
     : sws_ctx_(nullptr, &sws_freeContext), width_(width), height_(height),

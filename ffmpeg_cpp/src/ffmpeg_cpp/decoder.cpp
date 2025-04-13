@@ -16,12 +16,6 @@ namespace ffmpeg_cpp {
 // Decoder - RAII wrapper for AVCodecContext
 // =========================================
 
-Decoder::Decoder() : codec_ctx_(avcodec_alloc_context3(nullptr), &free_context) {
-  if (!codec_ctx_) {
-    throw Error("Decoder::Decoder(): Failed to allocate codec context");
-  }
-}
-
 Decoder::Decoder(const std::string &codec_name) : codec_ctx_(nullptr, &free_context) {
   // Find the decoder by name
   const AVCodec *const codec = avcodec_find_decoder_by_name(codec_name.c_str());

@@ -13,12 +13,6 @@ namespace ffmpeg_cpp {
 // Input - RAII wrapper for AVFormatContext
 // ========================================
 
-Input::Input() : format_ctx_(avformat_alloc_context(), &close_input), stream_id_(-1) {
-  if (!format_ctx_) {
-    throw Error("Input::Input(): Failed to allocate AVFormatContext");
-  }
-}
-
 Input::Input(const std::string &url, const std::string &format_name,
              const std::map<std::string, std::string> &option_map,
              const std::string &media_type_name)
@@ -108,10 +102,17 @@ Input::Input(const std::string &url, const std::string &format_name,
 }
 
 std::string Input::codec_name() const {
-  return avcodec_get_name(0 <= stream_id_ &&
-                                  static_cast<unsigned int>(stream_id_) < format_ctx_->nb_streams
-                              ? format_ctx_->streams[stream_id_]->codecpar->codec_id
-                              : AV_CODEC_ID_NONE);
+  return avcodec_get_name(format_ctx_->streams[stream_id_]->codecpar->codec_id);
+}
+
+CodecParameters Input::codec_parameters() const {
+  CodecParameters params;
+  if (const int ret =
+          avcodec_parameters_copy(params.get(), format_ctx_->streams[stream_id_]->codecpar);
+      ret < 0) {
+    throw Error("Input::codec_parameters(): Failed to copy codec parameters", ret);
+  }
+  return params;
 }
 
 Packet Input::read_frame() {

@@ -159,8 +159,8 @@ private:
 
 class Input {
 public:
-  // Just allocate the format context
-  Input();
+  // Construct without underlying AVFormatContext
+  Input() : format_ctx_(nullptr, &close_input), stream_id_(-1) {}
   // Open the input device by avformat_open_input() with the given URL, format name, and options,
   // and find the best stream of the given media type
   Input(const std::string &url, const std::string &format_name,
@@ -195,8 +195,8 @@ private:
 
 class Decoder {
 public:
-  // Allocate the codec context for no particular codec
-  Decoder();
+  // Construct without underlying AVCodecContext
+  Decoder() : codec_ctx_(nullptr, &free_context) {}
   // Allocate the codec context for the given codec name
   Decoder(const std::string &codec_name);
 
@@ -231,8 +231,8 @@ private:
 
 class Parser {
 public:
-  // Allocate the parser context for no particular codec
-  Parser();
+  // Construct without underlying AVCodecParserContext
+  Parser() : parser_ctx_(nullptr, &av_parser_close) {}
   // Allocate the parser context for the given codec name
   Parser(const std::string &codec_name);
 
@@ -261,7 +261,10 @@ private:
 
 class Converter {
 public:
-  Converter();
+  // Construct without underlying SwsContext
+  Converter()
+      : sws_ctx_(nullptr, &sws_freeContext), width_(0), height_(0), //
+        src_format_(AV_PIX_FMT_NONE), dst_format_(AV_PIX_FMT_NONE) {};
   // Initialize the converter with the given source and destination formats
   Converter(const std::size_t width, const std::size_t height, const std::string &src_format_name,
             const std::string &dst_format_name);
