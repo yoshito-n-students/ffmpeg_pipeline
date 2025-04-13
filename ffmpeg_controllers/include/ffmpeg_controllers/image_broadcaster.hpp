@@ -44,7 +44,7 @@ public:
       if (!decoder_.valid()) {
         decoder_ = ffmpeg_cpp::Decoder(codec_params);
         RCLCPP_INFO(get_logger(), "Configured decoder (codec: %s, hw: %s)",
-                    decoder_.codec_name().c_str(), decoder_.hw_device_type().c_str());
+                    decoder_.codec_name().c_str(), decoder_.hw_type_name().c_str());
       }
 
       // Put the compressed data into the decoder

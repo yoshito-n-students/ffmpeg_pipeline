@@ -42,7 +42,7 @@ protected:
       if (!decoder_.valid()) {
         decoder_ = ffmpeg_cpp::Decoder(fragment->format);
         RCLCPP_INFO(node_->get_logger(), "Configured decoder (codec: %s, hw: %s)",
-                    decoder_.codec_name().c_str(), decoder_.hw_device_type().c_str());
+                    decoder_.codec_name().c_str(), decoder_.hw_type_name().c_str());
       }
 
       // Copy the data fragment to the reference-counted buffer with padding

@@ -118,7 +118,7 @@ Frame Decoder::receive_frame() {
 
 std::string Decoder::codec_name() const { return avcodec_get_name(codec_ctx_->codec_id); }
 
-std::string Decoder::hw_device_type() const {
+std::string Decoder::hw_type_name() const {
   // av_hwdevice_get_type_name(AV_HWDEVICE_TYPE_NONE) returns nullptr,
   // so std::string CANNOT be constructed and std::logic_error is thrown.
   // To avoid this, return "none" in the case of no hardware.

@@ -41,7 +41,7 @@ int main(int argc, char *argv[]) {
             if (!decoder.valid()) {
               decoder = av::Decoder(packet_data->format);
               RCLCPP_INFO(node->get_logger(), "Configured decoder (codec: %s, hw: %s)",
-                          decoder.codec_name().c_str(), decoder.hw_device_type().c_str());
+                          decoder.codec_name().c_str(), decoder.hw_type_name().c_str());
             }
 
             // Send the packet to the decoder

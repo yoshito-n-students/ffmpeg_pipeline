@@ -202,7 +202,7 @@ public:
   Decoder(const CodecParameters &params);
 
   std::string codec_name() const;
-  std::string hw_device_type() const;
+  std::string hw_type_name() const;
 
   // Send a cmpressed packet to the decoder
   void send_packet(const Packet &packet);
