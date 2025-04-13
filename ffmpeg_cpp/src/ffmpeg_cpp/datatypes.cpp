@@ -79,6 +79,7 @@ Frame Frame::transfer_data() const {
 }
 
 std::string Frame::format_name() const {
+  // TODO: return sample format name if the frame is audio
   return av_get_pix_fmt_name(static_cast<AVPixelFormat>(frame_->format));
 }
 
