@@ -289,6 +289,37 @@ private:
   AVPixelFormat src_format_, dst_format_;
 };
 
+// =======================================================
+// RAII wrapper for output device (a.k.a. AVFormatContext)
+// =======================================================
+
+class Output {
+public:
+  // Construct without underlying AVFormatContext
+  Output() : format_ctx_(nullptr, &close_output) {}
+  // Open the input device by avformat_open_input() with the given URL, format name, and options,
+  // and find the best stream of the given media type
+  Output(const std::string &format_name, const std::string &filename,
+         const CodecParameters &codec_params, const std::map<std::string, std::string> &option_map);
+
+  // Get a frame from the stream of interest in a NON-BLOCKING way.
+  // If the next frame is not available for some temporary reason, return an empty frame.
+  void write_frame(Packet *const packet);
+
+  // Access to the underlying AVFormatContext
+  bool valid() const { return format_ctx_.get(); }
+  AVFormatContext *get() { return format_ctx_.get(); }
+  const AVFormatContext *get() const { return format_ctx_.get(); }
+  AVFormatContext *operator->() { return format_ctx_.operator->(); }
+  const AVFormatContext *operator->() const { return format_ctx_.operator->(); }
+
+private:
+  static void close_output(AVFormatContext *format_ctx);
+
+private:
+  std::unique_ptr<AVFormatContext, decltype(&close_output)> format_ctx_;
+};
+
 } // namespace ffmpeg_cpp
 
 #endif
