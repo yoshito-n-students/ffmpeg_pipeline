@@ -39,16 +39,8 @@ Output::Output(const std::string &format_name, const std::string &filename,
   }
 
   // Set the parameters for the stream
-  switch (codec_params->codec_type) {
-  case AVMEDIA_TYPE_AUDIO:
-    stream->time_base = AVRational{1, codec_params->sample_rate};
-    break;
-  case AVMEDIA_TYPE_VIDEO:
-    // TODO: set required parameters for video streams
-    break;
-  default:
-    break;
-  }
+  // TODO: set required parameters for video streams
+  stream->time_base = AVRational{1, codec_params->sample_rate};
   if (const int ret = avcodec_parameters_copy(stream->codecpar, codec_params.get()); ret < 0) {
     throw Error("Output::Output(): Failed to set codec parameters for output stream", ret);
   }
