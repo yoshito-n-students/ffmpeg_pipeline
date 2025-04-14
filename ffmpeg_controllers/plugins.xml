@@ -8,6 +8,14 @@
         </description>
     </class>
     
+    <class name="ffmpeg_controllers/FrameBroadcaster"
+           type="ffmpeg_controllers::FrameBroadcaster"
+           base_class_type="controller_interface::ControllerInterface">
+        <description>
+            This controller publishes decoded general frames as ffmpeg_pipeline_msgs::Frame read from the input.
+        </description>
+    </class>
+
     <class name="ffmpeg_controllers/ImageBroadcaster"
            type="ffmpeg_controllers::ImageBroadcaster"
            base_class_type="controller_interface::ControllerInterface">
