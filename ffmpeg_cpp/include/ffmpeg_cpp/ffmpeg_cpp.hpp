@@ -303,7 +303,7 @@ private:
 class Output {
 public:
   // Construct without underlying AVFormatContext
-  Output() : format_ctx_(nullptr, &close_output) {}
+  Output() : format_ctx_(nullptr, &close_output), stream_(nullptr) {}
   // Open the output device with the given format name and filename,
   // and set the codec parameters and options to the stream
   Output(const std::string &format_name, const std::string &filename,
@@ -325,6 +325,7 @@ private:
 
 private:
   std::unique_ptr<AVFormatContext, decltype(&close_output)> format_ctx_;
+  AVStream *stream_;
 };
 
 } // namespace ffmpeg_cpp

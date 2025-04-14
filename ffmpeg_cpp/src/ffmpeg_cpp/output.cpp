@@ -16,7 +16,7 @@ namespace ffmpeg_cpp {
 Output::Output(const std::string &format_name, const std::string &filename,
                const CodecParameters &codec_params,
                const std::map<std::string, std::string> &option_map)
-    : format_ctx_(nullptr, &close_output) {
+    : format_ctx_(nullptr, &close_output), stream_(nullptr) {
   // Register all the input format types
   avdevice_register_all();
 
@@ -33,15 +33,15 @@ Output::Output(const std::string &format_name, const std::string &filename,
   format_ctx_.reset(format_ctx);
 
   // Create a new stream in the format context
-  AVStream *const stream = avformat_new_stream(format_ctx, nullptr);
-  if (!stream) {
+  stream_ = avformat_new_stream(format_ctx, nullptr);
+  if (!stream_) {
     throw Error("Output::Output(): Failed to create new stream on AVFormatContext");
   }
 
   // Set the parameters for the stream
   // TODO: set required parameters for video streams
-  stream->time_base = AVRational{1, codec_params->sample_rate};
-  if (const int ret = avcodec_parameters_copy(stream->codecpar, codec_params.get()); ret < 0) {
+  stream_->time_base = AVRational{1, codec_params->sample_rate};
+  if (const int ret = avcodec_parameters_copy(stream_->codecpar, codec_params.get()); ret < 0) {
     throw Error("Output::Output(): Failed to set codec parameters for output stream", ret);
   }
 
@@ -81,9 +81,21 @@ bool Output::write_frame(const Packet &packet) {
   // Create a copy (shallow copy if possible) of the packet
   // and modify the properties for the output stream
   Packet output_packet(packet);
-  output_packet->stream_index = 0;     // stream_index must point to the output stream
-  output_packet->pts = AV_NOPTS_VALUE; // the timestamps must be increasing
-  output_packet->dts = AV_NOPTS_VALUE; // compared to the previous frame, or AV_NOPTS_VALUE
+  // stream_index must point to the output stream
+  output_packet->stream_index = stream_->index;
+  // pts can be set to AV_NOPTS_VALUE
+  output_packet->pts = AV_NOPTS_VALUE;
+  // dts must be increasing compared to the previous frame
+  output_packet->dts = [this]() {
+    std::int64_t last_dts;
+    if (const int ret =
+            av_get_output_timestamp(format_ctx_.get(), stream_->index, &last_dts, nullptr);
+        ret >= 0) {
+      return last_dts + 1;
+    } else {
+      throw Error("Output::write_frame(): Failed to get last output timestamp", ret);
+    }
+  }();
 
   // Write the packet to the output stream
   if (const int ret = av_write_frame(format_ctx_.get(), output_packet.get()); ret >= 0) {
