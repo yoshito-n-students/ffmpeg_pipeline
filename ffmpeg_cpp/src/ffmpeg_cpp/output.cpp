@@ -77,8 +77,16 @@ Output::Output(const std::string &format_name, const std::string &filename,
   }
 }
 
-bool Output::write_frame(Packet *const packet) {
-  if (const int ret = av_write_frame(format_ctx_.get(), packet->get()); ret >= 0) {
+bool Output::write_frame(const Packet &packet) {
+  // Create a copy (shallow copy if possible) of the packet
+  // and modify the properties for the output stream
+  Packet output_packet(packet);
+  output_packet->stream_index = 0;     // stream_index must point to the output stream
+  output_packet->pts = AV_NOPTS_VALUE; // the timestamps must be increasing
+  output_packet->dts = AV_NOPTS_VALUE; // compared to the previous frame, or AV_NOPTS_VALUE
+
+  // Write the packet to the output stream
+  if (const int ret = av_write_frame(format_ctx_.get(), output_packet.get()); ret >= 0) {
     return true; // Successfully written
   } else if (ret == AVERROR(EAGAIN)) {
     return false; // The output device is not ready to accept more data

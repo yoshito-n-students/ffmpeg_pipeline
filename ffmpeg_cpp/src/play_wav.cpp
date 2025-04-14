@@ -29,14 +29,14 @@ int main(int argc, char *argv[]) {
 
     // Read packets from the input file and play them on the output device
     while (true) {
-      av::Packet packet = input.read_frame();
+      const av::Packet packet = input.read_frame();
       if(packet.empty()) {
         std::cerr << "Failed to read frame for temporary reason. Retrying..." << std::endl;
         std::this_thread::sleep_for(10ms);
         continue;
       }
 
-      while(!output.write_frame(&packet)){
+      while(!output.write_frame(packet)){
         std::cerr << "Failed to write frame for temporary reason. Retrying..." << std::endl;
         std::this_thread::sleep_for(10ms);
       }
