@@ -22,6 +22,7 @@ add_library(
   src/ffmpeg_cpp/input.cpp
   # src/ffmpeg_cpp/output.cpp
   src/ffmpeg_cpp/parser.cpp
+  # src/ffmpeg_cpp/resampler.cpp
   src/ffmpeg_cpp/utility.cpp)
 target_include_directories(
   ffmpeg_cpp PUBLIC
