@@ -39,15 +39,14 @@ protected:
       // so no frames should be dropped.
       ffmpeg_cpp::Frame frame;
       while (true) {
-        ffmpeg_cpp::Frame tmp_frame = decoder_.receive_frame();
-        if (!tmp_frame.empty()) {
+        if (ffmpeg_cpp::Frame tmp_frame = decoder_.receive_frame(); !tmp_frame.empty()) {
           frame = std::move(tmp_frame); // Keep the latest frame
         } else {
           break; // No more frames available
         }
       }
       if (frame.empty()) {
-        RCLCPP_WARN(Base::get_logger(), "No frames available after decoding packet");
+        RCLCPP_WARN(Base::get_logger(), "No frames available although packet was processed");
         return std::nullopt;
       }
 
