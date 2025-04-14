@@ -29,6 +29,7 @@ Output::Output(const std::string &format_name, const std::string &filename,
                     ", filename: " + filename + ")",
                 ret);
   }
+  format_ctx->flags |= AVFMT_FLAG_NONBLOCK;
   format_ctx_.reset(format_ctx);
 
   // Create a new stream in the format context
@@ -84,8 +85,12 @@ Output::Output(const std::string &format_name, const std::string &filename,
   }
 }
 
-void Output::write_frame(Packet *const packet) {
-  if (const int ret = av_write_frame(format_ctx_.get(), packet->get()); ret < 0) {
+bool Output::write_frame(Packet *const packet) {
+  if (const int ret = av_write_frame(format_ctx_.get(), packet->get()); ret >= 0) {
+    return true; // Successfully written
+  } else if (ret == AVERROR(EAGAIN)) {
+    return false; // The output device is not ready to accept more data
+  } else {
     throw Error("Output::write_frame(): Failed to write frame", ret);
   }
 }

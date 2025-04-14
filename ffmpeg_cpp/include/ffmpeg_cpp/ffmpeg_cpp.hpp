@@ -302,9 +302,9 @@ public:
   Output(const std::string &format_name, const std::string &filename,
          const CodecParameters &codec_params, const std::map<std::string, std::string> &option_map);
 
-  // Get a frame from the stream of interest in a NON-BLOCKING way.
-  // If the next frame is not available for some temporary reason, return an empty frame.
-  void write_frame(Packet *const packet);
+  // Write a frame to the stream of interest in a NON-BLOCKING way.
+  // False if the output stream is not ready to accept the data for some temporary reason.
+  bool write_frame(Packet *const packet);
 
   // Access to the underlying AVFormatContext
   bool valid() const { return format_ctx_.get(); }
