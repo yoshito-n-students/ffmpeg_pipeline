@@ -20,7 +20,6 @@ public:
       : default_sensor_name_(default_sensor_name), topic_(topic) {}
 
 protected:
-  using Base = PacketBroadcasterBase<MessageT>;
   using Message = MessageT;
 
   // ===================

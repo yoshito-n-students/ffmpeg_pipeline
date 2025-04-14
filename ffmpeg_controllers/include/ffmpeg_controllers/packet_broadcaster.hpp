@@ -11,6 +11,9 @@
 namespace ffmpeg_controllers {
 
 class PacketBroadcaster : public PacketBroadcasterBase<ffmpeg_pipeline_msgs::msg::Packet> {
+private:
+  using Base = PacketBroadcasterBase<ffmpeg_pipeline_msgs::msg::Packet>;
+
 public:
   PacketBroadcaster() : Base(/* default_sensor_name = */ "sensor", /* topic = */ "~/packet") {}
 

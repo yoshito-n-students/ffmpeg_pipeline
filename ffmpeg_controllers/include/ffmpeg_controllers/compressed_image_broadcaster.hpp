@@ -11,6 +11,9 @@
 namespace ffmpeg_controllers {
 
 class CompressedImageBroadcaster : public PacketBroadcasterBase<sensor_msgs::msg::CompressedImage> {
+private:
+  using Base = PacketBroadcasterBase<sensor_msgs::msg::CompressedImage>;
+
 public:
   CompressedImageBroadcaster()
       : Base(/* default_sensor_name = */ "camera", /* topic = */ "~/image/ffmpeg") {}

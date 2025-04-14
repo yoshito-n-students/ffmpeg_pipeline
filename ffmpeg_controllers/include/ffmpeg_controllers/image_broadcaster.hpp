@@ -14,6 +14,9 @@
 namespace ffmpeg_controllers {
 
 class ImageBroadcaster : public PacketBroadcasterBase<sensor_msgs::msg::Image> {
+private:
+  using Base = PacketBroadcasterBase<sensor_msgs::msg::Image>;
+
 public:
   ImageBroadcaster() : Base(/* default_sensor_name = */ "camera", /* topic = */ "~/image") {}
 
