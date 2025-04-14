@@ -1,2 +1,2 @@
 # ffmpeg_pipeline
-A flexible pipeline for image acquisition, encoding, and decoding using ffmpeg on ROS 2
+A flexible pipeline for video/audio acquisition, encoding, decoding, and output using ffmpeg on ROS 2
