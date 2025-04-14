@@ -20,7 +20,7 @@ add_library(
   src/ffmpeg_cpp/decoder.cpp
   # src/ffmpeg_cpp/encoder.cpp
   src/ffmpeg_cpp/input.cpp
-  # src/ffmpeg_cpp/output.cpp
+  src/ffmpeg_cpp/output.cpp
   src/ffmpeg_cpp/parser.cpp
   # src/ffmpeg_cpp/resampler.cpp
   src/ffmpeg_cpp/utility.cpp)
@@ -53,6 +53,16 @@ target_link_libraries(decode_topic ffmpeg_cpp)
 ament_target_dependencies(decode_topic rclcpp sensor_msgs)
 
 add_executable(
+  play_wav
+  src/play_wav.cpp)
+target_include_directories(
+  play_wav PUBLIC
+  "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
+  "$<INSTALL_INTERFACE:include>")
+target_link_libraries(play_wav ffmpeg_cpp)
+# ament_target_dependencies(stream_camera rclcpp sensor_msgs)
+
+add_executable(
   stream_camera
   src/stream_camera.cpp)
 target_include_directories(
@@ -73,7 +83,7 @@ install(
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin)
 install(
-  TARGETS decode_bag decode_topic stream_camera
+  TARGETS decode_bag decode_topic play_wav stream_camera
   DESTINATION lib/${PROJECT_NAME})
 
 # export the library for downstream projects
