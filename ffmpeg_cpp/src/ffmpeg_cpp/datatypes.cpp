@@ -54,6 +54,12 @@ Packet::Packet(const BufferRef &buf) : Packet() {
   packet_->size = buf.unpadded_size();
 }
 
+Packet::Packet(const Packet &other) : Packet() {
+  if (const int ret = av_packet_ref(packet_.get(), other.get()); ret < 0) {
+    throw Error("Packet::Packet(): Failed to create a reference to packet", ret);
+  }
+}
+
 void Packet::free_packet(AVPacket *packet) { av_packet_free(&packet); }
 
 // ================================

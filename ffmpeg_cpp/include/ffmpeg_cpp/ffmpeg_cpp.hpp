@@ -77,6 +77,13 @@ public:
   Packet();
   // Create a packet by referencing the given buffer
   Packet(const BufferRef &buf);
+  // Create a packet by referencing the data of the given packet.
+  // If the data is not reference-counted, copy the data to a new packet.
+  Packet(const Packet &other);
+  // We need to define the move constructor and operator explicitly
+  // because they are not automatically defined if the copy constructor is manually defined.
+  Packet(Packet &&other) = default;
+  Packet &operator=(Packet &&other) = default;
 
   // True if the packet data is empty or invalid
   bool empty() const { return !packet_ || !packet_->data || packet_->size == 0; }
@@ -304,7 +311,7 @@ public:
 
   // Write a frame to the stream of interest in a NON-BLOCKING way.
   // False if the output stream is not ready to accept the data for some temporary reason.
-  bool write_frame(Packet *const packet);
+  bool write_frame(const Packet &packet);
 
   // Access to the underlying AVFormatContext
   bool valid() const { return format_ctx_.get(); }
