@@ -297,8 +297,8 @@ class Output {
 public:
   // Construct without underlying AVFormatContext
   Output() : format_ctx_(nullptr, &close_output) {}
-  // Open the input device by avformat_open_input() with the given URL, format name, and options,
-  // and find the best stream of the given media type
+  // Open the output device with the given format name and filename,
+  // and set the codec parameters and options to the stream
   Output(const std::string &format_name, const std::string &filename,
          const CodecParameters &codec_params, const std::map<std::string, std::string> &option_map);
 

@@ -20,10 +20,10 @@ Output::Output(const std::string &format_name, const std::string &filename,
   // Register all the input format types
   avdevice_register_all();
 
-  // Allocate the format context with the given format name and filename
+  // Allocate the format context and set the non-blocking flag
   AVFormatContext *format_ctx = nullptr;
-  if (const int ret = avformat_alloc_output_context2(
-          &format_ctx, NULL, format_name.c_str() /* "pulse" */, filename.c_str() /* "default" */);
+  if (const int ret = avformat_alloc_output_context2(&format_ctx, nullptr, format_name.c_str(),
+                                                     filename.c_str());
       ret < 0) {
     throw Error("Output::Output(): Failed to allocate AVFormatContext (format: " + format_name +
                     ", filename: " + filename + ")",
@@ -32,14 +32,22 @@ Output::Output(const std::string &format_name, const std::string &filename,
   format_ctx_.reset(format_ctx);
 
   // Create a new stream in the format context
-  AVStream *const stream = avformat_new_stream(format_ctx, NULL);
+  AVStream *const stream = avformat_new_stream(format_ctx, nullptr);
   if (!stream) {
     throw Error("Output::Output(): Failed to create new stream on AVFormatContext");
   }
 
   // Set the parameters for the stream
-  // TODO: Find proper way to set the params for video
-  stream->time_base = AVRational{1, codec_params->sample_rate};
+  switch (codec_params->codec_type) {
+  case AVMEDIA_TYPE_AUDIO:
+    stream->time_base = AVRational{1, codec_params->sample_rate};
+    break;
+  case AVMEDIA_TYPE_VIDEO:
+    // TODO: set required parameters for video streams
+    break;
+  default:
+    break;
+  }
   if (const int ret = avcodec_parameters_copy(stream->codecpar, codec_params.get()); ret < 0) {
     throw Error("Output::Output(): Failed to set codec parameters for output stream", ret);
   }
