@@ -4,13 +4,13 @@
 #include <optional>
 #include <string>
 
-#include <ffmpeg_controllers/broadcaster_base.hpp>
+#include <ffmpeg_controllers/packet_broadcaster_base.hpp>
 #include <ffmpeg_cpp/ffmpeg_cpp.hpp>
 #include <ffmpeg_pipeline_msgs/msg/packet.hpp>
 
 namespace ffmpeg_controllers {
 
-class PacketBroadcaster : public BroadcasterBase<ffmpeg_pipeline_msgs::msg::Packet> {
+class PacketBroadcaster : public PacketBroadcasterBase<ffmpeg_pipeline_msgs::msg::Packet> {
 public:
   PacketBroadcaster() : Base(/* default_sensor_name = */ "sensor", /* topic = */ "~/packet") {}
 

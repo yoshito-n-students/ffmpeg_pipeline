@@ -4,13 +4,13 @@
 #include <optional>
 #include <string>
 
-#include <ffmpeg_controllers/broadcaster_base.hpp>
+#include <ffmpeg_controllers/packet_broadcaster_base.hpp>
 #include <ffmpeg_cpp/ffmpeg_cpp.hpp>
 #include <sensor_msgs/msg/compressed_image.hpp>
 
 namespace ffmpeg_controllers {
 
-class CompressedImageBroadcaster : public BroadcasterBase<sensor_msgs::msg::CompressedImage> {
+class CompressedImageBroadcaster : public PacketBroadcasterBase<sensor_msgs::msg::CompressedImage> {
 public:
   CompressedImageBroadcaster()
       : Base(/* default_sensor_name = */ "camera", /* topic = */ "~/image/ffmpeg") {}

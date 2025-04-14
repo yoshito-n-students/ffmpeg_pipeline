@@ -5,7 +5,7 @@
 #include <stdexcept>
 #include <string>
 
-#include <ffmpeg_controllers/broadcaster_base.hpp>
+#include <ffmpeg_controllers/packet_broadcaster_base.hpp>
 #include <ffmpeg_cpp/ffmpeg_cpp.hpp>
 #include <rclcpp/logging.hpp>
 #include <sensor_msgs/image_encodings.hpp>
@@ -13,7 +13,7 @@
 
 namespace ffmpeg_controllers {
 
-class ImageBroadcaster : public BroadcasterBase<sensor_msgs::msg::Image> {
+class ImageBroadcaster : public PacketBroadcasterBase<sensor_msgs::msg::Image> {
 public:
   ImageBroadcaster() : Base(/* default_sensor_name = */ "camera", /* topic = */ "~/image") {}
 

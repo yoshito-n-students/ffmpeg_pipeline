@@ -1,5 +1,5 @@
-#ifndef FFMPEG_CONTROLLERS_BROADCASTER_BASE_HPP
-#define FFMPEG_CONTROLLERS_BROADCASTER_BASE_HPP
+#ifndef FFMPEG_CONTROLLERS_PACKET_BROADCASTER_BASE_HPP
+#define FFMPEG_CONTROLLERS_PACKET_BROADCASTER_BASE_HPP
 
 #include <algorithm>
 #include <memory>
@@ -14,13 +14,13 @@
 namespace ffmpeg_controllers {
 
 template <typename MessageT>
-class BroadcasterBase : public controller_interface::ControllerInterface {
+class PacketBroadcasterBase : public controller_interface::ControllerInterface {
 public:
-  BroadcasterBase(const std::string &default_sensor_name, const std::string &topic)
+  PacketBroadcasterBase(const std::string &default_sensor_name, const std::string &topic)
       : default_sensor_name_(default_sensor_name), topic_(topic) {}
 
 protected:
-  using Base = BroadcasterBase<MessageT>;
+  using Base = PacketBroadcasterBase<MessageT>;
   using Message = MessageT;
 
   // ===================
