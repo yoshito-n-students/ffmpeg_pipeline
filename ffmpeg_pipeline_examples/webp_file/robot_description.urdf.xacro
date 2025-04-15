@@ -4,19 +4,16 @@
     <link name="body">
     </link>
 
-    <ros2_control name="FFmpegInput" type="sensor">
+    <ros2_control name="image_reader" type="sensor">
         <hardware>
             <plugin>ffmpeg_hardware/FFmpegInput</plugin>
-        </hardware>
-        <sensor name="image_reader">
-            <state_interface name="codec_parameters" data_type="ffmpeg_cpp::CodecParameters*"/>
-            <state_interface name="packet" data_type="ffmpeg_cpp::Packet*"/>
             <param name="url">$(find ffmpeg_pipeline_examples)/webp_file/example_image.webp</param>
             <param name="input_format">image2</param>
             <param name="options">
                 loop: 1
             </param>
-        </sensor>
+            <param name="media_type">video</param>
+        </hardware>
     </ros2_control>
 
 </robot>
