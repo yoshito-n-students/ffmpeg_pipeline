@@ -8,6 +8,7 @@
 #include <vector>
 
 #include <ffmpeg_cpp/ffmpeg_cpp.hpp>
+#include <ffmpeg_hardware/interface_adapter.hpp>
 #include <hardware_interface/handle.hpp> // for hi::Interface{Description,Info}
 #include <hardware_interface/sensor_interface.hpp>
 #include <hardware_interface/types/hardware_interface_return_values.hpp>
@@ -18,7 +19,7 @@
 
 namespace ffmpeg_hardware {
 
-class FFmpegInput : public hardware_interface::SensorInterface {
+class FFmpegInput : public InterfaceAdapter<hardware_interface::SensorInterface> {
 protected:
   // ============================
   // Behavior as a lifecycle node
@@ -87,9 +88,8 @@ protected:
 
   std::vector<hardware_interface::InterfaceDescription>
   export_unlisted_state_interface_descriptions() override {
-    return {
-        make_interface_description(info_.name, "codec_parameters", "ffmpeg_cpp::CodecParameters*"),
-        make_interface_description(info_.name, "packet", "ffmpeg_cpp::Packet*")};
+    return {make_interface_description("codec_parameters", "ffmpeg_cpp::CodecParameters*"),
+            make_interface_description("packet", "ffmpeg_cpp::Packet*")};
   }
 
   hardware_interface::return_type read(const rclcpp::Time & /*time*/,
@@ -105,47 +105,6 @@ protected:
     }
 
     return hardware_interface::return_type::OK;
-  }
-
-protected:
-  template <typename T> T get_parameter_as(const std::string &key, T &&default_value) {
-    // Try to find the parameter with the given key
-    const auto found_it = info_.hardware_parameters.find(key);
-    if (found_it != info_.hardware_parameters.end()) {
-      // If the parameter is found, try to convert it to the desired type
-      try {
-        return YAML::Load(found_it->second).template as<T>();
-      } catch (const YAML::Exception &error) {
-        // If the conversion fails, log an error and return the default value
-        RCLCPP_ERROR(get_logger(),
-                     "Failed to convert parameter '%s' (value: '%s') to the desired type: %s",
-                     found_it->first.c_str(), found_it->second.c_str(), error.what());
-        return std::move(default_value);
-      }
-    } else {
-      // If the parameter is not found, return the default value
-      return std::move(default_value);
-    }
-  }
-
-  template <typename T>
-  void set_state_from_pointer(const std::string &iface_name, const T *const value) {
-    // Due to the constraints of hardware_interfae::StateInterface,
-    // the state can only be set as a double type value.
-    // Therefore, the pointer type is converted to double type at the value level and set.
-    // The double type has 53 bits of precision,
-    // which is sufficient to represent the 47 bits of the Linux user's address space.
-    set_state(make_interface_description(info_.name, iface_name, "").get_name(),
-              static_cast<double>(reinterpret_cast<std::uintptr_t>(value)));
-  }
-
-  static hardware_interface::InterfaceDescription
-  make_interface_description(const std::string &prefix_name, const std::string &iface_name,
-                             const std::string &data_type) {
-    hardware_interface::InterfaceInfo info;
-    info.name = iface_name;
-    info.data_type = data_type;
-    return hardware_interface::InterfaceDescription{prefix_name, info};
   }
 
 protected:
