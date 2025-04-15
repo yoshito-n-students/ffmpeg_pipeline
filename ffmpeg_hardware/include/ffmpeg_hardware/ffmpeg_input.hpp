@@ -2,17 +2,13 @@
 #define FFMPEG_HARDWARE_FFMPEG_INPUT_HPP
 
 #include <chrono>
-#include <memory>
 #include <string>
 #include <thread>
 #include <utility> // for std::move()
 #include <vector>
 
 #include <ffmpeg_cpp/ffmpeg_cpp.hpp>
-#include <hardware_interface/handle.hpp> // for hi::{State,Command}Interface
-#include <hardware_interface/hardware_info.hpp>
-#include <hardware_interface/loaned_command_interface.hpp>
-#include <hardware_interface/loaned_state_interface.hpp>
+#include <hardware_interface/handle.hpp> // for hi::Interface{Description,Info}
 #include <hardware_interface/sensor_interface.hpp>
 #include <hardware_interface/types/hardware_interface_return_values.hpp>
 #include <rclcpp/duration.hpp>
@@ -23,46 +19,21 @@
 namespace ffmpeg_hardware {
 
 class FFmpegInput : public hardware_interface::SensorInterface {
-public:
-  CallbackReturn on_init(const hardware_interface::HardwareInfo &hardware_info) override {
-    // Initialize the base class. info_ is copied from hardware_info,
-    // and *_interfaces_ are constructed according to the contents of info_.
-    if (const auto res = hardware_interface::SensorInterface::on_init(hardware_info);
-        res != CallbackReturn::SUCCESS) {
-      return res;
-    }
-
-    // Check if exactly two sensor state interfaces exist
-    if (sensor_state_interfaces_.size() != 2) {
-      RCLCPP_ERROR(get_logger(),
-                   "Exactly two sensor state interfaces are required while %zd are found",
-                   sensor_state_interfaces_.size());
-      return CallbackReturn::ERROR;
-    } else if (const auto &sensor_name = info_.sensors[0].name;
-               sensor_state_interfaces_.count(sensor_name + "/codec_parameters") == 0 ||
-               sensor_state_interfaces_.count(sensor_name + "/packet") == 0) {
-      RCLCPP_ERROR(get_logger(),
-                   "Sensor state interfaces must belong to the first sensor component '%s' "
-                   "and be named 'codec_parameters' and 'packet'",
-                   sensor_name.c_str());
-      return CallbackReturn::ERROR;
-    }
-
-    return CallbackReturn::SUCCESS;
-  }
+protected:
+  // ============================
+  // Behavior as a lifecycle node
+  // ============================
 
   CallbackReturn on_activate(const rclcpp_lifecycle::State & /*previous_state*/) override {
     // Try to get the parameters for the input from the hardware_info, or use default values
-    const auto &sensor_params = info_.sensors[0].parameters;
-    const auto url = get_parameter_as<std::string>(sensor_params, "url", "/dev/video0"),
-               input_format = get_parameter_as<std::string>(sensor_params, "input_format", "v4l2"),
-               media_type = get_parameter_as<std::string>(sensor_params, "media_type", "video");
-    const auto options =
-        get_parameter_as<std::map<std::string, std::string>>(sensor_params, "options",
-                                                             {{"input_format", "h264"},
-                                                              {"video_size", "1920x1080"},
-                                                              {"framerate", "30"},
-                                                              {"timestamps", "abs"}});
+    const auto url = get_parameter_as<std::string>("url", "/dev/video0"),
+               input_format = get_parameter_as<std::string>("input_format", "v4l2"),
+               media_type = get_parameter_as<std::string>("media_type", "video");
+    const auto options = get_parameter_as<std::map<std::string, std::string>>(
+        "options", {{"input_format", "h264"},
+                    {"video_size", "1920x1080"},
+                    {"framerate", "30"},
+                    {"timestamps", "abs"}});
 
     // Reset the input with the parameters
     try {
@@ -91,36 +62,56 @@ public:
     }
 
     // Set the codec name and packet to the state interface
-    const auto &sensor_name = info_.sensors[0].name;
-    set_state_from_pointer(sensor_name + "/codec_parameters", &codec_params_);
-    set_state_from_pointer(sensor_name + "/packet", &packet_);
+    set_state_from_pointer("codec_parameters", &codec_params_);
+    set_state_from_pointer("packet", &packet_);
 
     return CallbackReturn::SUCCESS;
   }
 
   CallbackReturn on_deactivate(const rclcpp_lifecycle::State & /*previous_state*/) override {
     // Close the input device
-    input_ = ffmpeg_cpp::Input();
+    try {
+      input_ = ffmpeg_cpp::Input();
+      RCLCPP_INFO(get_logger(), "Closed the input device");
+    } catch (const std::runtime_error &error) {
+      RCLCPP_ERROR(get_logger(), "Failed to close the input device: %s", error.what());
+      return CallbackReturn::ERROR;
+    }
 
     return CallbackReturn::SUCCESS;
+  }
+
+  // ================================
+  // Behavior as a hardware component
+  // ================================
+
+  std::vector<hardware_interface::InterfaceDescription>
+  export_unlisted_state_interface_descriptions() override {
+    return {
+        make_interface_description(info_.name, "codec_parameters", "ffmpeg_cpp::CodecParameters*"),
+        make_interface_description(info_.name, "packet", "ffmpeg_cpp::Packet*")};
   }
 
   hardware_interface::return_type read(const rclcpp::Time & /*time*/,
                                        const rclcpp::Duration & /*period*/) override {
     // Update the packet
-    if (ffmpeg_cpp::Packet packet = input_.read_frame(); !packet.empty()) {
-      packet_ = std::move(packet);
+    try {
+      if (ffmpeg_cpp::Packet packet = input_.read_frame(); !packet.empty()) {
+        packet_ = std::move(packet);
+      }
+    } catch (const std::runtime_error &error) {
+      RCLCPP_ERROR(get_logger(), "Failed to read the packet: %s", error.what());
+      return hardware_interface::return_type::ERROR;
     }
 
     return hardware_interface::return_type::OK;
   }
 
 protected:
-  template <typename T, class Map>
-  T get_parameter_as(const Map &params, const std::string &key, T &&default_value) {
+  template <typename T> T get_parameter_as(const std::string &key, T &&default_value) {
     // Try to find the parameter with the given key
-    const auto found_it = params.find(key);
-    if (found_it != params.end()) {
+    const auto found_it = info_.hardware_parameters.find(key);
+    if (found_it != info_.hardware_parameters.end()) {
       // If the parameter is found, try to convert it to the desired type
       try {
         return YAML::Load(found_it->second).template as<T>();
@@ -144,7 +135,17 @@ protected:
     // Therefore, the pointer type is converted to double type at the value level and set.
     // The double type has 53 bits of precision,
     // which is sufficient to represent the 47 bits of the Linux user's address space.
-    set_state(iface_name, static_cast<double>(reinterpret_cast<std::uintptr_t>(value)));
+    set_state(make_interface_description(info_.name, iface_name, "").get_name(),
+              static_cast<double>(reinterpret_cast<std::uintptr_t>(value)));
+  }
+
+  static hardware_interface::InterfaceDescription
+  make_interface_description(const std::string &prefix_name, const std::string &iface_name,
+                             const std::string &data_type) {
+    hardware_interface::InterfaceInfo info;
+    info.name = iface_name;
+    info.data_type = data_type;
+    return hardware_interface::InterfaceDescription{prefix_name, info};
   }
 
 protected:
