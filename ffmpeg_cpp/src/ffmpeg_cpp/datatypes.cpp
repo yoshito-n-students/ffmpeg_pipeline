@@ -60,6 +60,13 @@ Packet::Packet(const Packet &other) : Packet() {
   }
 }
 
+Packet &Packet::operator=(const Packet &other) {
+  if (const int ret = av_packet_ref(packet_.get(), other.get()); ret < 0) {
+    throw Error("Packet::operator=(): Failed to create a reference to packet", ret);
+  }
+  return *this;
+}
+
 void Packet::free_packet(AVPacket *packet) { av_packet_free(&packet); }
 
 // ================================

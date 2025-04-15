@@ -80,6 +80,7 @@ public:
   // Create a packet by referencing the data of the given packet.
   // If the data is not reference-counted, copy the data to a new packet.
   Packet(const Packet &other);
+  Packet &operator=(const Packet &other);
   // We need to define the move constructor and operator explicitly
   // because they are not automatically defined if the copy constructor is manually defined.
   Packet(Packet &&other) = default;
@@ -303,8 +304,7 @@ private:
 class Output {
 public:
   // Construct without underlying AVFormatContext
-  Output()
-      : format_ctx_(nullptr, &close_output), stream_(nullptr), increasing_dts_(0) {}
+  Output() : format_ctx_(nullptr, &close_output), stream_(nullptr), increasing_dts_(0) {}
   // Open the output device with the given format name and filename,
   // and set the codec parameters and options to the stream
   Output(const std::string &format_name, const std::string &filename,
