@@ -8,4 +8,12 @@
         </description>
     </class>
 
+    <class name="ffmpeg_hardware/FFmpegOutput"
+           type="ffmpeg_hardware::FFmpegOutput"
+           base_class_type="hardware_interface::ActuatorInterface">
+        <description>
+            This plugin write video/audio packets from various outputs using FFmpeg.
+        </description>
+    </class>
+
 </library>
