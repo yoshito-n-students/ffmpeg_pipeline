@@ -4,9 +4,9 @@
     <link name="body">
     </link>
 
-    <ros2_control name="FFmpegHardware" type="system">
+    <ros2_control name="FFmpegInput" type="sensor">
         <hardware>
-            <plugin>ffmpeg_hardware/FFmpegHardware</plugin>
+            <plugin>ffmpeg_hardware/FFmpegInput</plugin>
         </hardware>
         <sensor name="pulse_audio">
             <state_interface name="codec_parameters" data_type="ffmpeg_cpp::CodecParameters*"/>
