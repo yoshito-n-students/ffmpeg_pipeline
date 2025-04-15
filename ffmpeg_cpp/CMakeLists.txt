@@ -18,7 +18,7 @@ add_library(
   src/ffmpeg_cpp/converter.cpp
   src/ffmpeg_cpp/datatypes.cpp
   src/ffmpeg_cpp/decoder.cpp
-  # src/ffmpeg_cpp/encoder.cpp
+  src/ffmpeg_cpp/encoder.cpp
   src/ffmpeg_cpp/input.cpp
   src/ffmpeg_cpp/output.cpp
   src/ffmpeg_cpp/parser.cpp

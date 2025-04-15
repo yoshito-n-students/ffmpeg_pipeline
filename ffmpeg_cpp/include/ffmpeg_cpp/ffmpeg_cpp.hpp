@@ -282,6 +282,44 @@ private:
   std::unique_ptr<AVCodecParserContext, decltype(&av_parser_close)> parser_ctx_;
 };
 
+// ===============================================
+// RAII wrapper for encoder (a.k.a AVCodecContext)
+// ===============================================
+
+class Encoder {
+public:
+  // Construct without underlying AVCodecContext
+  Encoder() : codec_ctx_(nullptr, &free_context) {}
+  // Allocate the codec context for the given codec name.
+  // Parameters can be filled with Parser::parse().
+  Encoder(const std::string &codec_name);
+  // Allocate the codec context for the given codec parameters
+  Encoder(const CodecParameters &params);
+
+  std::string codec_name() const;
+  std::string hw_type_name() const;
+
+  // Send a raw frame to the encoder
+  void send_frame(const Frame &frame);
+
+  // Receive a encoded packet from the encoder.
+  // The packet may be empty if no packet is available.
+  Packet receive_packet();
+
+  // Access to the underlying AVCodecContext
+  bool valid() const { return codec_ctx_.get(); }
+  AVCodecContext *get() { return codec_ctx_.get(); }
+  const AVCodecContext *get() const { return codec_ctx_.get(); }
+  AVCodecContext *operator->() { return codec_ctx_.operator->(); }
+  const AVCodecContext *operator->() const { return codec_ctx_.operator->(); }
+
+private:
+  static void free_context(AVCodecContext *codec_ctx);
+
+private:
+  std::unique_ptr<AVCodecContext, decltype(&free_context)> codec_ctx_;
+};
+
 // ===========================
 // RAII wrapper for SwsContext
 // ===========================
