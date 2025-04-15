@@ -15,7 +15,18 @@ protected:
 
   CallbackReturn on_activate(const rclcpp_lifecycle::State & /*previous_state*/) override {
     try {
-      // TODO: Open and configure the output
+      // Try to get the parameters for the output from the hardware_info, or use default values
+      const auto format = get_parameter_as<std::string>("format", "pulse"),
+                 filename = get_parameter_as<std::string>("filename", "default");
+      const auto codec_params = get_parameter_as<ffmpeg_cpp::CodecParameters>(
+          "codec_parameters", ffmpeg_cpp::CodecParameters());
+      const auto options = get_parameter_as<std::map<std::string, std::string>>("options", {});
+
+      // Open the input with the parameters
+      output_ = ffmpeg_cpp::Output(format, filename, codec_params, options);
+      RCLCPP_INFO(get_logger(), "Configured the output (filename: %s, format: %s)",
+                  filename.c_str(), format.c_str());
+
       return CallbackReturn::SUCCESS;
     } catch (const std::runtime_error &error) {
       RCLCPP_ERROR(get_logger(), "Failed to configure the output device: %s", error.what());
@@ -25,7 +36,9 @@ protected:
 
   CallbackReturn on_deactivate(const rclcpp_lifecycle::State & /*previous_state*/) override {
     try {
-      // TODO: Finalize and close the output
+      // Close the output device
+      output_ = ffmpeg_cpp::Output();
+      RCLCPP_INFO(get_logger(), "Closed the output device");
       return CallbackReturn::SUCCESS;
     } catch (const std::runtime_error &error) {
       RCLCPP_ERROR(get_logger(), "Failed to close the output device: %s", error.what());
