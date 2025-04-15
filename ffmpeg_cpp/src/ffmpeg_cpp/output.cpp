@@ -83,7 +83,7 @@ bool Output::write_frame(const Packet &packet) {
   Packet output_packet(packet);
   // stream_index must point to the output stream
   output_packet->stream_index = stream_->index;
-  // en: The packet given to av_write_frame() must have monotonically increasing dts and pts.
+  // The packet given to av_write_frame() must have monotonically increasing dts and pts.
   // Even if the packet is temporarily failed to be sent to av_write_frame() and is resent,
   // dts and pts must continue to increase.
   // To guarantee this, overwrite the dts and pts of the copied packet.
