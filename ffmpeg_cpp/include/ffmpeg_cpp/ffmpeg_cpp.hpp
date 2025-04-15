@@ -15,6 +15,8 @@ extern "C" {
 #include <libswscale/swscale.h>
 }
 
+#include <yaml-cpp/yaml.h>
+
 namespace ffmpeg_cpp {
 
 // =================
@@ -389,5 +391,17 @@ private:
 };
 
 } // namespace ffmpeg_cpp
+
+// =====================================
+// Conversion between datatypes and yaml
+// =====================================
+
+namespace YAML {
+
+template <> struct convert<ffmpeg_cpp::CodecParameters> {
+  static bool decode(const Node &yaml, ffmpeg_cpp::CodecParameters &params);
+};
+
+} // namespace YAML
 
 #endif
