@@ -27,10 +27,18 @@ BufferRef::BufferRef(const std::uint8_t *const data, const std::size_t unpadded_
   std::memset(buf_->data + unpadded_size, 0, AV_INPUT_BUFFER_PADDING_SIZE);
 }
 
-BufferRef::BufferRef(const BufferRef &buf) : buf_(av_buffer_ref(buf.get()), &unref_buffer) {
+BufferRef::BufferRef(const BufferRef &other) : buf_(av_buffer_ref(other.get()), &unref_buffer) {
   if (!buf_) {
     throw Error("BufferRef::BufferRef(): Failed to create a reference to buffer");
   }
+}
+
+BufferRef &BufferRef::operator=(const BufferRef &other) {
+  buf_.reset(av_buffer_ref(other.get()));
+  if (!buf_) {
+    throw Error("BufferRef::operator=(): Failed to create a reference to buffer");
+  }
+  return *this;
 }
 
 void BufferRef::unref_buffer(AVBufferRef *buf) { av_buffer_unref(&buf); }
@@ -79,6 +87,19 @@ Frame::Frame() : frame_(av_frame_alloc(), free_frame) {
   }
 }
 
+Frame::Frame(const Frame &other) : Frame() {
+  if (const int ret = av_frame_ref(frame_.get(), other.get()); ret < 0) {
+    throw Error("Frame::Frame(): Failed to create a reference to frame", ret);
+  }
+}
+
+Frame &Frame::operator=(const Frame &other) {
+  if (const int ret = av_frame_ref(frame_.get(), other.get()); ret < 0) {
+    throw Error("Frame::operator=(): Failed to create a reference to frame", ret);
+  }
+  return *this;
+}
+
 Frame Frame::transfer_data() const {
   Frame dst;
   if (const int ret = av_hwframe_transfer_data(dst.get(), frame_.get(), 0); ret < 0) {
@@ -107,6 +128,19 @@ CodecParameters::CodecParameters() : params_(avcodec_parameters_alloc(), free_pa
   if (!params_) {
     throw Error("CodecParameters::CodecParameters(): Failed to allocate AVCodecParameters");
   }
+}
+
+CodecParameters::CodecParameters(const CodecParameters &other) : CodecParameters() {
+  if (const int ret = avcodec_parameters_copy(params_.get(), other.get()); ret < 0) {
+    throw Error("CodecParameters::CodecParameters(): Failed to copy codec parameters", ret);
+  }
+}
+
+CodecParameters &CodecParameters::operator=(const CodecParameters &other) {
+  if (const int ret = avcodec_parameters_copy(params_.get(), other.get()); ret < 0) {
+    throw Error("CodecParameters::operator=(): Failed to copy codec parameters", ret);
+  }
+  return *this;
 }
 
 std::string CodecParameters::codec_type_name() const {

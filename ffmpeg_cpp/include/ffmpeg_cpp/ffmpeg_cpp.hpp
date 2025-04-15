@@ -48,7 +48,12 @@ public:
   // Construct a BufferRef by copying the given data and adding padding
   BufferRef(const std::uint8_t *const data, const std::size_t unpadded_size);
   // Construct a BufferRef by referencing an existing buffer
-  BufferRef(const BufferRef &buf);
+  BufferRef(const BufferRef &other);
+  BufferRef &operator=(const BufferRef &other);
+  // We need to define the move constructor and operator explicitly
+  // because they are not automatically defined if the copy constructor is manually defined.
+  BufferRef(BufferRef &&other) = default;
+  BufferRef &operator=(BufferRef &&other) = default;
 
   // Get the size of the buffer, with or without padding
   std::size_t padded_size() const { return buf_->size; }
@@ -110,6 +115,14 @@ class Frame {
 public:
   // Allocate the frame and default the fields
   Frame();
+  // Create a frame by referencing the data of the given frame.
+  // If the data is not reference-counted, copy the data to a new frame.
+  Frame(const Frame &other);
+  Frame &operator=(const Frame &other);
+  // We need to define the move constructor and operator explicitly
+  // because they are not automatically defined if the copy constructor is manually defined.
+  Frame(Frame &&other) = default;
+  Frame &operator=(Frame &&other) = default;
 
   // True if the packet data is empty or invalid
   bool empty() const { return !frame_ || !frame_->data[0]; }
@@ -143,6 +156,13 @@ class CodecParameters {
 public:
   // Allocate the codec parameters and default the fields
   CodecParameters();
+  // Create a codec parameters by copying the given codec parameters
+  CodecParameters(const CodecParameters &other);
+  CodecParameters &operator=(const CodecParameters &other);
+  // We need to define the move constructor and operator explicitly
+  // because they are not automatically defined if the copy constructor is manually defined.
+  CodecParameters(CodecParameters &&other) = default;
+  CodecParameters &operator=(CodecParameters &&other) = default;
 
   std::string codec_type_name() const;
   std::string codec_name() const;
