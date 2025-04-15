@@ -16,7 +16,7 @@ namespace ffmpeg_cpp {
 // Decoder - RAII wrapper for AVCodecContext
 // =========================================
 
-static void set_options(AVCodecContext *codec_ctx) {
+static void set_options(AVCodecContext *const codec_ctx) {
   // Set the options to enable error concealment and format preference.
   // Some options are for video decoders, but they suppose no problem for other decoders.
   codec_ctx->workaround_bugs = FF_BUG_AUTODETECT;
