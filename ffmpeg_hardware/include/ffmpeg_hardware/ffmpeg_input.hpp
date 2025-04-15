@@ -1,5 +1,5 @@
-#ifndef FFMPEG_HARDWARE_FFMPEG_HARDWARE_HPP
-#define FFMPEG_HARDWARE_FFMPEG_HARDWARE_HPP
+#ifndef FFMPEG_HARDWARE_FFMPEG_INPUT_HPP
+#define FFMPEG_HARDWARE_FFMPEG_INPUT_HPP
 
 #include <chrono>
 #include <memory>
@@ -13,7 +13,7 @@
 #include <hardware_interface/hardware_info.hpp>
 #include <hardware_interface/loaned_command_interface.hpp>
 #include <hardware_interface/loaned_state_interface.hpp>
-#include <hardware_interface/system_interface.hpp>
+#include <hardware_interface/sensor_interface.hpp>
 #include <hardware_interface/types/hardware_interface_return_values.hpp>
 #include <rclcpp/duration.hpp>
 #include <rclcpp/time.hpp>
@@ -22,12 +22,12 @@
 
 namespace ffmpeg_hardware {
 
-class FFmpegHardware : public hardware_interface::SystemInterface {
+class FFmpegInput : public hardware_interface::SensorInterface {
 public:
   CallbackReturn on_init(const hardware_interface::HardwareInfo &hardware_info) override {
     // Initialize the base class. info_ is copied from hardware_info,
     // and *_interfaces_ are constructed according to the contents of info_.
-    if (const auto res = hardware_interface::SystemInterface::on_init(hardware_info);
+    if (const auto res = hardware_interface::SensorInterface::on_init(hardware_info);
         res != CallbackReturn::SUCCESS) {
       return res;
     }
@@ -112,12 +112,6 @@ public:
       packet_ = std::move(packet);
     }
 
-    return hardware_interface::return_type::OK;
-  }
-
-  hardware_interface::return_type write(const rclcpp::Time & /*time*/,
-                                        const rclcpp::Duration & /*period*/) override {
-    // Nothing to do
     return hardware_interface::return_type::OK;
   }
 

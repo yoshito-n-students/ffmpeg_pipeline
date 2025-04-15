@@ -1,10 +1,11 @@
 <library path="ffmpeg_hardware">
-  <class
-    name="ffmpeg_hardware/FFmpegHardware"
-    type="ffmpeg_hardware::FFmpegHardware"
-    base_class_type="hardware_interface::SystemInterface">
-    <description>
-      This plugin read video frames from various hardware devices using FFmpeg.
-    </description>
-  </class>
+
+    <class name="ffmpeg_hardware/FFmpegInput"
+           type="ffmpeg_hardware::FFmpegInput"
+           base_class_type="hardware_interface::SensorInterface">
+        <description>
+            This plugin read video/audio frames from various inputs using FFmpeg.
+        </description>
+    </class>
+
 </library>
