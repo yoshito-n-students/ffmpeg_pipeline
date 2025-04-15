@@ -16,7 +16,7 @@ namespace ffmpeg_cpp {
 Output::Output(const std::string &format_name, const std::string &filename,
                const CodecParameters &codec_params,
                const std::map<std::string, std::string> &option_map)
-    : format_ctx_(nullptr, &close_output), stream_(nullptr) {
+    : format_ctx_(nullptr, &close_output), stream_(nullptr), increasing_dts_(0) {
   // Register all the input format types
   avdevice_register_all();
 
@@ -83,19 +83,11 @@ bool Output::write_frame(const Packet &packet) {
   Packet output_packet(packet);
   // stream_index must point to the output stream
   output_packet->stream_index = stream_->index;
-  // pts can be set to AV_NOPTS_VALUE
-  output_packet->pts = AV_NOPTS_VALUE;
-  // dts must be increasing compared to the previous frame
-  output_packet->dts = [this]() {
-    std::int64_t last_dts;
-    if (const int ret =
-            av_get_output_timestamp(format_ctx_.get(), stream_->index, &last_dts, nullptr);
-        ret >= 0) {
-      return last_dts + 1;
-    } else {
-      throw Error("Output::write_frame(): Failed to get last output timestamp", ret);
-    }
-  }();
+  // en: The packet given to av_write_frame() must have monotonically increasing dts and pts.
+  // Even if the packet is temporarily failed to be sent to av_write_frame() and is resent,
+  // dts and pts must continue to increase.
+  // To guarantee this, overwrite the dts and pts of the copied packet.
+  output_packet->pts = output_packet->dts = increasing_dts_++;
 
   // Write the packet to the output stream
   if (const int ret = av_write_frame(format_ctx_.get(), output_packet.get()); ret >= 0) {
