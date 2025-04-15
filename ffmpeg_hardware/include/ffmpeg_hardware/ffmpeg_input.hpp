@@ -26,28 +26,23 @@ protected:
   // ============================
 
   CallbackReturn on_activate(const rclcpp_lifecycle::State & /*previous_state*/) override {
-    // Try to get the parameters for the input from the hardware_info, or use default values
-    const auto url = get_parameter_as<std::string>("url", "/dev/video0"),
-               input_format = get_parameter_as<std::string>("input_format", "v4l2"),
-               media_type = get_parameter_as<std::string>("media_type", "video");
-    const auto options = get_parameter_as<std::map<std::string, std::string>>(
-        "options", {{"input_format", "h264"},
-                    {"video_size", "1920x1080"},
-                    {"framerate", "30"},
-                    {"timestamps", "abs"}});
-
-    // Reset the input with the parameters
     try {
+      // Try to get the parameters for the input from the hardware_info, or use default values
+      const auto url = get_parameter_as<std::string>("url", "/dev/video0"),
+                 input_format = get_parameter_as<std::string>("input_format", "v4l2"),
+                 media_type = get_parameter_as<std::string>("media_type", "video");
+      const auto options = get_parameter_as<std::map<std::string, std::string>>(
+          "options", {{"input_format", "h264"},
+                      {"video_size", "1920x1080"},
+                      {"framerate", "30"},
+                      {"timestamps", "abs"}});
+
+      // Open the input with the parameters
       input_ = ffmpeg_cpp::Input(url, input_format, options, media_type);
       RCLCPP_INFO(get_logger(), "Configured the input (URL: %s, format: %s)", url.c_str(),
                   input_format.c_str());
-    } catch (const std::runtime_error &error) {
-      RCLCPP_ERROR(get_logger(), "Failed to configure the input: %s", error.what());
-      return CallbackReturn::ERROR;
-    }
 
-    // Initialize the codec params and packet
-    try {
+      // Initialize the codec params and packet by reading them from the input
       codec_params_ = input_.codec_parameters();
       while (true) {
         packet_ = input_.read_frame();
@@ -57,29 +52,28 @@ protected:
         RCLCPP_INFO(get_logger(), "Waiting for the first packet...");
         std::this_thread::sleep_for(std::chrono::milliseconds(250));
       }
+
+      // Set the initialized state variables to the interface
+      set_state_from_pointer("codec_parameters", &codec_params_);
+      set_state_from_pointer("packet", &packet_);
+
+      return CallbackReturn::SUCCESS;
     } catch (const std::runtime_error &error) {
-      RCLCPP_ERROR(get_logger(), "Failed to initialize codec name: %s", error.what());
+      RCLCPP_ERROR(get_logger(), "Failed to configure the input: %s", error.what());
       return CallbackReturn::ERROR;
     }
-
-    // Set the codec name and packet to the state interface
-    set_state_from_pointer("codec_parameters", &codec_params_);
-    set_state_from_pointer("packet", &packet_);
-
-    return CallbackReturn::SUCCESS;
   }
 
   CallbackReturn on_deactivate(const rclcpp_lifecycle::State & /*previous_state*/) override {
-    // Close the input device
     try {
+      // Close the input device
       input_ = ffmpeg_cpp::Input();
       RCLCPP_INFO(get_logger(), "Closed the input device");
+      return CallbackReturn::SUCCESS;
     } catch (const std::runtime_error &error) {
       RCLCPP_ERROR(get_logger(), "Failed to close the input device: %s", error.what());
       return CallbackReturn::ERROR;
     }
-
-    return CallbackReturn::SUCCESS;
   }
 
   // ================================
@@ -94,17 +88,16 @@ protected:
 
   hardware_interface::return_type read(const rclcpp::Time & /*time*/,
                                        const rclcpp::Duration & /*period*/) override {
-    // Update the packet
     try {
+      // Update the packet
       if (ffmpeg_cpp::Packet packet = input_.read_frame(); !packet.empty()) {
         packet_ = std::move(packet);
       }
+      return hardware_interface::return_type::OK;
     } catch (const std::runtime_error &error) {
       RCLCPP_ERROR(get_logger(), "Failed to read the packet: %s", error.what());
       return hardware_interface::return_type::ERROR;
     }
-
-    return hardware_interface::return_type::OK;
   }
 
 protected:
