@@ -188,10 +188,10 @@ private:
 class Input {
 public:
   // Construct without underlying AVFormatContext
-  Input() : format_ctx_(nullptr, &close_input), stream_id_(-1) {}
+  Input() : iformat_ctx_(nullptr, &close_input), istream_id_(-1) {}
   // Open the input device by avformat_open_input() with the given URL, format name, and options,
   // and find the best stream of the given media type
-  Input(const std::string &url, const std::string &format_name,
+  Input(const std::string &url, const std::string &iformat_name,
         const std::map<std::string, std::string> &option_map, const std::string &media_type_name);
 
   CodecParameters codec_parameters() const;
@@ -201,18 +201,18 @@ public:
   Packet read_frame();
 
   // Access to the underlying AVFormatContext
-  bool valid() const { return format_ctx_.get(); }
-  AVFormatContext *get() { return format_ctx_.get(); }
-  const AVFormatContext *get() const { return format_ctx_.get(); }
-  AVFormatContext *operator->() { return format_ctx_.operator->(); }
-  const AVFormatContext *operator->() const { return format_ctx_.operator->(); }
+  bool valid() const { return iformat_ctx_.get(); }
+  AVFormatContext *get() { return iformat_ctx_.get(); }
+  const AVFormatContext *get() const { return iformat_ctx_.get(); }
+  AVFormatContext *operator->() { return iformat_ctx_.operator->(); }
+  const AVFormatContext *operator->() const { return iformat_ctx_.operator->(); }
 
 private:
-  static void close_input(AVFormatContext *format_ctx);
+  static void close_input(AVFormatContext *iformat_ctx);
 
 private:
-  std::unique_ptr<AVFormatContext, decltype(&close_input)> format_ctx_;
-  int stream_id_;
+  std::unique_ptr<AVFormatContext, decltype(&close_input)> iformat_ctx_;
+  int istream_id_;
 };
 
 // ===============================================
@@ -222,7 +222,7 @@ private:
 class Decoder {
 public:
   // Construct without underlying AVCodecContext
-  Decoder() : codec_ctx_(nullptr, &free_context) {}
+  Decoder() : decoder_ctx_(nullptr, &free_context) {}
   // Allocate the codec context for the given codec name.
   // Parameters can be filled with Parser::parse().
   Decoder(const std::string &codec_name);
@@ -240,17 +240,17 @@ public:
   Frame receive_frame();
 
   // Access to the underlying AVCodecContext
-  bool valid() const { return codec_ctx_.get(); }
-  AVCodecContext *get() { return codec_ctx_.get(); }
-  const AVCodecContext *get() const { return codec_ctx_.get(); }
-  AVCodecContext *operator->() { return codec_ctx_.operator->(); }
-  const AVCodecContext *operator->() const { return codec_ctx_.operator->(); }
+  bool valid() const { return decoder_ctx_.get(); }
+  AVCodecContext *get() { return decoder_ctx_.get(); }
+  const AVCodecContext *get() const { return decoder_ctx_.get(); }
+  AVCodecContext *operator->() { return decoder_ctx_.operator->(); }
+  const AVCodecContext *operator->() const { return decoder_ctx_.operator->(); }
 
 private:
-  static void free_context(AVCodecContext *codec_ctx);
+  static void free_context(AVCodecContext *decoder_ctx);
 
 private:
-  std::unique_ptr<AVCodecContext, decltype(&free_context)> codec_ctx_;
+  std::unique_ptr<AVCodecContext, decltype(&free_context)> decoder_ctx_;
 };
 
 // ================================
@@ -289,7 +289,7 @@ private:
 class Encoder {
 public:
   // Construct without underlying AVCodecContext
-  Encoder() : codec_ctx_(nullptr, &free_context) {}
+  Encoder() : encoder_ctx_(nullptr, &free_context) {}
   // Allocate the codec context for the given codec name.
   // Parameters can be filled with Parser::parse().
   Encoder(const std::string &codec_name);
@@ -307,17 +307,17 @@ public:
   Packet receive_packet();
 
   // Access to the underlying AVCodecContext
-  bool valid() const { return codec_ctx_.get(); }
-  AVCodecContext *get() { return codec_ctx_.get(); }
-  const AVCodecContext *get() const { return codec_ctx_.get(); }
-  AVCodecContext *operator->() { return codec_ctx_.operator->(); }
-  const AVCodecContext *operator->() const { return codec_ctx_.operator->(); }
+  bool valid() const { return encoder_ctx_.get(); }
+  AVCodecContext *get() { return encoder_ctx_.get(); }
+  const AVCodecContext *get() const { return encoder_ctx_.get(); }
+  AVCodecContext *operator->() { return encoder_ctx_.operator->(); }
+  const AVCodecContext *operator->() const { return encoder_ctx_.operator->(); }
 
 private:
-  static void free_context(AVCodecContext *codec_ctx);
+  static void free_context(AVCodecContext *encoder_ctx);
 
 private:
-  std::unique_ptr<AVCodecContext, decltype(&free_context)> codec_ctx_;
+  std::unique_ptr<AVCodecContext, decltype(&free_context)> encoder_ctx_;
 };
 
 // ===========================
@@ -362,10 +362,10 @@ private:
 class Output {
 public:
   // Construct without underlying AVFormatContext
-  Output() : format_ctx_(nullptr, &close_output), stream_(nullptr), increasing_dts_(0) {}
+  Output() : oformat_ctx_(nullptr, &close_output), ostream_(nullptr), increasing_dts_(0) {}
   // Open the output device with the given format name and filename,
   // and set the codec parameters and options to the stream
-  Output(const std::string &format_name, const std::string &filename,
+  Output(const std::string &oformat_name, const std::string &filename,
          const CodecParameters &codec_params, const std::map<std::string, std::string> &option_map);
 
   // Write a frame to the stream of interest in a NON-BLOCKING way.
@@ -373,18 +373,18 @@ public:
   bool write_frame(const Packet &packet);
 
   // Access to the underlying AVFormatContext
-  bool valid() const { return format_ctx_.get(); }
-  AVFormatContext *get() { return format_ctx_.get(); }
-  const AVFormatContext *get() const { return format_ctx_.get(); }
-  AVFormatContext *operator->() { return format_ctx_.operator->(); }
-  const AVFormatContext *operator->() const { return format_ctx_.operator->(); }
+  bool valid() const { return oformat_ctx_.get(); }
+  AVFormatContext *get() { return oformat_ctx_.get(); }
+  const AVFormatContext *get() const { return oformat_ctx_.get(); }
+  AVFormatContext *operator->() { return oformat_ctx_.operator->(); }
+  const AVFormatContext *operator->() const { return oformat_ctx_.operator->(); }
 
 private:
-  static void close_output(AVFormatContext *format_ctx);
+  static void close_output(AVFormatContext *oformat_ctx);
 
 private:
-  std::unique_ptr<AVFormatContext, decltype(&close_output)> format_ctx_;
-  AVStream *stream_;
+  std::unique_ptr<AVFormatContext, decltype(&close_output)> oformat_ctx_;
+  AVStream *ostream_;
   std::uint64_t increasing_dts_;
 };
 

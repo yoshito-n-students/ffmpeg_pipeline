@@ -16,13 +16,13 @@ namespace ffmpeg_cpp {
 // Decoder - RAII wrapper for AVCodecContext
 // =========================================
 
-static void set_options(AVCodecContext *const codec_ctx) {
+static void set_options(AVCodecContext *const decoder_ctx) {
   // Set the options to enable error concealment and format preference.
   // Some options are for video decoders, but they suppose no problem for other decoders.
-  codec_ctx->workaround_bugs = FF_BUG_AUTODETECT;
-  codec_ctx->err_recognition = AV_EF_CRCCHECK;
-  codec_ctx->error_concealment = FF_EC_GUESS_MVS | FF_EC_DEBLOCK;
-  codec_ctx->get_format = [](AVCodecContext *codec_ctx, const AVPixelFormat *formats) {
+  decoder_ctx->workaround_bugs = FF_BUG_AUTODETECT;
+  decoder_ctx->err_recognition = AV_EF_CRCCHECK;
+  decoder_ctx->error_concealment = FF_EC_GUESS_MVS | FF_EC_DEBLOCK;
+  decoder_ctx->get_format = [](AVCodecContext *decoder_ctx, const AVPixelFormat *formats) {
     // Prefer the first pixel formats compatible with ROS image encodings
     // to avoid unnecessary conversions after decoding
     for (const AVPixelFormat *format = formats; *format != AV_PIX_FMT_NONE; ++format) {
@@ -32,17 +32,17 @@ static void set_options(AVCodecContext *const codec_ctx) {
       }
     }
     // If no compatible pixel format is found, defer to the default behavior
-    return avcodec_default_get_format(codec_ctx, formats);
+    return avcodec_default_get_format(decoder_ctx, formats);
   };
 
   // Create a hardware acceleration context supported by the decoder.
   // If multiple hardware devices are supported, the first one is used.
-  if (!codec_ctx->hw_device_ctx) {
+  if (!decoder_ctx->hw_device_ctx) {
     for (int i = 0;; ++i) {
-      const AVCodecHWConfig *const hw_config = avcodec_get_hw_config(codec_ctx->codec, i);
+      const AVCodecHWConfig *const hw_config = avcodec_get_hw_config(decoder_ctx->codec, i);
       if (hw_config                                                         // HW config exists
           && (hw_config->methods & AV_CODEC_HW_CONFIG_METHOD_HW_DEVICE_CTX) // HW context supported
-          && av_hwdevice_ctx_create(&codec_ctx->hw_device_ctx, hw_config->device_type, nullptr,
+          && av_hwdevice_ctx_create(&decoder_ctx->hw_device_ctx, hw_config->device_type, nullptr,
                                     nullptr, 0) == 0 // HW context created
       ) {
         break; // exit the loop if the HW context is created successfully
@@ -53,7 +53,7 @@ static void set_options(AVCodecContext *const codec_ctx) {
   }
 }
 
-Decoder::Decoder(const std::string &codec_name) : codec_ctx_(nullptr, &free_context) {
+Decoder::Decoder(const std::string &codec_name) : decoder_ctx_(nullptr, &free_context) {
   // Find the decoder by name
   const AVCodec *const codec = avcodec_find_decoder_by_name(codec_name.c_str());
   if (!codec) {
@@ -61,19 +61,19 @@ Decoder::Decoder(const std::string &codec_name) : codec_ctx_(nullptr, &free_cont
   }
 
   // Allocate the decoder context and set some options
-  codec_ctx_.reset(avcodec_alloc_context3(codec));
-  if (!codec_ctx_) {
+  decoder_ctx_.reset(avcodec_alloc_context3(codec));
+  if (!decoder_ctx_) {
     throw Error("Decoder::Decoder(): Failed to allocate codec context");
   }
-  set_options(codec_ctx_.get());
+  set_options(decoder_ctx_.get());
 
   // Open the decoder
-  if (const int ret = avcodec_open2(codec_ctx_.get(), codec, nullptr); ret < 0) {
+  if (const int ret = avcodec_open2(decoder_ctx_.get(), codec, nullptr); ret < 0) {
     throw Error("Decoder::Decoder(): Failed to open codec", ret);
   }
 }
 
-Decoder::Decoder(const CodecParameters &params) : codec_ctx_(nullptr, &free_context) {
+Decoder::Decoder(const CodecParameters &params) : decoder_ctx_(nullptr, &free_context) {
   // Find the decoder by the given id
   const AVCodec *const codec = avcodec_find_decoder(params->codec_id);
   if (!codec) {
@@ -81,23 +81,23 @@ Decoder::Decoder(const CodecParameters &params) : codec_ctx_(nullptr, &free_cont
   }
 
   // Allocate the decoder context and set some options
-  codec_ctx_.reset(avcodec_alloc_context3(codec));
-  if (!codec_ctx_) {
+  decoder_ctx_.reset(avcodec_alloc_context3(codec));
+  if (!decoder_ctx_) {
     throw Error("Decoder::Decoder(): Failed to allocate codec context");
   }
-  set_options(codec_ctx_.get());
+  set_options(decoder_ctx_.get());
 
   // Import the codec parameters to the decoder context
-  avcodec_parameters_to_context(codec_ctx_.get(), params.get());
+  avcodec_parameters_to_context(decoder_ctx_.get(), params.get());
 
   // Open the decoder
-  if (const int ret = avcodec_open2(codec_ctx_.get(), codec, nullptr); ret < 0) {
+  if (const int ret = avcodec_open2(decoder_ctx_.get(), codec, nullptr); ret < 0) {
     throw Error("Decoder::Decoder(): Failed to open codec", ret);
   }
 }
 
 void Decoder::send_packet(const Packet &packet) {
-  if (const int ret = avcodec_send_packet(codec_ctx_.get(), packet.get()); ret < 0) {
+  if (const int ret = avcodec_send_packet(decoder_ctx_.get(), packet.get()); ret < 0) {
     throw Error("Decoder::send_packet(): Error sending packet for decoding", ret);
   }
 }
@@ -109,25 +109,25 @@ Frame Decoder::receive_frame() {
   // - AVERROR_EOF: No frame available because the decoder has finished successfully
   // TODO: Notify the reason for the empty frame to the caller
   Frame frame;
-  if (const int ret = avcodec_receive_frame(codec_ctx_.get(), frame.get());
+  if (const int ret = avcodec_receive_frame(decoder_ctx_.get(), frame.get());
       ret < 0 && ret != AVERROR(EAGAIN) && ret != AVERROR_EOF) {
     throw Error("Decoder::receive_frame(): Error during decoding", ret);
   }
   return frame;
 }
 
-std::string Decoder::codec_name() const { return avcodec_get_name(codec_ctx_->codec_id); }
+std::string Decoder::codec_name() const { return avcodec_get_name(decoder_ctx_->codec_id); }
 
 std::string Decoder::hw_type_name() const {
   // av_hwdevice_get_type_name(AV_HWDEVICE_TYPE_NONE) returns nullptr,
   // so std::string CANNOT be constructed and std::logic_error is thrown.
   // To avoid this, return "none" in the case of no hardware.
-  return codec_ctx_->hw_device_ctx
+  return decoder_ctx_->hw_device_ctx
              ? av_hwdevice_get_type_name(
-                   reinterpret_cast<AVHWDeviceContext *>(codec_ctx_->hw_device_ctx->data)->type)
+                   reinterpret_cast<AVHWDeviceContext *>(decoder_ctx_->hw_device_ctx->data)->type)
              : "none";
 }
 
-void Decoder::free_context(AVCodecContext *codec_ctx) { avcodec_free_context(&codec_ctx); }
+void Decoder::free_context(AVCodecContext *decoder_ctx) { avcodec_free_context(&decoder_ctx); }
 
 } // namespace ffmpeg_cpp
