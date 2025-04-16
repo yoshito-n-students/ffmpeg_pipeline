@@ -32,4 +32,12 @@
         </description>
     </class>
 
+    <class name="ffmpeg_controllers/PacketController"
+           type="ffmpeg_controllers::PacketController"
+           base_class_type="controller_interface::ControllerInterface">
+        <description>
+            This controller subscribes general packets as ffmpeg_pipeline_msgs::Packet and write them to the output.
+        </description>
+    </class>
+
 </library>
