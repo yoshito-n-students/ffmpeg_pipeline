@@ -5,4 +5,4 @@ controller_manager:
 compressed_image_broadcaster:
   ros__parameters:
     type: ffmpeg_controllers/CompressedImageBroadcaster
-    sensor_name: h264_camera
+    input_name: h264_camera

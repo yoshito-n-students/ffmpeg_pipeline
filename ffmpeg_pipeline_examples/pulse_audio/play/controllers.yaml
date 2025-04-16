@@ -5,4 +5,4 @@ controller_manager:
 packet_controller:
   ros__parameters:
     type: ffmpeg_controllers/PacketController
-    sensor_name: pulse_audio
+    output_name: pulse_audio
