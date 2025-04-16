@@ -19,10 +19,8 @@ public:
 protected:
   std::optional<ffmpeg_cpp::Packet>
   on_update(const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/,
-            const ffmpeg_pipeline_msgs::msg::Packet & /*msg*/) override {
-    ffmpeg_cpp::Packet packet;
-    // TODO: convert the message to a packet
-    return packet;
+            const ffmpeg_pipeline_msgs::msg::Packet &msg) override {
+    return ffmpeg_cpp::Packet(msg);
   }
 };
 

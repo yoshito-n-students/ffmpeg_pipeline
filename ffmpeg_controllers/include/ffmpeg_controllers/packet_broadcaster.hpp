@@ -22,12 +22,7 @@ protected:
                                    const rclcpp::Duration & /*period*/,
                                    const ffmpeg_cpp::CodecParameters &codec_params,
                                    const ffmpeg_cpp::Packet &packet) override {
-    Message msg;
-    msg.header.stamp.sec = packet->dts / 1'000'000;
-    msg.header.stamp.nanosec = (packet->dts % 1'000'000) * 1'000;
-    msg.codec = codec_params.codec_name();
-    msg.data.assign(packet->data, packet->data + packet->size);
-    return msg;
+    return packet.to_msg(codec_params.codec_name());
   }
 };
 
