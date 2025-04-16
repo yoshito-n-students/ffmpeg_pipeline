@@ -33,7 +33,7 @@ target_include_directories(
   "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
   "$<INSTALL_INTERFACE:include>")
 target_link_libraries(ffmpeg_cpp avcodec avdevice avformat avutil swscale ${YAML_CPP_LIBRARIES})
-ament_target_dependencies(ffmpeg_cpp ffmpeg_pipeline_msgs sensor_msgs yaml_cpp_vendor)
+ament_target_dependencies(ffmpeg_cpp ffmpeg_pipeline_msgs rclcpp sensor_msgs yaml_cpp_vendor)
 
 #
 add_executable(
@@ -93,7 +93,7 @@ install(
 # export the library for downstream projects
 ament_export_include_directories(include)
 ament_export_targets(export_ffmpeg_cpp HAS_LIBRARY_TARGET)
-ament_export_dependencies(ffmpeg_pipeline_msgs yaml_cpp_vendor)
+ament_export_dependencies(ffmpeg_pipeline_msgs rclcpp yaml_cpp_vendor)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

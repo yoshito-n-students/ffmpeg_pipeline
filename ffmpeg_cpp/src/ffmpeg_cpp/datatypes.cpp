@@ -67,7 +67,11 @@ Packet::Packet(const BufferRef &buf) : Packet() {
 
 Packet::Packet(const ffmpeg_pipeline_msgs::msg::Packet &msg)
     : Packet(BufferRef(msg.data.data(), msg.data.size())) {
-  // TODO: copy timestamps and other fields??
+  packet_->pts = msg.pts;
+  packet_->dts = msg.dts;
+  packet_->duration = msg.duration;
+  packet_->time_base.num = msg.time_base.num;
+  packet_->time_base.den = msg.time_base.den;
 }
 
 Packet::Packet(const Packet &other) : Packet() {
@@ -83,12 +87,17 @@ Packet &Packet::operator=(const Packet &other) {
   return *this;
 }
 
-ffmpeg_pipeline_msgs::msg::Packet Packet::to_msg(const std::string &codec_name) const {
+ffmpeg_pipeline_msgs::msg::Packet Packet::to_msg(const rclcpp::Time &stamp,
+                                                 const std::string &codec_name) const {
   ffmpeg_pipeline_msgs::msg::Packet msg;
-  msg.header.stamp.sec = packet_->dts / 1'000'000;
-  msg.header.stamp.nanosec = (packet_->dts % 1'000'000) * 1'000;
+  msg.header.stamp = stamp;
   msg.codec = codec_name;
+  msg.pts = packet_->pts;
+  msg.dts = packet_->dts;
   msg.data.assign(packet_->data, packet_->data + packet_->size);
+  msg.duration = packet_->duration;
+  msg.time_base.num = packet_->time_base.num;
+  msg.time_base.den = packet_->time_base.den;
   return msg;
 }
 

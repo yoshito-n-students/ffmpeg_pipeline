@@ -9,6 +9,7 @@
 #include <vector>
 
 #include <ffmpeg_pipeline_msgs/msg/packet.hpp>
+#include <rclcpp/time.hpp>
 
 extern "C" {
 #include <libavcodec/avcodec.h>
@@ -101,7 +102,8 @@ public:
   bool empty() const { return !packet_ || !packet_->data || packet_->size == 0; }
 
   // Convert the packet to a message
-  ffmpeg_pipeline_msgs::msg::Packet to_msg(const std::string &codec_name) const;
+  ffmpeg_pipeline_msgs::msg::Packet to_msg(const rclcpp::Time &stamp,
+                                           const std::string &codec_name) const;
 
   // Access to the underlying AVPacket
   AVPacket *get() { return packet_.get(); }

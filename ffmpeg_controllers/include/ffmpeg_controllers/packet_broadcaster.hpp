@@ -22,7 +22,7 @@ protected:
                                    const rclcpp::Duration & /*period*/,
                                    const ffmpeg_cpp::CodecParameters &codec_params,
                                    const ffmpeg_cpp::Packet &packet) override {
-    return packet.to_msg(codec_params.codec_name());
+    return packet.to_msg(get_node()->now(), codec_params.codec_name());
   }
 };
 
