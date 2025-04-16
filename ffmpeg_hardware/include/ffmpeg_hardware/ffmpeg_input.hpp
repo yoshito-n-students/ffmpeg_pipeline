@@ -53,7 +53,7 @@ protected:
         std::this_thread::sleep_for(std::chrono::milliseconds(250));
       }
 
-      // Set the initialized state variables to the interface
+      // Register the initialized state variables to the interface
       set_state_from_pointer("codec_parameters", &codec_params_);
       set_state_from_pointer("packet", &packet_);
 
@@ -66,6 +66,11 @@ protected:
 
   CallbackReturn on_deactivate(const rclcpp_lifecycle::State & /*previous_state*/) override {
     try {
+      // Unregister the state variables to the interface
+      set_state_from_pointer("codec_parameters",
+                             static_cast<const ffmpeg_cpp::CodecParameters *>(nullptr));
+      set_state_from_pointer("packet", static_cast<const ffmpeg_cpp::Packet *>(nullptr));
+
       // Close the input device
       input_ = ffmpeg_cpp::Input();
       RCLCPP_INFO(get_logger(), "Closed the input device");
@@ -82,8 +87,8 @@ protected:
 
   std::vector<hardware_interface::InterfaceDescription>
   export_unlisted_state_interface_descriptions() override {
-    return {make_interface_description("codec_parameters", "ffmpeg_cpp::CodecParameters*"),
-            make_interface_description("packet", "ffmpeg_cpp::Packet*")};
+    return {make_interface_description("codec_parameters", "const ffmpeg_cpp::CodecParameters*"),
+            make_interface_description("packet", "const ffmpeg_cpp::Packet*")};
   }
 
   hardware_interface::return_type read(const rclcpp::Time & /*time*/,
