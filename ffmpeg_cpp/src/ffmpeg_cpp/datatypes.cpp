@@ -212,7 +212,6 @@ bool convert<ffmpeg_cpp::CodecParameters>::decode(const Node &yaml,
     decode_if_exists(yaml, "profile", &params->profile);
     decode_if_exists(yaml, "level", &params->level);
     // === for video and audio ===
-    // format
     if (const Node elem = yaml["format"]; elem) {
       switch (params->codec_type) {
       case AVMEDIA_TYPE_VIDEO:
@@ -222,7 +221,7 @@ bool convert<ffmpeg_cpp::CodecParameters>::decode(const Node &yaml,
         params->format = av_get_sample_fmt(elem.as<std::string>().c_str());
         break;
       default:
-        std::cerr << "format is ignored as codec_type is not video or audio" << std::endl;
+        std::cerr << "format field is ignored as codec type is not video or audio" << std::endl;
         break;
       }
     }
@@ -250,7 +249,7 @@ bool convert<ffmpeg_cpp::CodecParameters>::decode(const Node &yaml,
     decode_if_exists(yaml, "seek_preroll", &params->seek_preroll);
     return true;
   } catch (const std::runtime_error &error) {
-    std::cerr << "Failed to convert yaml to CodecParameters: " << error.what() << std::endl;
+    std::cerr << "Failed to decode CodecParameters from yaml: " << error.what() << std::endl;
     return false;
   }
 }
