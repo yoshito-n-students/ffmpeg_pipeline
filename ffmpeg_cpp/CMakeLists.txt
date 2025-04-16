@@ -7,6 +7,7 @@ endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
+find_package(ffmpeg_pipeline_msgs REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rosbag2_storage REQUIRED)
 find_package(rosbag2_transport REQUIRED)
@@ -14,7 +15,7 @@ find_package(sensor_msgs REQUIRED)
 find_package(yaml-cpp REQUIRED)
 find_package(yaml_cpp_vendor REQUIRED)
 
-# ffmpeg_cpp as an interface library (i.e. no compilation, only headers)
+# ffmpeg_cpp as a shared library
 add_library(
   ffmpeg_cpp SHARED
   src/ffmpeg_cpp/codec_parameters.cpp
@@ -32,7 +33,7 @@ target_include_directories(
   "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
   "$<INSTALL_INTERFACE:include>")
 target_link_libraries(ffmpeg_cpp avcodec avdevice avformat avutil swscale ${YAML_CPP_LIBRARIES})
-ament_target_dependencies(ffmpeg_cpp sensor_msgs yaml_cpp_vendor)
+ament_target_dependencies(ffmpeg_cpp ffmpeg_pipeline_msgs sensor_msgs yaml_cpp_vendor)
 
 #
 add_executable(
@@ -92,6 +93,7 @@ install(
 # export the library for downstream projects
 ament_export_include_directories(include)
 ament_export_targets(export_ffmpeg_cpp HAS_LIBRARY_TARGET)
+ament_export_dependencies(ffmpeg_pipeline_msgs yaml_cpp_vendor)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

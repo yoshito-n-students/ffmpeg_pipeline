@@ -65,6 +65,11 @@ Packet::Packet(const BufferRef &buf) : Packet() {
   packet_->size = buf.unpadded_size();
 }
 
+Packet::Packet(const ffmpeg_pipeline_msgs::msg::Packet &msg)
+    : Packet(BufferRef(msg.data.data(), msg.data.size())) {
+  // TODO: copy timestamps and other fields??
+}
+
 Packet::Packet(const Packet &other) : Packet() {
   if (const int ret = av_packet_ref(packet_.get(), other.get()); ret < 0) {
     throw Error("Packet::Packet(): Failed to create a reference to packet", ret);
@@ -76,6 +81,15 @@ Packet &Packet::operator=(const Packet &other) {
     throw Error("Packet::operator=(): Failed to create a reference to packet", ret);
   }
   return *this;
+}
+
+ffmpeg_pipeline_msgs::msg::Packet::UniquePtr Packet::to_msg() const {
+  auto msg = std::make_unique<ffmpeg_pipeline_msgs::msg::Packet>();
+  msg->header.stamp.sec = packet_->dts / 1'000'000;
+  msg->header.stamp.nanosec = (packet_->dts % 1'000'000) * 1'000;
+  // msg->codec = codec_name;
+  msg->data.assign(packet_->data, packet_->data + packet_->size);
+  return msg;
 }
 
 void Packet::free_packet(AVPacket *packet) { av_packet_free(&packet); }

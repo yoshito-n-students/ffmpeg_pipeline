@@ -8,6 +8,8 @@
 #include <string>
 #include <vector>
 
+#include <ffmpeg_pipeline_msgs/msg/packet.hpp>
+
 extern "C" {
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
@@ -84,6 +86,8 @@ public:
   Packet();
   // Create a packet by referencing the given buffer
   Packet(const BufferRef &buf);
+  // Create a packet by copying the given message
+  Packet(const ffmpeg_pipeline_msgs::msg::Packet &msg);
   // Create a packet by referencing the data of the given packet.
   // If the data is not reference-counted, copy the data to a new packet.
   Packet(const Packet &other);
@@ -95,6 +99,9 @@ public:
 
   // True if the packet data is empty or invalid
   bool empty() const { return !packet_ || !packet_->data || packet_->size == 0; }
+
+  // Convert the packet to a message
+  ffmpeg_pipeline_msgs::msg::Packet::UniquePtr to_msg() const;
 
   // Access to the underlying AVPacket
   AVPacket *get() { return packet_.get(); }
