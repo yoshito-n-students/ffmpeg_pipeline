@@ -29,6 +29,7 @@ protected:
 
       // Register the command variables to the interface
       set_command_from_pointer("packet", &packet_);
+      prev_dts_ = 0;
 
       return CallbackReturn::SUCCESS;
     } catch (const std::runtime_error &error) {
@@ -70,8 +71,10 @@ protected:
   hardware_interface::return_type write(const rclcpp::Time & /*time*/,
                                         const rclcpp::Duration & /*period*/) override {
     try {
-      if (true /* TODO: if packet updated */) {
+      // Write the packet to the output device if the packet is newer than the previous one
+      if (packet_->dts > prev_dts_) {
         output_.write_frame(packet_);
+        prev_dts_ = packet_->dts;
       }
       return hardware_interface::return_type::OK;
     } catch (const std::runtime_error &error) {
@@ -83,6 +86,7 @@ protected:
 protected:
   ffmpeg_cpp::Output output_;
   ffmpeg_cpp::Packet packet_;
+  decltype(ffmpeg_cpp::Packet()->dts) prev_dts_;
 };
 
 } // namespace ffmpeg_hardware
