@@ -12,8 +12,9 @@ find_package(std_msgs REQUIRED)
 
 rosidl_generate_interfaces(
   ${PROJECT_NAME}
-  "msg/Frame.msg"
-  "msg/Packet.msg"
+  msg/Frame.msg
+  msg/Packet.msg
+  msg/Rational.msg
   DEPENDENCIES std_msgs)
 
 if(BUILD_TESTING)
