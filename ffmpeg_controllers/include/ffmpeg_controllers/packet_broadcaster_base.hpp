@@ -29,7 +29,7 @@ protected:
   CallbackReturn on_init() override {
     // Load parameters
     input_name_ = get_node()->declare_parameter("input_name", default_input_name_);
-    prev_pts_ = 0;
+    prev_dts_ = 0;
     return CallbackReturn::SUCCESS;
   }
 
@@ -73,7 +73,7 @@ protected:
     }
 
     // Skip publishing if the packet is not new
-    if ((*packet)->pts <= prev_pts_) {
+    if ((*packet)->dts <= prev_dts_) {
       return controller_interface::return_type::OK;
     }
 
@@ -87,7 +87,7 @@ protected:
     if (async_publisher_->trylock()) {
       async_publisher_->msg_ = std::move(*msg);
       async_publisher_->unlockAndPublish();
-      prev_pts_ = (*packet)->pts;
+      prev_dts_ = (*packet)->dts;
     }
 
     return controller_interface::return_type::OK;
@@ -136,7 +136,7 @@ protected:
   typename rclcpp::Publisher<Message>::SharedPtr underlying_publisher_;
   std::unique_ptr<realtime_tools::RealtimePublisher<Message>> async_publisher_;
 
-  decltype(ffmpeg_cpp::Packet()->pts) prev_pts_;
+  decltype(ffmpeg_cpp::Packet()->dts) prev_dts_;
 };
 
 } // namespace ffmpeg_controllers
