@@ -53,8 +53,8 @@ public:
 
       // Build the image message
       Message msg;
-      msg.header.stamp.sec = frame->dts / 1'000'000;
-      msg.header.stamp.nanosec = (frame->dts % 1'000'000) * 1'000;
+      msg.header.stamp.sec = frame->pkt_dts / 1'000'000;
+      msg.header.stamp.nanosec = (frame->pkt_dts % 1'000'000) * 1'000;
       msg.height = frame->height;
       msg.width = frame->width;
       msg.encoding = dst_encoding_;
