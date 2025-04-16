@@ -14,7 +14,10 @@
                 format: s16
                 ch_layout: stereo
                 sample_rate: 44100
-                bit_rate: 128000
+                bit_rate: 1411200
+            </param>
+            <param name="options">
+                buffer_duration: 50
             </param>
         </hardware>
     </ros2_control>

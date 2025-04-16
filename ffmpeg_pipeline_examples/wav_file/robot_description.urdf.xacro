@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<robot name="robot">
+
+    <link name="body">
+    </link>
+
+    <ros2_control name="audio_streamer" type="sensor">
+        <hardware>
+            <plugin>ffmpeg_hardware/FFmpegInput</plugin>
+            <param name="url">$(find ffmpeg_pipeline_examples)/wav_file/example.wav</param>
+            <param name="input_format">wav</param>
+            <param name="options">
+                {}
+            </param>
+            <param name="media_type">audio</param>
+        </hardware>
+    </ros2_control>
+
+</robot>
