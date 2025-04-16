@@ -27,6 +27,9 @@ protected:
       RCLCPP_INFO(get_logger(), "Configured the output (filename: %s, format: %s)",
                   filename.c_str(), format.c_str());
 
+      // Register the command variables to the interface
+      set_command_from_pointer("packet", &packet_);
+
       return CallbackReturn::SUCCESS;
     } catch (const std::runtime_error &error) {
       RCLCPP_ERROR(get_logger(), "Failed to configure the output device: %s", error.what());
@@ -36,6 +39,9 @@ protected:
 
   CallbackReturn on_deactivate(const rclcpp_lifecycle::State & /*previous_state*/) override {
     try {
+      // Unregister the command variables to the interface
+      set_command_from_pointer("packet", static_cast<ffmpeg_cpp::Packet *>(nullptr));
+
       // Close the output device
       output_ = ffmpeg_cpp::Output();
       RCLCPP_INFO(get_logger(), "Closed the output device");
@@ -64,9 +70,8 @@ protected:
   hardware_interface::return_type write(const rclcpp::Time & /*time*/,
                                         const rclcpp::Duration & /*period*/) override {
     try {
-      if (const auto packet = get_command_as_pointer<ffmpeg_cpp::Packet>("packet");
-          packet /* && packet->dts > prev_dts */) {
-        output_.write_frame(*packet);
+      if (true /* TODO: if packet updated */) {
+        output_.write_frame(packet_);
       }
       return hardware_interface::return_type::OK;
     } catch (const std::runtime_error &error) {
@@ -77,6 +82,7 @@ protected:
 
 protected:
   ffmpeg_cpp::Output output_;
+  ffmpeg_cpp::Packet packet_;
 };
 
 } // namespace ffmpeg_hardware

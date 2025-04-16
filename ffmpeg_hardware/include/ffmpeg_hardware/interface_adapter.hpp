@@ -36,14 +36,15 @@ protected:
   // the command/state can only be set as a double type value.
   // Therefore, in case of getting the pointer-type command,
   // the double type on the interface is converted to pointer type at the value level.
-  // In case of setting the pointer-type state, 
+  // In case of setting the pointer-type state,
   // the pointer type is converted to double type at the value level for the interface.
   // The double type has 53 bits of precision,
   // which is sufficient to represent the 47 bits of the Linux user's address space.
 
-  template <typename T> const T *get_command_as_pointer(const std::string &iface_name) const {
-    return reinterpret_cast<const T *>(static_cast<std::uintptr_t>(
-        Interface::get_command(make_interface_description(iface_name, "").get_name())));
+  template <typename T>
+  void set_command_from_pointer(const std::string &iface_name, T *const value) {
+    Interface::set_command(make_interface_description(iface_name, "").get_name(),
+                           static_cast<double>(reinterpret_cast<std::uintptr_t>(value)));
   }
 
   template <typename T>
