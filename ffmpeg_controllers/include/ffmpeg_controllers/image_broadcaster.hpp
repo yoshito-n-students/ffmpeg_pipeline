@@ -18,7 +18,7 @@ private:
   using Base = FrameBroadcasterBase<sensor_msgs::msg::Image>;
 
 public:
-  ImageBroadcaster() : Base(/* default_sensor_name = */ "camera", /* topic = */ "~/image") {}
+  ImageBroadcaster() : Base(/* default_input_name = */ "camera", /* topic = */ "~/image") {}
 
   CallbackReturn on_init() override {
     // Call the base class on_init

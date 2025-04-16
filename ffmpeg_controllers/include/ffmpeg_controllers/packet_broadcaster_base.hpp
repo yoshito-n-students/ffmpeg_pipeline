@@ -16,8 +16,8 @@ namespace ffmpeg_controllers {
 template <typename MessageT>
 class PacketBroadcasterBase : public controller_interface::ControllerInterface {
 public:
-  PacketBroadcasterBase(const std::string &default_sensor_name, const std::string &topic)
-      : default_sensor_name_(default_sensor_name), topic_(topic) {}
+  PacketBroadcasterBase(const std::string &default_input_name, const std::string &topic)
+      : default_input_name_(default_input_name), topic_(topic) {}
 
 protected:
   using Message = MessageT;
@@ -28,7 +28,7 @@ protected:
 
   CallbackReturn on_init() override {
     // Load parameters
-    sensor_name_ = get_node()->declare_parameter("sensor_name", default_sensor_name_);
+    input_name_ = get_node()->declare_parameter("input_name", default_input_name_);
     prev_pts_ = 0;
     return CallbackReturn::SUCCESS;
   }
@@ -57,17 +57,16 @@ protected:
   }
 
   controller_interface::InterfaceConfiguration state_interface_configuration() const override {
-    // Request "foo_sensor/codec_parameters" and "foo_sensor/packet" state interfaces
+    // Request "foo_input/codec_parameters" and "foo_input/packet" state interfaces
     return {controller_interface::interface_configuration_type::INDIVIDUAL,
-            {sensor_name_ + "/codec_parameters", sensor_name_ + "/packet"}};
+            {input_name_ + "/codec_parameters", input_name_ + "/packet"}};
   }
 
   controller_interface::return_type update(const rclcpp::Time &time,
                                            const rclcpp::Duration &period) override {
     // Try to get the codec params and packet from the state interfaces
-    const auto codec_params =
-        get_state_as_pointer<ffmpeg_cpp::CodecParameters>(sensor_name_, "codec_parameters");
-    const auto packet = get_state_as_pointer<ffmpeg_cpp::Packet>(sensor_name_, "packet");
+    const auto codec_params = get_state_as_pointer<ffmpeg_cpp::CodecParameters>("codec_parameters");
+    const auto packet = get_state_as_pointer<ffmpeg_cpp::Packet>("packet");
     if (!codec_params || !packet) {
       RCLCPP_WARN(get_logger(), "Failed to get codec parameters or packet. Will skip this update.");
       return controller_interface::return_type::OK;
@@ -104,15 +103,13 @@ protected:
 
   rclcpp::Logger get_logger() const { return get_node()->get_logger(); }
 
-  // Read the value from the state_interface specified by prefix_name and interface_name,
+  // Read the value from the state_interface specified by interface_name,
   // cast it to a pointer type, and return it. Or return nullptr on failure.
-  template <typename T>
-  const T *get_state_as_pointer(const std::string &prefix_name,
-                                const std::string &iface_name) const {
-    // Find the state interface with the given keys
+  template <typename T> const T *get_state_as_pointer(const std::string &iface_name) const {
+    // Find the state interface with the given name
     const auto iface_it =
         std::find_if(state_interfaces_.begin(), state_interfaces_.end(), [&](const auto &iface) {
-          return iface.get_prefix_name() == prefix_name && iface.get_interface_name() == iface_name;
+          return iface.get_prefix_name() == input_name_ && iface.get_interface_name() == iface_name;
         });
     if (iface_it == state_interfaces_.end()) {
       return nullptr;
@@ -133,8 +130,8 @@ protected:
   }
 
 protected:
-  const std::string default_sensor_name_, topic_;
-  std::string sensor_name_;
+  const std::string default_input_name_, topic_;
+  std::string input_name_;
 
   typename rclcpp::Publisher<Message>::SharedPtr underlying_publisher_;
   std::unique_ptr<realtime_tools::RealtimePublisher<Message>> async_publisher_;

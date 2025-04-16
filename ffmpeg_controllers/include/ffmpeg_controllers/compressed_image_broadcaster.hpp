@@ -16,7 +16,7 @@ private:
 
 public:
   CompressedImageBroadcaster()
-      : Base(/* default_sensor_name = */ "camera", /* topic = */ "~/image/ffmpeg") {}
+      : Base(/* default_input_name = */ "camera", /* topic = */ "~/image/ffmpeg") {}
 
 protected:
   std::optional<Message> on_update(const rclcpp::Time & /*time*/,

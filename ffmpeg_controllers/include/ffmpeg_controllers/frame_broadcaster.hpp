@@ -17,7 +17,7 @@ private:
   using Base = FrameBroadcasterBase<ffmpeg_pipeline_msgs::msg::Frame>;
 
 public:
-  FrameBroadcaster() : Base(/* default_sensor_name = */ "sensor", /* topic = */ "~/frame") {}
+  FrameBroadcaster() : Base(/* default_input_name = */ "input", /* topic = */ "~/frame") {}
 
   std::optional<Message> on_update(const rclcpp::Time & /*time*/,
                                    const rclcpp::Duration & /*period*/,

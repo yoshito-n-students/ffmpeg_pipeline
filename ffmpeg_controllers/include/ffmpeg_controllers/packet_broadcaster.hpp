@@ -15,7 +15,7 @@ private:
   using Base = PacketBroadcasterBase<ffmpeg_pipeline_msgs::msg::Packet>;
 
 public:
-  PacketBroadcaster() : Base(/* default_sensor_name = */ "sensor", /* topic = */ "~/packet") {}
+  PacketBroadcaster() : Base(/* default_input_name = */ "input", /* topic = */ "~/packet") {}
 
 protected:
   std::optional<Message> on_update(const rclcpp::Time & /*time*/,
