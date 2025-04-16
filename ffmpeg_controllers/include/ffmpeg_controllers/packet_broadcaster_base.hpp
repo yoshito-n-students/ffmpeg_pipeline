@@ -9,6 +9,7 @@
 #include <controller_interface/controller_interface.hpp>
 #include <ffmpeg_cpp/ffmpeg_cpp.hpp>
 #include <rclcpp/logging.hpp>
+#include <rclcpp/publisher.hpp>
 #include <realtime_tools/realtime_publisher.hpp>
 
 namespace ffmpeg_controllers {
@@ -65,8 +66,9 @@ protected:
   controller_interface::return_type update(const rclcpp::Time &time,
                                            const rclcpp::Duration &period) override {
     // Try to get the codec params and packet from the state interfaces
-    const auto codec_params = get_state_as_pointer<ffmpeg_cpp::CodecParameters>("codec_parameters");
-    const auto packet = get_state_as_pointer<ffmpeg_cpp::Packet>("packet");
+    const ffmpeg_cpp::CodecParameters *const codec_params =
+        get_state_as_pointer<ffmpeg_cpp::CodecParameters>("codec_parameters");
+    const ffmpeg_cpp::Packet *const packet = get_state_as_pointer<ffmpeg_cpp::Packet>("packet");
     if (!codec_params || !packet) {
       RCLCPP_WARN(get_logger(), "Failed to get codec parameters or packet. Will skip this update.");
       return controller_interface::return_type::OK;
