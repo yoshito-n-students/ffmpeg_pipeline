@@ -1,0 +1,8 @@
+controller_manager:
+  ros__parameters:
+    update_rate: 30  # Hz
+
+packet_controller:
+  ros__parameters:
+    type: ffmpeg_controllers/PacketController
+    sensor_name: pulse_audio

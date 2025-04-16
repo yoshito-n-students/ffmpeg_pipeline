@@ -16,6 +16,7 @@ def generate_launch_description():
                 [
                     FindPackageShare('ffmpeg_pipeline_examples'),
                     'pulse_audio',
+                    'play',
                     'robot_description.urdf.xacro',
                 ]
             ),
@@ -29,6 +30,7 @@ def generate_launch_description():
         [
             FindPackageShare('ffmpeg_pipeline_examples'),
             'pulse_audio',
+            'play',
             'controllers.yaml',
         ]
     )
@@ -47,16 +49,16 @@ def generate_launch_description():
         parameters=[robot_description],
     )
 
-    packet_broadcaster_spawner = Node(
+    packet_controller_spawner = Node(
         package='controller_manager',
         executable='spawner',
-        arguments=['packet_broadcaster', '--param-file', robot_controllers],
+        arguments=['packet_controller', '--param-file', robot_controllers],
     )
 
     nodes = [
         control_node,
         robot_description_pub_node,
-        packet_broadcaster_spawner,
+        packet_controller_spawner,
     ]
 
     return LaunchDescription(nodes)

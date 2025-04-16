@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<robot name="robot">
+
+    <link name="body">
+    </link>
+
+    <ros2_control name="pulse_audio" type="actuator">
+        <hardware>
+            <plugin>ffmpeg_hardware/FFmpegOutput</plugin>
+            <param name="filename">default</param>
+            <param name="format">pulse</param>
+            <param name="codec_parameters">
+                codec: pcm_s16le
+                format: s16
+                ch_layout: stereo
+                sample_rate: 44100
+                bit_rate: 128000
+            </param>
+        </hardware>
+    </ros2_control>
+
+</robot>
