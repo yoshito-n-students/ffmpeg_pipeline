@@ -83,12 +83,12 @@ Packet &Packet::operator=(const Packet &other) {
   return *this;
 }
 
-ffmpeg_pipeline_msgs::msg::Packet::UniquePtr Packet::to_msg() const {
-  auto msg = std::make_unique<ffmpeg_pipeline_msgs::msg::Packet>();
-  msg->header.stamp.sec = packet_->dts / 1'000'000;
-  msg->header.stamp.nanosec = (packet_->dts % 1'000'000) * 1'000;
-  // msg->codec = codec_name;
-  msg->data.assign(packet_->data, packet_->data + packet_->size);
+ffmpeg_pipeline_msgs::msg::Packet Packet::to_msg(const std::string &codec_name) const {
+  ffmpeg_pipeline_msgs::msg::Packet msg;
+  msg.header.stamp.sec = packet_->dts / 1'000'000;
+  msg.header.stamp.nanosec = (packet_->dts % 1'000'000) * 1'000;
+  msg.codec = codec_name;
+  msg.data.assign(packet_->data, packet_->data + packet_->size);
   return msg;
 }
 
