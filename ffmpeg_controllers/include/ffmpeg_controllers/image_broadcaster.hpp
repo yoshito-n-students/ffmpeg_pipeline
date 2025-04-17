@@ -2,74 +2,79 @@
 #define FFMPEG_CONTROLLERS_IMAGE_BROADCASTER_HPP
 
 #include <optional>
-#include <stdexcept>
-#include <string>
 
-#include <ffmpeg_controllers/frame_broadcaster_base.hpp>
+#include <ffmpeg_controllers/broadcaster_base.hpp>
 #include <ffmpeg_cpp/ffmpeg_cpp.hpp>
-#include <rclcpp/logging.hpp>
-#include <sensor_msgs/image_encodings.hpp>
 #include <sensor_msgs/msg/image.hpp>
 
 namespace ffmpeg_controllers {
 
-class ImageBroadcaster : public FrameBroadcasterBase<sensor_msgs::msg::Image> {
+class ImageBroadcaster : public BroadcasterBase<sensor_msgs::msg::Image> {
 private:
-  using Base = FrameBroadcasterBase<sensor_msgs::msg::Image>;
+  using Base = BroadcasterBase<sensor_msgs::msg::Image>;
 
-public:
-  ImageBroadcaster() : Base(/* default_input_name = */ "camera", /* topic = */ "~/image") {}
-
-  CallbackReturn on_init() override {
-    // Call the base class on_init
-    if (const auto ret = Base::on_init(); ret != CallbackReturn::SUCCESS) {
-      return ret;
+protected:
+  NodeReturn on_init() override {
+    // Initialize the base class first
+    if (const NodeReturn base_ret = Base::on_init(); base_ret != NodeReturn::SUCCESS) {
+      return base_ret;
     }
 
-    // Load additional parameters
-    dst_encoding_ =
-        get_node()->declare_parameter("dst_encoding", sensor_msgs::image_encodings::BGR8);
-    dst_format_name_ = ffmpeg_cpp::to_ffmpeg_format_name(dst_encoding_);
-    if (dst_format_name_.empty()) {
-      RCLCPP_ERROR(get_logger(), "Unsupported destination encoding: %s", dst_encoding_.c_str());
-      return CallbackReturn::ERROR;
-    }
+    // Name of interprocess topic to be subscribed to
+    topic_ = "~/image";
 
-    return CallbackReturn::SUCCESS;
+    return NodeReturn::SUCCESS;
   }
 
-  std::optional<Message> on_update(const rclcpp::Time & /*time*/,
-                                   const rclcpp::Duration & /*period*/,
-                                   const ffmpeg_cpp::Frame &frame) override {
-    try {
-      // Ensure the converter is configured for this frame
-      if (!converter_.valid()) {
-        converter_ = ffmpeg_cpp::Converter(frame->width, frame->height, frame.format_name(),
-                                           dst_format_name_);
-        RCLCPP_INFO(get_logger(), "Configured converter (src: %s, dst: %s, size: %zdx%zd)",
-                    converter_.src_format_name().c_str(), converter_.dst_format_name().c_str(),
-                    converter_.width(), converter_.height());
-      }
+  NodeReturn on_activate(const rclcpp_lifecycle::State &previous_state) override {
+    // Activate the base class first
+    if (const NodeReturn base_ret = Base::on_activate(previous_state);
+        base_ret != NodeReturn::SUCCESS) {
+      return base_ret;
+    }
 
-      // Build the image message
-      Message msg;
-      msg.header.stamp.sec = frame->pkt_dts / 1'000'000;
-      msg.header.stamp.nanosec = (frame->pkt_dts % 1'000'000) * 1'000;
-      msg.height = frame->height;
-      msg.width = frame->width;
-      msg.encoding = dst_encoding_;
-      converter_.convert(frame, &msg.data);
-      msg.step = msg.data.size() / frame->height;
-      return msg;
-    } catch (const std::runtime_error &error) {
-      RCLCPP_ERROR(get_logger(), "Error while decoding packet: %s", error.what());
+    // Reset the previous dts
+    prev_dts_ = 0;
+
+    return NodeReturn::SUCCESS;
+  }
+
+  controller_interface::InterfaceConfiguration state_interface_configuration() const override {
+    return {controller_interface::interface_configuration_type::INDIVIDUAL,
+            {input_name_ + "/frame"}};
+  }
+
+  std::optional<Message> on_update(const rclcpp::Time &time,
+                                   const rclcpp::Duration & /*period*/) override {
+    // Try to get the frame from the state interfaces
+    const ffmpeg_cpp::Frame *const frame = get_state_as_pointer<ffmpeg_cpp::Frame>("frame");
+    if (!frame) {
+      RCLCPP_WARN(get_logger(), "Failed to get frame. Will skip this update.");
       return std::nullopt;
     }
+
+    // Skip publishing if the frame is not new
+    if ((*frame)->pkt_dts <= prev_dts_) {
+      return std::nullopt;
+    }
+
+    // Generate the message with the new frame
+    Message msg;
+    msg.header.stamp = time;
+    msg.height = (*frame)->height;
+    msg.width = (*frame)->width;
+    RCLCPP_INFO(get_logger(), "Image size: %dx%d, format: %s", msg.width, msg.height,
+                frame->format_name().c_str());
+    msg.encoding = ffmpeg_cpp::to_ros_image_encoding(frame->format_name());
+    msg.data.assign((*frame)->data[0],
+                    (*frame)->data[0] + (*frame)->linesize[0] * (*frame)->height);
+    msg.step = (*frame)->linesize[0];
+    prev_dts_ = (*frame)->pkt_dts;
+    return msg;
   }
 
 protected:
-  std::string dst_format_name_, dst_encoding_;
-  ffmpeg_cpp::Converter converter_;
+  decltype(ffmpeg_cpp::Frame()->pkt_dts) prev_dts_;
 };
 
 } // namespace ffmpeg_controllers

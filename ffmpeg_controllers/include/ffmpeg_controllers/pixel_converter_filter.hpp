@@ -1,0 +1,114 @@
+#ifndef FFMPEG_CONTROLLERS_PIXEL_CONVERTER_FILTER_HPP
+#define FFMPEG_CONTROLLERS_PIXEL_CONVERTER_FLITER_HPP
+
+#include <ffmpeg_controllers/filter_base.hpp>
+#include <ffmpeg_cpp/ffmpeg_cpp.hpp>
+
+namespace ffmpeg_controllers {
+
+class PixelConverterFilter : public FilterBase {
+protected:
+  // ===================
+  // AS a lifecycle node
+  // ===================
+
+  NodeReturn on_init() override {
+    // Initialize the base class first
+    if (const NodeReturn base_ret = FilterBase::on_init(); base_ret != NodeReturn::SUCCESS) {
+      return base_ret;
+    }
+
+    try {
+      dst_format_ = get_node()->declare_parameter<std::string>("dst_format");
+    } catch (const std::runtime_error &error) {
+      RCLCPP_ERROR(get_logger(), "Error while getting parameter value: %s", error.what());
+      return CallbackReturn::ERROR;
+    }
+
+    // Names of intraprocess read-only variables to be exported
+    exported_state_interface_names_ = {"frame"};
+
+    return NodeReturn::SUCCESS;
+  }
+
+  NodeReturn on_activate(const rclcpp_lifecycle::State &previous_state) override {
+    // Activate the base class first
+    if (const NodeReturn base_ret = FilterBase::on_activate(previous_state);
+        base_ret != NodeReturn::SUCCESS) {
+      return base_ret;
+    }
+
+    // Register the frame to state interface owned by this controller
+    if (!set_state_from_pointer("frame", &frame_)) {
+      return NodeReturn::ERROR;
+    }
+
+    // Reset the previous dts
+    prev_dts_ = 0;
+
+    return NodeReturn::SUCCESS;
+  }
+
+  NodeReturn on_deactivate(const rclcpp_lifecycle::State &previous_state) override {
+    // Unregister the frame from state interface owned by this controller
+    if (!set_state_from_pointer("frame", static_cast<ffmpeg_cpp::Frame *>(nullptr))) {
+      return NodeReturn::ERROR;
+    }
+
+    // Deactivate the base class in the end
+    return FilterBase::on_deactivate(previous_state);
+  }
+
+  // ===============
+  // As a controller
+  // ===============
+
+  controller_interface::InterfaceConfiguration state_interface_configuration() const override {
+    return {controller_interface::interface_configuration_type::INDIVIDUAL,
+            {input_name_ + "/frame"}};
+  }
+
+  ControllerReturn on_update(const rclcpp::Time & /*time*/,
+                             const rclcpp::Duration & /*period*/) override {
+    // Try to get the input frame owned by the hardware or other chained controller
+    const ffmpeg_cpp::Frame *const src_frame = get_state_as_pointer<ffmpeg_cpp::Frame>("frame");
+    if (!src_frame) {
+      RCLCPP_WARN(get_logger(), "Failed to get input frame. Will skip this update.");
+      return ControllerReturn::OK;
+    }
+
+    // Skip converting the frame if it is not new
+    if ((*src_frame)->pkt_dts <= prev_dts_) {
+      return ControllerReturn::OK;
+    }
+
+    try {
+      // Ensure the converter is configured
+      if (!converter_.valid()) {
+        converter_ = ffmpeg_cpp::Converter((*src_frame)->width, (*src_frame)->height,
+                                           src_frame->format_name(), dst_format_);
+        RCLCPP_INFO(get_logger(), "Configured converter (size: %zdx%zd, src: %s, dst: %s)",
+                    converter_.width(), converter_.height(), converter_.src_format_name().c_str(),
+                    converter_.dst_format_name().c_str());
+      }
+
+      // TODO: Do conversion and set the converted frame to frame_
+      RCLCPP_WARN(get_logger(), "Pixel conversion is not implemented yet. Skipping.");
+      prev_dts_ = frame_->pkt_dts;
+      return ControllerReturn::OK;
+    } catch (const std::runtime_error &error) {
+      RCLCPP_ERROR(get_logger(), "Error while decoding packet: %s", error.what());
+      return ControllerReturn::ERROR;
+    }
+  }
+
+protected:
+  std::string dst_format_;
+  ffmpeg_cpp::Converter converter_;
+  ffmpeg_cpp::Frame frame_;
+  decltype(ffmpeg_cpp::Packet()->dts) prev_dts_;
+};
+
+} // namespace ffmpeg_controllers
+
+#endif

@@ -4,10 +4,30 @@
            type="ffmpeg_controllers::CompressedImageBroadcaster"
            base_class_type="controller_interface::ControllerInterface">
         <description>
-            This controller publishes video packets as sensor_msgs::CompressedImage read from the input.
+            This controller reads ffmpeg_cpp::Packet from the state interface owned by other controller
+            and publishes it as sensor_msgs::msg::CompressedImage.
         </description>
     </class>
     
+    <class name="ffmpeg_controllers/DecoderFilter"
+           type="ffmpeg_controllers::DecoderFilter"
+           base_class_type="controller_interface::ChainableControllerInterface">
+        <description>
+            This controller reads ffmpeg_cpp::Packet from the state interface owned by other controller
+            and export decoded frames as ffmpeg_cpp::Frame on the state interface owned by this controller.
+        </description>
+    </class>
+
+    <class name="ffmpeg_controllers/EncoderFilter"
+           type="ffmpeg_controllers::EncoderFilter"
+           base_class_type="controller_interface::ChainableControllerInterface">
+        <description>
+            This controller reads ffmpeg_cpp::Frame from the state interface owned by other controller
+            and export encoded packets as ffmpeg_cpp::Packet on the state interface owned by this controller.
+        </description>
+    </class>
+
+    <!--
     <class name="ffmpeg_controllers/FrameBroadcaster"
            type="ffmpeg_controllers::FrameBroadcaster"
            base_class_type="controller_interface::ControllerInterface">
@@ -15,12 +35,14 @@
             This controller publishes decoded general frames as ffmpeg_pipeline_msgs::Frame read from the input.
         </description>
     </class>
+    -->
 
     <class name="ffmpeg_controllers/ImageBroadcaster"
            type="ffmpeg_controllers::ImageBroadcaster"
            base_class_type="controller_interface::ControllerInterface">
         <description>
-            This controller publishes decoded video frames as sensor_msgs::Image read from the input.
+            This controller reads ffmpeg_cpp::Frame from the state interface owned by other controller
+            and publishes it as sensor_msgs::msg::Image.
         </description>
     </class>
 
@@ -28,15 +50,35 @@
            type="ffmpeg_controllers::PacketBroadcaster"
            base_class_type="controller_interface::ControllerInterface">
         <description>
-            This controller publishes general packets as ffmpeg_pipeline_msgs::Packet read from the input.
+            This controller reads ffmpeg_cpp::Packet from the state interface owned by other controller
+            and publishes it as ffmpeg_pipeline_msgs::msg::Packet.
         </description>
     </class>
 
-    <class name="ffmpeg_controllers/PacketController"
-           type="ffmpeg_controllers::PacketController"
-           base_class_type="controller_interface::ControllerInterface">
+    <class name="ffmpeg_controllers/PacketReceiver"
+           type="ffmpeg_controllers::PacketReceiver"
+           base_class_type="controller_interface::ChainedControllerInterface">
         <description>
-            This controller subscribes general packets as ffmpeg_pipeline_msgs::Packet and write them to the output.
+            This controller subscribes ffmpeg_pipeline_msgs::Packet
+            and export it as ffmpeg_cpp::Packet on the state interface owned by this controller.
+        </description>
+    </class>
+
+    <class name="ffmpeg_controllers/PacketWriter"
+           type="ffmpeg_controllers::PacketWriter"
+           base_class_type="controller_interface::ChainedControllerInterface">
+        <description>
+            This controller reads ffmpeg_cpp::Packet from the state interface owned by other controller
+            and write it to the command interface owned by the hardware.
+        </description>
+    </class>
+
+    <class name="ffmpeg_controllers/PixelConverterFilter"
+           type="ffmpeg_controllers::PixelConverterFilter"
+           base_class_type="controller_interface::ChainedControllerInterface">
+        <description>
+            This controller reads ffmpeg_cpp::Frame from the state interface owned by other controller
+            and export the converted frame on the state interface owned by this controller.
         </description>
     </class>
 
