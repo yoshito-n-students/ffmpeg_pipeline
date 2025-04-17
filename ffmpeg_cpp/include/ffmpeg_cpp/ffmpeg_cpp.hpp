@@ -167,6 +167,8 @@ class CodecParameters {
 public:
   // Allocate the codec parameters and default the fields
   CodecParameters();
+  // Allocate the codec parameters and set fields from the given yaml string
+  CodecParameters(const std::string &yaml);
   // Create a codec parameters by copying the given codec parameters
   CodecParameters(const CodecParameters &other);
   CodecParameters &operator=(const CodecParameters &other);

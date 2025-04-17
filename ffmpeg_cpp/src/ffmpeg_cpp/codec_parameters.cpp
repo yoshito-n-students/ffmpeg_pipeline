@@ -14,6 +14,8 @@ extern "C" {
 
 #include <ffmpeg_cpp/ffmpeg_cpp.hpp>
 
+#include <yaml-cpp/yaml.h>
+
 namespace ffmpeg_cpp {
 
 // ====================================================
@@ -23,6 +25,12 @@ namespace ffmpeg_cpp {
 CodecParameters::CodecParameters() : params_(avcodec_parameters_alloc(), free_parameters) {
   if (!params_) {
     throw Error("CodecParameters::CodecParameters(): Failed to allocate AVCodecParameters");
+  }
+}
+
+CodecParameters::CodecParameters(const std::string &yaml) : CodecParameters() {
+  if (!YAML::convert<CodecParameters>::decode(YAML::Load(yaml), *this)) {
+    throw Error("CodecParameters::CodecParameters(): Failed to parse codec parameters from yaml");
   }
 }
 
