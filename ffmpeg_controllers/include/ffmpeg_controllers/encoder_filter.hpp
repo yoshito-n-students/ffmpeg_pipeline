@@ -1,6 +1,8 @@
 #ifndef FFMPEG_CONTROLLERS_ENCODER_FILTER_HPP
 #define FFMPEG_CONTROLLERS_ENCODER_FLITER_HPP
 
+#include <string>
+
 #include <ffmpeg_controllers/filter_base.hpp>
 #include <ffmpeg_cpp/ffmpeg_cpp.hpp>
 
@@ -16,6 +18,14 @@ protected:
     // Initialize the base class first
     if (const NodeReturn base_ret = FilterBase::on_init(); base_ret != NodeReturn::SUCCESS) {
       return base_ret;
+    }
+
+    try {
+      codec_params_ = ffmpeg_cpp::CodecParameters(
+          get_node()->declare_parameter<std::string>("codec_parameters"));
+    } catch (const std::runtime_error &error) {
+      RCLCPP_ERROR(get_logger(), "Error while getting parameter value: %s", error.what());
+      return CallbackReturn::ERROR;
     }
 
     // Names of intraprocess read-only variables to be exported
@@ -78,10 +88,41 @@ protected:
       return ControllerReturn::OK;
     }
 
-    // Encode the frame
-    prev_dts_ = (*frame)->pkt_dts;
+    try {
+      // Ensure the encoder is configured for the codec
+      if (!encoder_.valid()) {
+        encoder_ = ffmpeg_cpp::Encoder(codec_params_);
+        RCLCPP_INFO(get_logger(), "Configured encoder (codec: %s, hw: %s)",
+                    encoder_.codec_name().c_str(), encoder_.hw_type_name().c_str());
+      }
 
-    return ControllerReturn::OK;
+      // Put the raw frame into the encoder
+      encoder_.send_frame(*frame);
+
+      // Extract as many packets as possible from the encoder and keep only the latest packet.
+      // According to the ffmpeg's reference, there should be only one packet per frame
+      // so no packets should be dropped.
+      ffmpeg_cpp::Packet packet;
+      while (true) {
+        if (ffmpeg_cpp::Packet tmp_packet = encoder_.receive_packet(); !tmp_packet.empty()) {
+          packet = std::move(tmp_packet); // Keep the latest packet
+        } else {
+          break; // No more packets available
+        }
+      }
+      if (packet.empty()) {
+        RCLCPP_WARN(get_logger(), "No packets available although frame was processed");
+        return ControllerReturn::OK;
+      }
+
+      // Move the encoded packet to the exported state interface
+      packet_ = std::move(packet);
+      prev_dts_ = packet_->dts;
+      return ControllerReturn::OK;
+    } catch (const std::runtime_error &error) {
+      RCLCPP_ERROR(get_logger(), "Error while encoding frame: %s", error.what());
+      return ControllerReturn::ERROR;
+    }
   }
 
 protected:
