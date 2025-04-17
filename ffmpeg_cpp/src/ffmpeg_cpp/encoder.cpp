@@ -71,6 +71,7 @@ Encoder::Encoder(const CodecParameters &params) : encoder_ctx_(nullptr, &free_co
 
   // Import the codec parameters to the encoder context
   avcodec_parameters_to_context(encoder_ctx_.get(), params.get());
+  encoder_ctx_->time_base = av_inv_q(params->framerate);
 
   // Open the encoder
   if (const int ret = avcodec_open2(encoder_ctx_.get(), codec, nullptr); ret < 0) {
