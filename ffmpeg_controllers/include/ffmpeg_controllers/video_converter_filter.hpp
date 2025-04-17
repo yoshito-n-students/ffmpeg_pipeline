@@ -92,14 +92,15 @@ protected:
                     converter_.dst_format_name().c_str());
       }
 
-      // TODO: Do conversion and set the converted frame to frame_
-      RCLCPP_WARN(get_logger(), "Pixel conversion is not implemented yet. Skipping.");
+      // Convert the frame to the destination format
+      frame_ = converter_.convert(*src_frame);
       prev_dts_ = frame_->pkt_dts;
-      return ControllerReturn::OK;
     } catch (const std::runtime_error &error) {
       RCLCPP_ERROR(get_logger(), "Error while decoding packet: %s", error.what());
       return ControllerReturn::ERROR;
     }
+
+    return ControllerReturn::OK;
   }
 
 protected:
