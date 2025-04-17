@@ -120,7 +120,7 @@ int main(int argc, char **argv) {
             image->width = frame->width;
             image->encoding = sensor_msgs::image_encodings::BGR8;
             image->step = 3 * frame->width;
-            converter.convert(frame, &image->data);
+            image->data = converter.convert_to_vector(frame);
 
             // Publish the destination image
             publisher->publish(std::move(image));

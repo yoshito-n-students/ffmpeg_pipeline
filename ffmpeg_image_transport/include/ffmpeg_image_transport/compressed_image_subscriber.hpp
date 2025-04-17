@@ -104,7 +104,7 @@ protected:
               // Make the destination image
               // by copying the frame properties and converting the pixel data
               image->encoding = dst_encoding;
-              converter_.convert(frame, &image->data);
+              image->data = converter_.convert_to_vector(frame);
               image->step = image->data.size() / image->height;
             }
 

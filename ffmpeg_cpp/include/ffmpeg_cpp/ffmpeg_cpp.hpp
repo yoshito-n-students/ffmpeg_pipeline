@@ -347,8 +347,9 @@ public:
   VideoConverter(const std::size_t width, const std::size_t height,
                  const std::string &src_format_name, const std::string &dst_format_name);
 
-  // Convert the source frame to the destination pixel format
-  void convert(const Frame &src_frame, std::vector<std::uint8_t> *const dst_data);
+  // Convert the source frame to the destination format
+  Frame convert(const Frame &src_frame);
+  std::vector<std::uint8_t> convert_to_vector(const Frame &src_frame);
 
   std::size_t width() const { return width_; }
   std::size_t height() const { return height_; }

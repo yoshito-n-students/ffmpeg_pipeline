@@ -29,7 +29,15 @@ VideoConverter::VideoConverter(const std::size_t width, const std::size_t height
   }
 }
 
-void VideoConverter::convert(const Frame &src_frame, std::vector<std::uint8_t> *const dst_data) {
+Frame VideoConverter::convert(const Frame &src_frame) {
+  Frame dst_frame;
+  if (const int ret = sws_scale_frame(sws_ctx_.get(), dst_frame.get(), src_frame.get()); ret < 0) {
+    throw Error("VideoConverter::convert(): Failed to convert frame", ret);
+  }
+  return dst_frame;
+}
+
+std::vector<std::uint8_t> VideoConverter::convert_to_vector(const Frame &src_frame) {
   // Get the layout of the destination image
   // - linesize: bytes per line for each plane
   std::array<int, 4> dst_linesize;
@@ -50,19 +58,19 @@ void VideoConverter::convert(const Frame &src_frame, std::vector<std::uint8_t> *
   std::array<std::ptrdiff_t, 4> dst_data_offset;
   std::partial_sum(dst_plane_size.begin(), dst_plane_size.end(), dst_data_offset.begin());
 
-  // Resize the destination buffer to the sum of the plane sizes
-  dst_data->resize(dst_data_offset[3]);
-
   // Convert the pixel data
+  std::vector<std::uint8_t> dst_data(dst_data_offset[3]);
   sws_scale(sws_ctx_.get(),
             // src description
             src_frame->data, src_frame->linesize, 0, src_frame->height,
             // dst description
             std::array<std::uint8_t *const, 4>{
-                dst_data->data(), dst_data->data() + dst_data_offset[0],
-                dst_data->data() + dst_data_offset[1], dst_data->data() + dst_data_offset[2]}
+                dst_data.data(), dst_data.data() + dst_data_offset[0],
+                dst_data.data() + dst_data_offset[1], dst_data.data() + dst_data_offset[2]}
                 .data(),
             dst_linesize.data());
+
+  return dst_data;
 }
 
 std::string VideoConverter::src_format_name() const { return av_get_pix_fmt_name(src_format_); }

@@ -54,14 +54,6 @@ int main(int argc, char *argv[]) {
                 break; // No more frames available
               }
 
-              // Copy the frame properties to the destination image
-              auto image = std::make_unique<sensor_msgs::msg::Image>();
-              image->header.stamp = packet_data->header.stamp;
-              image->height = frame->height;
-              image->width = frame->width;
-              image->encoding = sensor_msgs::image_encodings::BGR8;
-              image->step = 3 * frame->width;
-
               // Convert the frame to BGR24 image
               if (frame.is_hw_frame()) {
                 // If the frame data is in a hardware device,
@@ -79,8 +71,14 @@ int main(int argc, char *argv[]) {
                     converter.dst_format_name().c_str());
               }
 
-              // Convert the frame to BGR24 format
-              converter.convert(frame, &image->data);
+              // Copy the frame properties to the destination image
+              auto image = std::make_unique<sensor_msgs::msg::Image>();
+              image->header.stamp = packet_data->header.stamp;
+              image->height = frame->height;
+              image->width = frame->width;
+              image->encoding = sensor_msgs::image_encodings::BGR8;
+              image->step = 3 * frame->width;
+              image->data = converter.convert_to_vector(frame);
 
               // Publish the destination image
               publisher->publish(std::move(image));
