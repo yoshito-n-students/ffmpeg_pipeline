@@ -8,7 +8,7 @@
 #include <ffmpeg_controllers/packet_broadcaster.hpp>
 #include <ffmpeg_controllers/packet_receiver.hpp>
 #include <ffmpeg_controllers/packet_writer.hpp>
-#include <ffmpeg_controllers/pixel_converter_filter.hpp>
+#include <ffmpeg_controllers/video_converter_filter.hpp>
 #include <pluginlib/class_list_macros.hpp>
 
 /*
@@ -29,5 +29,5 @@ PLUGINLIB_EXPORT_CLASS(ffmpeg_controllers::PacketReceiver,
                        controller_interface::ChainableControllerInterface);
 PLUGINLIB_EXPORT_CLASS(ffmpeg_controllers::PacketWriter,
                        controller_interface::ChainableControllerInterface);
-PLUGINLIB_EXPORT_CLASS(ffmpeg_controllers::PixelConverterFilter,
+PLUGINLIB_EXPORT_CLASS(ffmpeg_controllers::VideoConverterFilter,
                        controller_interface::ChainableControllerInterface);

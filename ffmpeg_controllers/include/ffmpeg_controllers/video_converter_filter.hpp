@@ -1,12 +1,12 @@
-#ifndef FFMPEG_CONTROLLERS_PIXEL_CONVERTER_FILTER_HPP
-#define FFMPEG_CONTROLLERS_PIXEL_CONVERTER_FLITER_HPP
+#ifndef FFMPEG_CONTROLLERS_VIDEO_CONVERTER_FILTER_HPP
+#define FFMPEG_CONTROLLERS_VIDEO_CONVERTER_FLITER_HPP
 
 #include <ffmpeg_controllers/filter_base.hpp>
 #include <ffmpeg_cpp/ffmpeg_cpp.hpp>
 
 namespace ffmpeg_controllers {
 
-class PixelConverterFilter : public FilterBase {
+class VideoConverterFilter : public FilterBase {
 protected:
   // ===================
   // AS a lifecycle node
@@ -85,8 +85,8 @@ protected:
     try {
       // Ensure the converter is configured
       if (!converter_.valid()) {
-        converter_ = ffmpeg_cpp::Converter((*src_frame)->width, (*src_frame)->height,
-                                           src_frame->format_name(), dst_format_);
+        converter_ = ffmpeg_cpp::VideoConverter((*src_frame)->width, (*src_frame)->height,
+                                                src_frame->format_name(), dst_format_);
         RCLCPP_INFO(get_logger(), "Configured converter (size: %zdx%zd, src: %s, dst: %s)",
                     converter_.width(), converter_.height(), converter_.src_format_name().c_str(),
                     converter_.dst_format_name().c_str());
@@ -104,7 +104,7 @@ protected:
 
 protected:
   std::string dst_format_;
-  ffmpeg_cpp::Converter converter_;
+  ffmpeg_cpp::VideoConverter converter_;
   ffmpeg_cpp::Frame frame_;
   decltype(ffmpeg_cpp::Packet()->dts) prev_dts_;
 };

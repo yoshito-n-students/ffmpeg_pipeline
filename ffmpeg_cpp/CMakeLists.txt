@@ -19,7 +19,6 @@ find_package(yaml_cpp_vendor REQUIRED)
 add_library(
   ffmpeg_cpp SHARED
   src/ffmpeg_cpp/codec_parameters.cpp
-  src/ffmpeg_cpp/converter.cpp
   src/ffmpeg_cpp/datatypes.cpp
   src/ffmpeg_cpp/decoder.cpp
   src/ffmpeg_cpp/encoder.cpp
@@ -27,7 +26,8 @@ add_library(
   src/ffmpeg_cpp/output.cpp
   src/ffmpeg_cpp/parser.cpp
   # src/ffmpeg_cpp/resampler.cpp
-  src/ffmpeg_cpp/utility.cpp)
+  src/ffmpeg_cpp/utility.cpp
+  src/ffmpeg_cpp/video_converter.cpp)
 target_include_directories(
   ffmpeg_cpp PUBLIC
   "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"

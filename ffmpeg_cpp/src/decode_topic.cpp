@@ -20,7 +20,7 @@ int main(int argc, char *argv[]) {
     // The decoder, which decompresses H.264 video packets
     // and the converter, which converts the decoded frames to BGR24 images
     av::Decoder decoder;
-    av::Converter converter;
+    av::VideoConverter converter;
 
     // Create a publisher to publish the decoded images
     const auto publisher = node->create_publisher<sensor_msgs::msg::Image>("dst_image", 10);
@@ -72,7 +72,7 @@ int main(int argc, char *argv[]) {
               // Initialize the image converter if not already done
               if (!converter.valid()) {
                 converter =
-                    av::Converter(frame->width, frame->height, frame.format_name(), "bgr24");
+                    av::VideoConverter(frame->width, frame->height, frame.format_name(), "bgr24");
                 RCLCPP_INFO(
                     node->get_logger(), "Configured converter (size: %zdx%zd, src: %s, dst: %s)",
                     converter.width(), converter.height(), converter.src_format_name().c_str(),

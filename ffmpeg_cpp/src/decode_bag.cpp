@@ -50,7 +50,7 @@ int main(int argc, char **argv) {
   // They must be configured with the codec name or pixel format name before use.
   av::Parser parser;
   av::Decoder decoder;
-  av::Converter converter;
+  av::VideoConverter converter;
 
   // Decode and convert each message in the bag
   const rclcpp::Time start_time = node->now();
@@ -105,7 +105,8 @@ int main(int argc, char **argv) {
 
             // Initialize the image converter if not already done
             if (!converter.valid()) {
-              converter = av::Converter(frame->width, frame->height, frame.format_name(), "bgr24");
+              converter =
+                  av::VideoConverter(frame->width, frame->height, frame.format_name(), "bgr24");
               RCLCPP_INFO(node->get_logger(),
                           "Configured converter (size: %zdx%zd, src: %s, dst: %s)",
                           converter.width(), converter.height(),

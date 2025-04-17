@@ -337,15 +337,15 @@ private:
 // RAII wrapper for SwsContext
 // ===========================
 
-class Converter {
+class VideoConverter {
 public:
   // Construct without underlying SwsContext
-  Converter()
+  VideoConverter()
       : sws_ctx_(nullptr, &sws_freeContext), width_(0), height_(0), //
         src_format_(AV_PIX_FMT_NONE), dst_format_(AV_PIX_FMT_NONE) {};
   // Initialize the converter with the given source and destination formats
-  Converter(const std::size_t width, const std::size_t height, const std::string &src_format_name,
-            const std::string &dst_format_name);
+  VideoConverter(const std::size_t width, const std::size_t height,
+                 const std::string &src_format_name, const std::string &dst_format_name);
 
   // Convert the source frame to the destination pixel format
   void convert(const Frame &src_frame, std::vector<std::uint8_t> *const dst_data);

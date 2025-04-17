@@ -73,8 +73,8 @@
         </description>
     </class>
 
-    <class name="ffmpeg_controllers/PixelConverterFilter"
-           type="ffmpeg_controllers::PixelConverterFilter"
+    <class name="ffmpeg_controllers/VideoConverterFilter"
+           type="ffmpeg_controllers::VideoConverterFilter"
            base_class_type="controller_interface::ChainableControllerInterface">
         <description>
             This controller reads ffmpeg_cpp::Frame from the state interface owned by other controller
