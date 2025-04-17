@@ -114,11 +114,12 @@ protected:
       // Move the decoded frame to the exported state interface
       frame_ = std::move(frame);
       prev_dts_ = frame_->pkt_dts;
-      return ControllerReturn::OK;
     } catch (const std::runtime_error &error) {
       RCLCPP_ERROR(get_logger(), "Error while decoding packet: %s", error.what());
       return ControllerReturn::ERROR;
     }
+
+    return ControllerReturn::OK;
   }
 
 protected:
