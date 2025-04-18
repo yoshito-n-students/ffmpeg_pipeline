@@ -32,13 +32,12 @@ protected:
     }
   }
 
-  // Due to the constraints of hardware_interfae::{Command,State}Interface,
-  // the command/state can only be set as a double type value.
-  // Therefore, in case of getting the pointer-type command,
-  // the double type on the interface is converted to pointer type at the value level.
-  // In case of setting the pointer-type state,
-  // the pointer type is converted to double type at the value level for the interface.
-  // The double type has 53 bits of precision,
+  // This package uses hardware_interface::{Command,State}Interface
+  // to exchange various types of data between hardware and controller.
+  // On the other hand, due to the constraints of hardware_interface,
+  // the only available type is double.
+  // Therefore, as a workaround, pointer types are converted to double type for exchange.
+  // The double type can represent up to 53 bits,
   // which is sufficient to represent the 47 bits of the Linux user's address space.
 
   template <typename T>

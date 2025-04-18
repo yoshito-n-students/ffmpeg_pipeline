@@ -44,6 +44,15 @@ protected:
 
   rclcpp::Logger get_logger() const { return Interface::get_node()->get_logger(); }
 
+  // This package uses hardware_interface::{Command,State}Interface
+  // to exchange various types of data between hardware and controller.
+  // On the other hand, due to the constraints of hardware_interface,
+  // the only available type is double.
+  // Therefore, as a workaround, pointer types are converted to double type for exchange.
+  // The double type can represent up to 53 bits,
+  // which is sufficient to represent the 47 bits of the Linux user's address space.
+
+  // Get the pointer value stored in the state interface loaned from other classes
   template <typename T>
   const T *get_state_as_pointer(const std::string &prefix_name,
                                 const std::string &iface_name) const {
@@ -62,6 +71,7 @@ protected:
     return nullptr;
   }
 
+  // Get the pointer value stored in the command interface loaned from other classes
   template <typename T>
   T *get_command_as_pointer(const std::string &prefix_name, const std::string &iface_name) const {
     // Find the state interface specified by iface_name
@@ -79,6 +89,7 @@ protected:
     return nullptr;
   }
 
+  // Set the pointer value to the state interface exported from the derived class
   template <typename T>
   bool set_state_from_pointer(const std::string &iface_name, const T *const ptr_value) {
     // Find the state interface specified by iface_name owned by this controller
