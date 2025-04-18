@@ -18,6 +18,7 @@ find_package(yaml_cpp_vendor REQUIRED)
 # ffmpeg_cpp as a shared library
 add_library(
   ffmpeg_cpp SHARED
+  src/ffmpeg_cpp/audio_converter.cpp
   src/ffmpeg_cpp/codec_parameters.cpp
   src/ffmpeg_cpp/datatypes.cpp
   src/ffmpeg_cpp/decoder.cpp

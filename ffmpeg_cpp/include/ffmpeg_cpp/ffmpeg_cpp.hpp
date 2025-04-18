@@ -15,6 +15,7 @@ extern "C" {
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
 #include <libavutil/avutil.h>
+#include <libswresample/swresample.h>
 #include <libswscale/swscale.h>
 }
 
@@ -348,14 +349,14 @@ public:
   VideoConverter(const std::size_t width, const std::size_t height,
                  const std::string &src_format_name, const std::string &dst_format_name);
 
-  // Convert the source frame to the destination format
-  Frame convert(const Frame &src_frame);
-  std::vector<std::uint8_t> convert_to_vector(const Frame &src_frame);
-
   std::size_t width() const { return width_; }
   std::size_t height() const { return height_; }
   std::string src_format_name() const;
   std::string dst_format_name() const;
+
+  // Convert the source frame to the destination format
+  Frame convert(const Frame &src_frame);
+  std::vector<std::uint8_t> convert_to_vector(const Frame &src_frame);
 
   // Access to the underlying SwsContext
   bool valid() const { return sws_ctx_.get(); }
@@ -368,6 +369,40 @@ private:
   std::unique_ptr<SwsContext, decltype(&sws_freeContext)> sws_ctx_;
   std::size_t width_, height_;
   AVPixelFormat src_format_, dst_format_;
+};
+
+// ===========================
+// RAII wrapper for SwrContext
+// ===========================
+
+class AudioConverter {
+public:
+  AudioConverter() : swr_ctx_(nullptr, &free_context) {}
+  AudioConverter(const std::string &in_ch_layout_str, const std::string &in_format_name,
+                 const int in_sample_rate, //
+                 const std::string &out_ch_layout_str, const std::string &out_format_name,
+                 const int out_sample_rate);
+
+  std::string in_ch_layout_str() const;
+  std::string in_format_name() const;
+  std::string out_ch_layout_str() const;
+  std::string out_format_name() const;
+
+  // Convert the source frame to the destination format
+  Frame convert(const Frame &src_frame);
+
+  // Access to the underlying SwrContext
+  bool valid() const { return swr_ctx_.get(); }
+  SwrContext *get() { return swr_ctx_.get(); }
+  const SwrContext *get() const { return swr_ctx_.get(); }
+  SwrContext *operator->() { return swr_ctx_.operator->(); }
+  const SwrContext *operator->() const { return swr_ctx_.operator->(); }
+
+private:
+  static void free_context(SwrContext *swr_ctx);
+
+private:
+  std::unique_ptr<SwrContext, decltype(&free_context)> swr_ctx_;
 };
 
 // =======================================================
