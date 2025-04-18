@@ -16,6 +16,8 @@ extern "C" {
 
 #include <yaml-cpp/yaml.h>
 
+#include "internal.hpp"
+
 namespace ffmpeg_cpp {
 
 // ====================================================
@@ -47,18 +49,16 @@ CodecParameters &CodecParameters::operator=(const CodecParameters &other) {
   return *this;
 }
 
-std::string CodecParameters::codec_type_name() const {
-  return av_get_media_type_string(params_->codec_type);
-}
+std::string CodecParameters::codec_type_name() const { return to_string(params_->codec_type); }
 
 std::string CodecParameters::codec_name() const { return avcodec_get_name(params_->codec_id); }
 
 std::string CodecParameters::format_name() const {
   switch (params_->codec_type) {
   case AVMEDIA_TYPE_VIDEO:
-    return av_get_pix_fmt_name(static_cast<AVPixelFormat>(params_->format));
+    return to_string(static_cast<AVPixelFormat>(params_->format));
   case AVMEDIA_TYPE_AUDIO:
-    return av_get_sample_fmt_name(static_cast<AVSampleFormat>(params_->format));
+    return to_string(static_cast<AVSampleFormat>(params_->format));
   default:
     return "";
   }
