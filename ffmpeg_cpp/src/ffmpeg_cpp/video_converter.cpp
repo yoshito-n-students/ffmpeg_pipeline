@@ -19,12 +19,13 @@ namespace ffmpeg_cpp {
 // VideoConverter - RAII wrapper for SwsContext
 // ============================================
 
-VideoConverter::VideoConverter(const std::size_t width, const std::size_t height,
-                               const std::string &src_format_name,
+VideoConverter::VideoConverter(const std::size_t src_width, const std::size_t src_height,
+                               const std::string &src_format_name, //
+                               const std::size_t dst_width, const std::size_t dst_height,
                                const std::string &dst_format_name)
     : sws_ctx_(nullptr, &sws_freeContext) {
-  sws_ctx_.reset(sws_getContext(width, height, av_get_pix_fmt(src_format_name.c_str()), //
-                                width, height, av_get_pix_fmt(dst_format_name.c_str()), //
+  sws_ctx_.reset(sws_getContext(src_width, src_height, av_get_pix_fmt(src_format_name.c_str()), //
+                                dst_width, dst_height, av_get_pix_fmt(dst_format_name.c_str()), //
                                 0, nullptr, nullptr, nullptr));
   if (!sws_ctx_) {
     throw Error("VideoConverter::VideoConverter(): Failed to create SwsContext");
@@ -40,21 +41,20 @@ Frame VideoConverter::convert(const Frame &src_frame) {
 }
 
 std::vector<std::uint8_t> VideoConverter::convert_to_vector(const Frame &src_frame) {
-  // Get the properties of the destination image
+  // Get the pixel format of the destination image
   const AVPixelFormat dst_format = get_pixel_format(sws_ctx_.get(), "dst_format");
-  const std::size_t dst_width = width(), dst_height = height();
-  
+
   // Get the layout of the destination image
   // - linesize: bytes per line for each plane
   std::array<int, 4> dst_linesize;
-  if (const int ret = av_image_fill_linesizes(dst_linesize.data(), dst_format, dst_width);
+  if (const int ret = av_image_fill_linesizes(dst_linesize.data(), dst_format, dst_width());
       ret < 0) {
     throw Error("VideoConverter::convert(): Failed to get destination linesizes", ret);
   }
   // - plane size: bytes per plane
   std::array<std::size_t, 4> dst_plane_size;
   if (const int ret =
-          av_image_fill_plane_sizes(dst_plane_size.data(), dst_format, dst_height,
+          av_image_fill_plane_sizes(dst_plane_size.data(), dst_format, dst_height(),
                                     std::array<std::ptrdiff_t, 4>{dst_linesize[0], dst_linesize[1],
                                                                   dst_linesize[2], dst_linesize[3]}
                                         .data());
@@ -80,13 +80,17 @@ std::vector<std::uint8_t> VideoConverter::convert_to_vector(const Frame &src_fra
   return dst_data;
 }
 
-std::size_t VideoConverter::width() const { return get_int64(sws_ctx_.get(), "srcw", 0); }
+std::size_t VideoConverter::src_width() const { return get_int64(sws_ctx_.get(), "srcw", 0); }
 
-std::size_t VideoConverter::height() const { return get_int64(sws_ctx_.get(), "srch", 0); }
+std::size_t VideoConverter::src_height() const { return get_int64(sws_ctx_.get(), "srch", 0); }
 
 std::string VideoConverter::src_format_name() const {
   return to_string(get_pixel_format(sws_ctx_.get(), "src_format"));
 }
+
+std::size_t VideoConverter::dst_width() const { return get_int64(sws_ctx_.get(), "dstw", 0); }
+
+std::size_t VideoConverter::dst_height() const { return get_int64(sws_ctx_.get(), "dsth", 0); }
 
 std::string VideoConverter::dst_format_name() const {
   return to_string(get_pixel_format(sws_ctx_.get(), "dst_format"));

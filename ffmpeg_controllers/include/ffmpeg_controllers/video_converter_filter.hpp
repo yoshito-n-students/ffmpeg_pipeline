@@ -19,6 +19,8 @@ protected:
     }
 
     try {
+      dst_width_ = get_node()->declare_parameter("dst_width", 0);
+      dst_height_ = get_node()->declare_parameter("dst_height", 0);
       dst_format_ = get_node()->declare_parameter<std::string>("dst_format");
     } catch (const std::runtime_error &error) {
       RCLCPP_ERROR(get_logger(), "Error while getting parameter value: %s", error.what());
@@ -85,10 +87,15 @@ protected:
     try {
       // Ensure the converter is configured
       if (!converter_.valid()) {
-        converter_ = ffmpeg_cpp::VideoConverter((*src_frame)->width, (*src_frame)->height,
-                                                src_frame->format_name(), dst_format_);
-        RCLCPP_INFO(get_logger(), "Configured converter (size: %zdx%zd, src: %s, dst: %s)",
-                    converter_.width(), converter_.height(), converter_.src_format_name().c_str(),
+        converter_ = ffmpeg_cpp::VideoConverter(
+            (*src_frame)->width, (*src_frame)->height, src_frame->format_name(),
+            // Keep the original size if dst_{width_, height_} are not set
+            dst_width_ > 0 ? dst_width_ : (*src_frame)->width,
+            dst_height_ > 0 ? dst_height_ : (*src_frame)->height, dst_format_);
+        RCLCPP_INFO(get_logger(), "Configured converter (src: %zdx%zd(%s), dst: %zdx%zd(%s))",
+                    converter_.src_width(), converter_.src_height(),
+                    converter_.src_format_name().c_str(), //
+                    converter_.dst_width(), converter_.dst_height(),
                     converter_.dst_format_name().c_str());
       }
 
@@ -104,6 +111,7 @@ protected:
   }
 
 protected:
+  std::size_t dst_width_, dst_height_;
   std::string dst_format_;
   ffmpeg_cpp::VideoConverter converter_;
   ffmpeg_cpp::Frame frame_;

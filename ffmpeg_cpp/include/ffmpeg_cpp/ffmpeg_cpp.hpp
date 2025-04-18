@@ -343,13 +343,20 @@ class VideoConverter {
 public:
   // Construct without underlying SwsContext
   VideoConverter() : sws_ctx_(nullptr, &sws_freeContext) {};
-  // Initialize the converter with the given source and destination formats
+  // Initialize the converter for changing only the pixel format
   VideoConverter(const std::size_t width, const std::size_t height,
-                 const std::string &src_format_name, const std::string &dst_format_name);
+                 const std::string &src_format_name, const std::string &dst_format_name)
+      : VideoConverter(width, height, src_format_name, width, height, dst_format_name) {};
+  // Initialize the converter for changing the pixel format and the size
+  VideoConverter(const std::size_t src_width, const std::size_t src_height,
+                 const std::string &src_format_name, const std::size_t dst_width,
+                 const std::size_t dst_height, const std::string &dst_format_name);
 
-  std::size_t width() const;
-  std::size_t height() const;
+  std::size_t src_width() const;
+  std::size_t src_height() const;
   std::string src_format_name() const;
+  std::size_t dst_width() const;
+  std::size_t dst_height() const;
   std::string dst_format_name() const;
 
   // Convert the source frame to the destination format

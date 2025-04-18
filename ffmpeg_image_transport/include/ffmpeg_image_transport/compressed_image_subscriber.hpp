@@ -98,7 +98,7 @@ protected:
                 RCLCPP_INFO(
                     node_->get_logger(), "Initialized converter (src: %s, dst: %s, size: %zdx%zd)",
                     converter_.src_format_name().c_str(), converter_.dst_format_name().c_str(),
-                    converter_.width(), converter_.height());
+                    converter_.src_width(), converter_.src_height());
               }
 
               // Make the destination image
