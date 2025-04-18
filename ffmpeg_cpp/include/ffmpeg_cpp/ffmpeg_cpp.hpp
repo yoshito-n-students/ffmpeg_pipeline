@@ -342,15 +342,13 @@ private:
 class VideoConverter {
 public:
   // Construct without underlying SwsContext
-  VideoConverter()
-      : sws_ctx_(nullptr, &sws_freeContext), width_(0), height_(0), //
-        src_format_(AV_PIX_FMT_NONE), dst_format_(AV_PIX_FMT_NONE) {};
+  VideoConverter() : sws_ctx_(nullptr, &sws_freeContext) {};
   // Initialize the converter with the given source and destination formats
   VideoConverter(const std::size_t width, const std::size_t height,
                  const std::string &src_format_name, const std::string &dst_format_name);
 
-  std::size_t width() const { return width_; }
-  std::size_t height() const { return height_; }
+  std::size_t width() const;
+  std::size_t height() const;
   std::string src_format_name() const;
   std::string dst_format_name() const;
 
@@ -367,8 +365,6 @@ public:
 
 private:
   std::unique_ptr<SwsContext, decltype(&sws_freeContext)> sws_ctx_;
-  std::size_t width_, height_;
-  AVPixelFormat src_format_, dst_format_;
 };
 
 // ===========================
