@@ -64,6 +64,8 @@ std::string CodecParameters::format_name() const {
   }
 }
 
+std::string CodecParameters::ch_layout_str() const { return to_string(params_->ch_layout); }
+
 void CodecParameters::free_parameters(AVCodecParameters *params) {
   avcodec_parameters_free(&params);
 }

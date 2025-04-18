@@ -180,6 +180,7 @@ public:
   std::string codec_type_name() const;
   std::string codec_name() const;
   std::string format_name() const;
+  std::string ch_layout_str() const;
 
   // Access to the underlying AVPacket
   AVCodecParameters *get() { return params_.get(); }
