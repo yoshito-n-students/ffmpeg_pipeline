@@ -9,7 +9,7 @@ extern "C" {
 
 #include <ffmpeg_cpp/ffmpeg_cpp.hpp>
 
-#include "format_encoding_pairs.hpp"
+#include "internal.hpp"
 
 namespace ffmpeg_cpp {
 
