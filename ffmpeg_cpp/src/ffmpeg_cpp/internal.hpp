@@ -1,6 +1,7 @@
 #ifndef FFMEPG_CPP_INTERNAL_HPP
 #define FFMEPG_CPP_INTERNAL_HPP
 
+#include <cstdint>
 #include <string>
 #include <utility> // for std::pair<>
 
@@ -131,7 +132,8 @@ static inline AVChannelLayout get_channel_layout(const void *obj, const std::str
   return ch_layout;
 }
 
-static inline int get_int64(const void *obj, const std::string &key, const std::int64_t fallback_value) {
+static inline int get_int64(const void *obj, const std::string &key,
+                            const std::int64_t fallback_value) {
   std::int64_t value;
   if (const int ret = av_opt_get_int(const_cast<void *>(obj), key.c_str(), 0, &value); ret >= 0) {
     return value;
