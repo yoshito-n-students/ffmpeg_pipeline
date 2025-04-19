@@ -91,6 +91,17 @@ protected:
     try {
       // Ensure the encoder is configured for the codec
       if (!encoder_.valid()) {
+        // Fill unspecified codec parameters with those from the source frame
+        if (codec_params_->width <= 0) {
+          codec_params_->width = (*frame)->width;
+        }
+        if (codec_params_->height <= 0) {
+          codec_params_->height = (*frame)->height;
+        }
+        if (codec_params_->sample_rate <= 0) {
+          codec_params_->sample_rate = (*frame)->sample_rate;
+        }
+
         encoder_ = ffmpeg_cpp::Encoder(codec_params_);
         RCLCPP_INFO(get_logger(), "Configured encoder (codec: %s, hw: %s)",
                     encoder_.codec_name().c_str(), encoder_.hw_type_name().c_str());
