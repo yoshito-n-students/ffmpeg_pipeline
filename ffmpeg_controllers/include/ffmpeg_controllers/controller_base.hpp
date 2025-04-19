@@ -449,6 +449,10 @@ using BroadcasterBase =
 template <typename Message>
 using ReceiverBase =
     ControllerBase<controller_base_mixin::Subscribe<Message>, controller_base_mixin::ExportState>;
+// ControllerBase<Susbcribe, WriteCommand> is unnecessary
+// because it can be realized by a combination of Receiver and Writer.
+// ControllerBase<Susbcribe, Publish> is also not defined here
+// as it is not a controller but a normal node.
 
 } // namespace ffmpeg_controllers
 
