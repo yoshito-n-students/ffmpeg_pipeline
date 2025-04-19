@@ -1,7 +1,7 @@
 #ifndef FFMPEG_CONTROLLERS_PACKET_WRITER_HPP
 #define FFMPEG_CONTROLLERS_PACKET_WRITER_HPP
 
-#include <ffmpeg_controllers/writer_base.hpp>
+#include <ffmpeg_controllers/controller_base.hpp>
 
 namespace ffmpeg_controllers {
 
@@ -23,7 +23,7 @@ protected:
 
     return NodeReturn::SUCCESS;
   }
-  
+
   // ===============
   // As a controller
   // ===============
@@ -38,8 +38,8 @@ protected:
             {output_name_ + "/packet"}};
   }
 
-  ControllerReturn on_update(const rclcpp::Time & /*time*/,
-                             const rclcpp::Duration & /*period*/) override {
+  ControllerReturn update(const rclcpp::Time & /*time*/,
+                          const rclcpp::Duration & /*period*/) override {
     // Try to get the input and output packets owned by the hardware or other chained controller
     const ffmpeg_cpp::Packet *const input_packet =
         get_state_as_pointer<ffmpeg_cpp::Packet>("packet");

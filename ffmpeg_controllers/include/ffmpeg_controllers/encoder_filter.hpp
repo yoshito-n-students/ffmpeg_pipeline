@@ -3,7 +3,7 @@
 
 #include <string>
 
-#include <ffmpeg_controllers/filter_base.hpp>
+#include <ffmpeg_controllers/controller_base.hpp>
 #include <ffmpeg_cpp/ffmpeg_cpp.hpp>
 
 namespace ffmpeg_controllers {

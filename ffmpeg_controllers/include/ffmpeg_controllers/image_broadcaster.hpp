@@ -3,7 +3,7 @@
 
 #include <optional>
 
-#include <ffmpeg_controllers/broadcaster_base.hpp>
+#include <ffmpeg_controllers/controller_base.hpp>
 #include <ffmpeg_cpp/ffmpeg_cpp.hpp>
 #include <sensor_msgs/msg/image.hpp>
 
@@ -20,8 +20,8 @@ protected:
       return base_ret;
     }
 
-    // Name of interprocess topic to be subscribed to
-    topic_ = "~/image";
+    // Name of interprocess topic to publish
+    output_topic_ = "~/image";
 
     return NodeReturn::SUCCESS;
   }
@@ -44,8 +44,8 @@ protected:
             {input_name_ + "/frame"}};
   }
 
-  std::optional<Message> on_update(const rclcpp::Time &time,
-                                   const rclcpp::Duration & /*period*/) override {
+  std::optional<OutputMessage> on_generate(const rclcpp::Time &time,
+                                     const rclcpp::Duration & /*period*/) override {
     // Try to get the frame from the state interfaces
     const ffmpeg_cpp::Frame *const frame = get_state_as_pointer<ffmpeg_cpp::Frame>("frame");
     if (!frame) {
@@ -59,7 +59,7 @@ protected:
     }
 
     // Generate the message with the new frame
-    Message msg;
+    OutputMessage msg;
     msg.header.stamp = time;
     msg.height = (*frame)->height;
     msg.width = (*frame)->width;

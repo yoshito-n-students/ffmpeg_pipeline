@@ -3,7 +3,7 @@
 
 #include <optional>
 
-#include <ffmpeg_controllers/broadcaster_base.hpp>
+#include <ffmpeg_controllers/controller_base.hpp>
 #include <ffmpeg_cpp/ffmpeg_cpp.hpp>
 #include <ffmpeg_pipeline_msgs/msg/packet.hpp>
 
@@ -20,8 +20,8 @@ protected:
       return base_ret;
     }
 
-    // Name of interprocess topic to be subscribed to
-    topic_ = "~/packet";
+    // Name of interprocess topic to publish
+    output_topic_ = "~/packet";
 
     return NodeReturn::SUCCESS;
   }
@@ -45,8 +45,8 @@ protected:
             {input_name_ + "/codec_parameters", input_name_ + "/packet"}};
   }
 
-  std::optional<Message> on_update(const rclcpp::Time &time,
-                                   const rclcpp::Duration & /*period*/) override {
+  std::optional<OutputMessage> on_generate(const rclcpp::Time &time,
+                                     const rclcpp::Duration & /*period*/) override {
     // Try to get the codec params and packet from the state interfaces
     const ffmpeg_cpp::CodecParameters *const codec_params =
         get_state_as_pointer<ffmpeg_cpp::CodecParameters>("codec_parameters");

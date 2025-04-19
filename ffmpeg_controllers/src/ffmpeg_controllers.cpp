@@ -28,6 +28,6 @@ PLUGINLIB_EXPORT_CLASS(ffmpeg_controllers::PacketBroadcaster,
 PLUGINLIB_EXPORT_CLASS(ffmpeg_controllers::PacketReceiver,
                        controller_interface::ChainableControllerInterface);
 PLUGINLIB_EXPORT_CLASS(ffmpeg_controllers::PacketWriter,
-                       controller_interface::ChainableControllerInterface);
+                       controller_interface::ControllerInterface);
 PLUGINLIB_EXPORT_CLASS(ffmpeg_controllers::VideoConverterFilter,
                        controller_interface::ChainableControllerInterface);

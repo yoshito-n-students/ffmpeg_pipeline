@@ -3,7 +3,7 @@
 
 #include <stdexcept>
 
-#include <ffmpeg_controllers/receiver_base.hpp>
+#include <ffmpeg_controllers/controller_base.hpp>
 #include <ffmpeg_cpp/ffmpeg_cpp.hpp>
 #include <ffmpeg_pipeline_msgs/msg/packet.hpp>
 
@@ -25,7 +25,7 @@ protected:
     }
 
     // Name of interprocess topic to be subscribed to
-    topic_ = "~/packet";
+    input_topic_ = "~/packet";
     // Names of intraprocess read-only variables to be exported
     exported_state_interface_names_ = {"packet"};
 
@@ -61,8 +61,8 @@ protected:
   // As a controller
   // ===============
 
-  ControllerReturn on_update(const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/,
-                             const ffmpeg_pipeline_msgs::msg::Packet &msg) override {
+  ControllerReturn on_process(const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/,
+                              const ffmpeg_pipeline_msgs::msg::Packet &msg) override {
     try {
       // Update the packet with the received message
       packet_ = ffmpeg_cpp::Packet(msg);

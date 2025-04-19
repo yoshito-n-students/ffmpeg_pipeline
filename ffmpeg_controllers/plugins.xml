@@ -66,7 +66,7 @@
 
     <class name="ffmpeg_controllers/PacketWriter"
            type="ffmpeg_controllers::PacketWriter"
-           base_class_type="controller_interface::ChainableControllerInterface">
+           base_class_type="controller_interface::ControllerInterface">
         <description>
             This controller reads ffmpeg_cpp::Packet from the state interface owned by other controller
             and write it to the command interface owned by the hardware.

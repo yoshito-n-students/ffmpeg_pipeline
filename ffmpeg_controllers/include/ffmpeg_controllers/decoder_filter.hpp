@@ -1,7 +1,7 @@
 #ifndef FFMPEG_CONTROLLERS_DECODER_FILTER_HPP
 #define FFMPEG_CONTROLLERS_DECODER_FLITER_HPP
 
-#include <ffmpeg_controllers/filter_base.hpp>
+#include <ffmpeg_controllers/controller_base.hpp>
 #include <ffmpeg_cpp/ffmpeg_cpp.hpp>
 
 namespace ffmpeg_controllers {
