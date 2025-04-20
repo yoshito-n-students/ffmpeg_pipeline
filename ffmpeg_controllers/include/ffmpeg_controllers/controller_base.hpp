@@ -150,7 +150,8 @@ protected:
 
   // Set the pointer value to the state interface exported from the derived class
   template <typename T>
-  bool set_state_from_pointer(const std::string &iface_name, const T *const ptr_value) {
+  std::enable_if_t<std::is_pointer_v<T> || std::is_same_v<T, std::nullptr_t>, bool>
+  set_state_from_pointer(const std::string &iface_name, const T ptr_value) {
     // Find the state interface specified by iface_name owned by this controller
     for (const auto &iface : Base::ordered_exported_state_interfaces_) {
       if (iface && iface->get_interface_name() != iface_name) {

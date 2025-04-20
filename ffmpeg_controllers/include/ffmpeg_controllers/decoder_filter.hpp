@@ -44,7 +44,7 @@ protected:
 
   NodeReturn on_deactivate(const rclcpp_lifecycle::State &previous_state) override {
     // Unregister the frame from state interface owned by this controller
-    if (!set_state_from_pointer("frame", static_cast<ffmpeg_cpp::Frame *>(nullptr))) {
+    if (!set_state_from_pointer("frame", nullptr)) {
       return NodeReturn::ERROR;
     }
 

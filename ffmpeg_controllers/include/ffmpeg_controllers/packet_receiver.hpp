@@ -49,7 +49,7 @@ protected:
 
   NodeReturn on_deactivate(const rclcpp_lifecycle::State &previous_state) override {
     // Unregister the packet from state interface owned by this controller
-    if (!set_state_from_pointer("packet", static_cast<ffmpeg_cpp::Packet *>(nullptr))) {
+    if (!set_state_from_pointer("packet", nullptr)) {
       return NodeReturn::ERROR;
     }
 
