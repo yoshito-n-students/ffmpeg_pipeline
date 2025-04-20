@@ -19,12 +19,10 @@ int main(int argc, char *argv[]) {
   const rclcpp::Node::SharedPtr node = rclcpp::Node::make_shared("stream_camera");
 
   // Parameters for the input device
-  const std::string url = node->declare_parameter("url", "/dev/video0");
-  const std::map<std::string, std::string> option_map = {
-      {"input_format", node->declare_parameter("input_format", "h264")},
-      {"video_size", node->declare_parameter("video_size", "1920x1080")},
-      {"framerate", node->declare_parameter("framerate", "30")},
-      {"timestamps", node->declare_parameter("timestamps", "abs")}};
+  const std::string
+      url = node->declare_parameter("url", "/dev/video0"),
+      options_str = node->declare_parameter(
+          "options", "{input_format: h264, video_size: 1920x1080, framerate: 30, timestamps: abs}");
 
   // Setup the destination packet publisher
   const auto publisher =
@@ -32,7 +30,8 @@ int main(int argc, char *argv[]) {
 
   try {
     // Open the input device
-    av::Input input(url, "v4l2", option_map, "video");
+    av::Dictionary options(options_str);
+    av::Input input(url, "v4l2", &options, "video");
     const std::string codec_name = input.codec_parameters().codec_name();
 
     // Continuously read frames from the input device and publish them

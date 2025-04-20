@@ -250,8 +250,8 @@ public:
   Input() : iformat_ctx_(nullptr, &close_input), istream_id_(-1) {}
   // Open the input device by avformat_open_input() with the given URL, format name, and options,
   // and find the best stream of the given media type
-  Input(const std::string &url, const std::string &iformat_name,
-        const std::map<std::string, std::string> &option_map, const std::string &media_type_name);
+  Input(const std::string &url, const std::string &iformat_name, Dictionary *const options,
+        const std::string &media_type_name);
 
   CodecParameters codec_parameters() const;
 

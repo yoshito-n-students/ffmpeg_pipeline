@@ -13,61 +13,49 @@ namespace ffmpeg_cpp {
 // Input - RAII wrapper for AVFormatContext
 // ========================================
 
-Input::Input(const std::string &url, const std::string &iformat_name,
-             const std::map<std::string, std::string> &option_map,
+Input::Input(const std::string &url, const std::string &iformat_name, Dictionary *const options,
              const std::string &media_type_name)
     : iformat_ctx_(nullptr, &close_input), istream_id_(-1) {
   // Register all the input format types
   avdevice_register_all();
 
   // Allocate the input format context and set the non-blocking flag
-  AVFormatContext *iformat_ctx = avformat_alloc_context();
-  if (!iformat_ctx) {
+  if (AVFormatContext *iformat_ctx = avformat_alloc_context(); iformat_ctx) {
+    iformat_ctx->flags |= AVFMT_FLAG_NONBLOCK;
+    iformat_ctx_.reset(iformat_ctx);
+  } else {
     throw Error("Input::Input(): Failed to allocate AVFormatContext");
   }
-  iformat_ctx->flags |= AVFMT_FLAG_NONBLOCK;
 
   // Find the input format by name
   const AVInputFormat *iformat =
       (iformat_name.empty() ? nullptr : av_find_input_format(iformat_name.c_str()));
   if (!iformat_name.empty() && iformat == nullptr) {
-    avformat_free_context(iformat_ctx);
     throw Error("Input::Input(): " + iformat_name + " was not recognized as an input format");
   }
 
-  // Build the option dictionary from the map
-  AVDictionary *option_dict = nullptr;
-  for (const auto &[key, value] : option_map) {
-    if (const int ret = av_dict_set(&option_dict, key.c_str(), value.c_str(), 0); ret < 0) {
-      avformat_free_context(iformat_ctx);
-      av_dict_free(&option_dict);
-      throw Error("Input::Input(): Failed to pack option [" + key + ", " + value + "]", ret);
+  // Open the input with the URL, format and options.
+  // avformat_open_input() may free the context and options,
+  // so we release the ownership of them from unique_ptr during calling it.
+  {
+    AVFormatContext *iformat_ctx = iformat_ctx_.release();
+    AVDictionary *options_ptr = options->release();
+    const int ret = avformat_open_input(&iformat_ctx, url.c_str(), iformat, &options_ptr);
+    iformat_ctx_.reset(iformat_ctx);
+    *options = Dictionary(options_ptr);
+    if (ret < 0) {
+      throw Error("Input::Input(): Failed to open input " + url, ret);
     }
   }
 
-  // Open the input with the URL, format and options.
-  // If avformat_open_input() fails, it frees format_ctx.
-  // So, we put format_ctx into unique_ptr after open succeeds.
-  if (const int ret = avformat_open_input(&iformat_ctx, url.c_str(), iformat, &option_dict);
-      ret < 0) {
-    av_dict_free(&option_dict);
-    throw Error("Input::Input(): Failed to open input " + url, ret);
-  }
-  iformat_ctx_.reset(iformat_ctx);
-
   // Check if the input accepts all the options
-  if (option_dict) {
-    AVDictionaryEntry *remaining_option = nullptr;
-    av_dict_get(option_dict, "", remaining_option, AV_DICT_IGNORE_SUFFIX);
-    const std::string msg = "Input::Input(): Input " + url + " does not accept option [" +
-                            remaining_option->key + ", " + remaining_option->value + "]";
-    av_dict_free(&option_dict);
-    throw Error(msg);
+  if (const auto remaining_options = options->to_map(); !remaining_options.empty()) {
+    throw Error("Input::Input(): Input " + url + " does not accept option [" +
+                remaining_options.begin()->first + ", " + remaining_options.begin()->second + "]");
   }
 
   // Retrieve stream information on the input
-  // (TODO: check if this is necessary to find the stream)
-  if (const int ret = avformat_find_stream_info(iformat_ctx, nullptr); ret < 0) {
+  if (const int ret = avformat_find_stream_info(iformat_ctx_.get(), nullptr); ret < 0) {
     throw Error("Input::Input(): Failed to find stream information", ret);
   }
 
@@ -94,7 +82,7 @@ Input::Input(const std::string &url, const std::string &iformat_name,
   }
 
   // Find the best stream of the given media type
-  istream_id_ = av_find_best_stream(iformat_ctx, media_type, -1, -1, nullptr, 0);
+  istream_id_ = av_find_best_stream(iformat_ctx_.get(), media_type, -1, -1, nullptr, 0);
   if (istream_id_ < 0) {
     throw Error("Input::Input(): Failed to find the best stream of media type " + media_type_name,
                 istream_id_);
