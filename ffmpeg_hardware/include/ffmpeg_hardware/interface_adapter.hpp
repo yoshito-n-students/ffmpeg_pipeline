@@ -2,6 +2,7 @@
 #define FFMPEG_HARDWARE_INTERFACE_ADAPTER_HPP
 
 #include <string>
+#include <type_traits>
 #include <utility> // for std::move()
 
 #include <hardware_interface/handle.hpp> // for hi::Interface{Description,Info}
@@ -41,13 +42,15 @@ protected:
   // which is sufficient to represent the 47 bits of the Linux user's address space.
 
   template <typename T>
-  void set_command_from_pointer(const std::string &iface_name, T *const value) {
+  std::enable_if_t<std::is_pointer_v<T> || std::is_same_v<T, std::nullptr_t>, void>
+  set_command_from_pointer(const std::string &iface_name, const T value) {
     Interface::set_command(make_interface_description(iface_name, "").get_name(),
                            static_cast<double>(reinterpret_cast<std::uintptr_t>(value)));
   }
 
   template <typename T>
-  void set_state_from_pointer(const std::string &iface_name, const T *const value) {
+  std::enable_if_t<std::is_pointer_v<T> || std::is_same_v<T, std::nullptr_t>, void>
+  set_state_from_pointer(const std::string &iface_name, const T value) {
     Interface::set_state(make_interface_description(iface_name, "").get_name(),
                          static_cast<double>(reinterpret_cast<std::uintptr_t>(value)));
   }

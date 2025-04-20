@@ -41,7 +41,7 @@ protected:
   CallbackReturn on_deactivate(const rclcpp_lifecycle::State & /*previous_state*/) override {
     try {
       // Unregister the command variables to the interface
-      set_command_from_pointer("packet", static_cast<ffmpeg_cpp::Packet *>(nullptr));
+      set_command_from_pointer("packet", nullptr);
 
       // Close the output device
       output_ = ffmpeg_cpp::Output();

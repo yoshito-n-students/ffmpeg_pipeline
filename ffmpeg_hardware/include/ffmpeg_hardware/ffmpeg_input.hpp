@@ -67,9 +67,8 @@ protected:
   CallbackReturn on_deactivate(const rclcpp_lifecycle::State & /*previous_state*/) override {
     try {
       // Unregister the state variables to the interface
-      set_state_from_pointer("codec_parameters",
-                             static_cast<const ffmpeg_cpp::CodecParameters *>(nullptr));
-      set_state_from_pointer("packet", static_cast<const ffmpeg_cpp::Packet *>(nullptr));
+      set_state_from_pointer("codec_parameters", nullptr);
+      set_state_from_pointer("packet", nullptr);
 
       // Close the input device
       input_ = ffmpeg_cpp::Input();
