@@ -21,6 +21,7 @@ protected:
     }
 
     try {
+      options_ = ffmpeg_cpp::Dictionary(get_node()->declare_parameter<std::string>("options"));
       codec_params_ = ffmpeg_cpp::CodecParameters(
           get_node()->declare_parameter<std::string>("codec_parameters"));
     } catch (const std::runtime_error &error) {
@@ -101,7 +102,8 @@ protected:
           codec_params_->sample_rate = (*frame)->sample_rate;
         }
 
-        encoder_ = ffmpeg_cpp::Encoder(codec_params_);
+        ffmpeg_cpp::Dictionary options(options_); // Copy options_ to avoid modifying it
+        encoder_ = ffmpeg_cpp::Encoder(codec_params_, &options);
         RCLCPP_INFO(get_logger(), "Configured encoder (codec: %s, hw: %s)",
                     encoder_.codec_name().c_str(), encoder_.hw_type_name().c_str());
       }
@@ -138,6 +140,7 @@ protected:
 
 protected:
   ffmpeg_cpp::Encoder encoder_;
+  ffmpeg_cpp::Dictionary options_;
   ffmpeg_cpp::CodecParameters codec_params_;
   ffmpeg_cpp::Packet packet_;
   decltype(ffmpeg_cpp::Packet()->dts) prev_dts_;

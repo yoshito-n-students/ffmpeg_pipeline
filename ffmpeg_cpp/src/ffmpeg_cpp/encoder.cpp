@@ -33,7 +33,8 @@ static void set_options(AVCodecContext *const encoder_ctx) {
   }
 }
 
-Encoder::Encoder(const std::string &codec_name) : encoder_ctx_(nullptr, &free_context) {
+Encoder::Encoder(const std::string &codec_name, Dictionary *const options)
+    : encoder_ctx_(nullptr, &free_context) {
   // Find the encoder by name
   const AVCodec *const codec = avcodec_find_encoder_by_name(codec_name.c_str());
   if (!codec) {
@@ -47,13 +48,25 @@ Encoder::Encoder(const std::string &codec_name) : encoder_ctx_(nullptr, &free_co
   }
   set_options(encoder_ctx_.get());
 
-  // Open the encoder
-  if (const int ret = avcodec_open2(encoder_ctx_.get(), codec, nullptr); ret < 0) {
-    throw Error("Encoder::Encoder(): Failed to open codec", ret);
+  // Open the encoder. avcodec_open2() may free the options,
+  // so we release the ownership of it from unique_ptr during calling the function.
+  {
+    AVDictionary *options_ptr = options->release();
+    if (const int ret = avcodec_open2(encoder_ctx_.get(), codec, &options_ptr); ret < 0) {
+      throw Error("Encoder::Encoder(): Failed to open codec", ret);
+    }
+    *options = Dictionary(options_ptr);
+  }
+
+  // Check if the encoder accepts all the options
+  if (const auto remaining_options = options->to_map(); !remaining_options.empty()) {
+    throw Error("Encoder::Encoder(): Encoder does not accept option [" +
+                remaining_options.begin()->first + ", " + remaining_options.begin()->second + "]");
   }
 }
 
-Encoder::Encoder(const CodecParameters &params) : encoder_ctx_(nullptr, &free_context) {
+Encoder::Encoder(const CodecParameters &params, Dictionary *const options)
+    : encoder_ctx_(nullptr, &free_context) {
   // Find the encoder by the given id
   const AVCodec *const codec = avcodec_find_encoder(params->codec_id);
   if (!codec) {
@@ -71,9 +84,20 @@ Encoder::Encoder(const CodecParameters &params) : encoder_ctx_(nullptr, &free_co
   avcodec_parameters_to_context(encoder_ctx_.get(), params.get());
   encoder_ctx_->time_base = av_inv_q(params->framerate);
 
-  // Open the encoder
-  if (const int ret = avcodec_open2(encoder_ctx_.get(), codec, nullptr); ret < 0) {
-    throw Error("Encoder::Encoder(): Failed to open codec", ret);
+  // Open the encoder. avcodec_open2() may free the options,
+  // so we release the ownership of it from unique_ptr during calling the function.
+  {
+    AVDictionary *options_ptr = options->release();
+    if (const int ret = avcodec_open2(encoder_ctx_.get(), codec, &options_ptr); ret < 0) {
+      throw Error("Encoder::Encoder(): Failed to open codec", ret);
+    }
+    *options = Dictionary(options_ptr);
+  }
+
+  // Check if the encoder accepts all the options
+  if (const auto remaining_options = options->to_map(); !remaining_options.empty()) {
+    throw Error("Encoder::Encoder(): Encoder does not accept option [" +
+                remaining_options.begin()->first + ", " + remaining_options.begin()->second + "]");
   }
 }
 
