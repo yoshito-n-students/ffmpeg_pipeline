@@ -14,26 +14,27 @@ namespace ffmpeg_cpp {
 // =========================================
 
 Output::Output(const std::string &oformat_name, const std::string &filename,
-               const CodecParameters &codec_params,
-               const std::map<std::string, std::string> &option_map)
+               const CodecParameters &codec_params, Dictionary *const options)
     : oformat_ctx_(nullptr, &close_output), ostream_(nullptr), increasing_dts_(0) {
   // Register all the input format types
   avdevice_register_all();
 
   // Allocate the output format context and set the non-blocking flag
-  AVFormatContext *oformat_ctx = nullptr;
-  if (const int ret = avformat_alloc_output_context2(&oformat_ctx, nullptr, oformat_name.c_str(),
-                                                     filename.c_str());
-      ret < 0) {
-    throw Error("Output::Output(): Failed to allocate AVFormatContext (format: " + oformat_name +
-                    ", filename: " + filename + ")",
-                ret);
+  {
+    AVFormatContext *oformat_ctx = nullptr;
+    if (const int ret = avformat_alloc_output_context2(&oformat_ctx, nullptr, oformat_name.c_str(),
+                                                       filename.c_str());
+        ret < 0) {
+      throw Error("Output::Output(): Failed to allocate AVFormatContext (format: " + oformat_name +
+                      ", filename: " + filename + ")",
+                  ret);
+    }
+    oformat_ctx->flags |= AVFMT_FLAG_NONBLOCK;
+    oformat_ctx_.reset(oformat_ctx);
   }
-  oformat_ctx->flags |= AVFMT_FLAG_NONBLOCK;
-  oformat_ctx_.reset(oformat_ctx);
 
   // Create a new stream in the output format context
-  ostream_ = avformat_new_stream(oformat_ctx, nullptr);
+  ostream_ = avformat_new_stream(oformat_ctx_.get(), nullptr);
   if (!ostream_) {
     throw Error("Output::Output(): Failed to create new stream on AVFormatContext");
   }
@@ -46,34 +47,28 @@ Output::Output(const std::string &oformat_name, const std::string &filename,
   }
 
   // Open the file for writing if the format requires it
-  if (!(oformat_ctx->oformat->flags & AVFMT_NOFILE)) {
-    if (const int ret = avio_open(&oformat_ctx->pb, filename.c_str(), AVIO_FLAG_WRITE); ret < 0) {
+  if (!(oformat_ctx_->oformat->flags & AVFMT_NOFILE)) {
+    if (const int ret = avio_open(&oformat_ctx_->pb, filename.c_str(), AVIO_FLAG_WRITE); ret < 0) {
       throw Error("Output::Output(): Failed to open output file " + filename, ret);
     }
   }
 
-  // Build the option dictionary from the map
-  AVDictionary *option_dict = nullptr;
-  for (const auto &[key, value] : option_map) {
-    if (const int ret = av_dict_set(&option_dict, key.c_str(), value.c_str(), 0); ret < 0) {
-      av_dict_free(&option_dict);
-      throw Error("Output::Output(): Failed to pack option [" + key + ", " + value + "]", ret);
+  // Write the header for the output stream.
+  // avformat_write_header() may free the options,
+  // so we release the ownership of it from unique_ptr during calling the function.
+  {
+    AVDictionary *options_ptr = options->release();
+    const int ret = avformat_write_header(oformat_ctx_.get(), &options_ptr);
+    *options = Dictionary(options_ptr);
+    if (ret < 0) {
+      throw Error("Output::Output(): Failed to write header", ret);
     }
   }
 
-  // Write the header for the output stream
-  if (const int ret = avformat_write_header(oformat_ctx, &option_dict); ret < 0) {
-    throw Error("Output::Output(): Failed to write header", ret);
-  }
-
   // Check if the input accepts all the options
-  if (option_dict) {
-    AVDictionaryEntry *remaining_option = nullptr;
-    av_dict_get(option_dict, "", remaining_option, AV_DICT_IGNORE_SUFFIX);
-    const std::string msg = "Output::Ourput(): Output " + filename + " does not accept option [" +
-                            remaining_option->key + ", " + remaining_option->value + "]";
-    av_dict_free(&option_dict);
-    throw Error(msg);
+  if (const auto remaining_options = options->to_map(); !remaining_options.empty()) {
+    throw Error("Output::Output(): Output " + filename + " does not accept option [" +
+                remaining_options.begin()->first + ", " + remaining_options.begin()->second + "]");
   }
 }
 

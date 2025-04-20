@@ -20,10 +20,10 @@ protected:
                  filename = get_parameter_as<std::string>("filename", "default");
       const auto codec_params = get_parameter_as<ffmpeg_cpp::CodecParameters>(
           "codec_parameters", ffmpeg_cpp::CodecParameters());
-      const auto options = get_parameter_as<std::map<std::string, std::string>>("options", {});
+      auto options = get_parameter_as<ffmpeg_cpp::Dictionary>("options", ffmpeg_cpp::Dictionary());
 
       // Open the input with the parameters
-      output_ = ffmpeg_cpp::Output(format, filename, codec_params, options);
+      output_ = ffmpeg_cpp::Output(format, filename, codec_params, &options);
       RCLCPP_INFO(get_logger(), "Configured the output (filename: %s, format: %s)",
                   filename.c_str(), format.c_str());
 

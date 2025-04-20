@@ -463,7 +463,7 @@ public:
   // Open the output device with the given format name and filename,
   // and set the codec parameters and options to the stream
   Output(const std::string &oformat_name, const std::string &filename,
-         const CodecParameters &codec_params, const std::map<std::string, std::string> &option_map);
+         const CodecParameters &codec_params, Dictionary *const options);
 
   // Write a frame to the stream of interest in a NON-BLOCKING way.
   // False if the output stream is not ready to accept the data for some temporary reason.
