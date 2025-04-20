@@ -1,7 +1,6 @@
 #ifndef FFMPEG_CONTROLLERS_CONTROLLER_BASE_HPP
 #define FFMPEG_CONTROLLERS_CONTROLLER_BASE_HPP
 
-#include <algorithm>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -52,7 +51,7 @@ template <class Interface> class InterfaceAdapter;
 // Common base class for all variations of InterfaceAdapter<>
 template <class Interface> class InterfaceAdapterBase : public virtual Interface {
 protected:
-  // Return types of virtual interface functions
+  // Provide consistent aliases for the return values of virtual interface functions
   using NodeReturn = typename Interface::CallbackReturn;      // for node-related functions
   using ControllerReturn = controller_interface::return_type; // for controller-related functions
 
@@ -212,7 +211,7 @@ protected:
             msg_buffer_.writeFromNonRT(msg);
           });
       return Base::NodeReturn::SUCCESS;
-    } catch (const std::exception &error) {
+    } catch (const std::runtime_error &error) {
       RCLCPP_ERROR(Base::get_logger(), "Error while creating subscription: %s", error.what());
       return Base::NodeReturn::ERROR;
     }
@@ -300,7 +299,7 @@ protected:
       async_publisher_ =
           std::make_unique<realtime_tools::RealtimePublisher<OutputMessage>>(underlying_publisher_);
       return Base::NodeReturn::SUCCESS;
-    } catch (const std::exception &error) {
+    } catch (const std::runtime_error &error) {
       RCLCPP_ERROR(Base::get_logger(), "Error while creating publishers: %s", error.what());
       return Base::NodeReturn::ERROR;
     }
