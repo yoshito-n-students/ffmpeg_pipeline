@@ -30,13 +30,13 @@ protected:
       // Try to get the parameters for the input from the hardware_info, or use default values
       const auto url = get_parameter_as<std::string>("url", "/dev/video0"),
                  input_format = get_parameter_as<std::string>("input_format", "v4l2"),
-                 media_type = get_parameter_as<std::string>("media_type", "video"),
-                 options_str = get_parameter_as<std::string>(
-                     "options",
-                     "{input_format: h264, video_size: 1920x1080, framerate: 30, timestamps: abs}");
+                 media_type = get_parameter_as<std::string>("media_type", "video");
+      auto options = get_parameter_as<ffmpeg_cpp::Dictionary>(
+          "options",
+          ffmpeg_cpp::Dictionary(
+              "{input_format: h264, video_size: 1920x1080, framerate: 30, timestamps: abs}"));
 
       // Open the input with the parameters
-      ffmpeg_cpp::Dictionary options(options_str);
       input_ = ffmpeg_cpp::Input(url, input_format, &options, media_type);
       RCLCPP_INFO(get_logger(), "Configured the input (URL: %s, format: %s)", url.c_str(),
                   input_format.c_str());
