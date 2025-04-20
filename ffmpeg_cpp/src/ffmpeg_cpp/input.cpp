@@ -20,7 +20,7 @@ Input::Input(const std::string &url, const std::string &iformat_name, Dictionary
   avdevice_register_all();
 
   // Allocate the input format context and set the non-blocking flag
-  if (AVFormatContext *iformat_ctx = avformat_alloc_context(); iformat_ctx) {
+  if (AVFormatContext *const iformat_ctx = avformat_alloc_context(); iformat_ctx) {
     iformat_ctx->flags |= AVFMT_FLAG_NONBLOCK;
     iformat_ctx_.reset(iformat_ctx);
   } else {
