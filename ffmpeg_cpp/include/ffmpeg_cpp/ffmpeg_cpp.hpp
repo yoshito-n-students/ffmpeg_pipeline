@@ -160,6 +160,47 @@ private:
   std::unique_ptr<AVFrame, decltype(&free_frame)> frame_;
 };
 
+// =============================
+// RAII wrapper for AVDictionary
+// =============================
+
+class Dictionary {
+public:
+  // Construct without underlying AVDictionary
+  Dictionary() : dict_(nullptr, &free_dict) {};
+  // Take ownership of the given AVDictionary
+  Dictionary(AVDictionary *const dict) : dict_(dict, &free_dict) {}
+  // Create a dictionary by parsing the given yaml string
+  Dictionary(const std::string &yaml);
+  // Create a dictionary by copying the entries from the given map
+  Dictionary(const std::map<std::string, std::string> &map);
+  // Create a dictionary by copying the given dictionary
+  Dictionary(const Dictionary &other);
+  Dictionary &operator=(const Dictionary &other) {
+    *this = Dictionary(other);
+    return *this;
+  }
+  // We need to define the move constructor and operator explicitly
+  // because they are not automatically defined if the copy constructor is manually defined.
+  Dictionary(Dictionary &&other) = default;
+  Dictionary &operator=(Dictionary &&other) = default;
+
+  std::map<std::string, std::string> to_map() const;
+
+  // Access to the underlying AVDictionary
+  AVDictionary *get() { return dict_.get(); }
+  const AVDictionary *get() const { return dict_.get(); }
+  AVDictionary *operator->() { return dict_.operator->(); }
+  const AVDictionary *operator->() const { return dict_.operator->(); }
+  AVDictionary *release() { return dict_.release(); }
+
+private:
+  static void free_dict(AVDictionary *dict);
+
+private:
+  std::unique_ptr<AVDictionary, decltype(&free_dict)> dict_;
+};
+
 // ==================================
 // RAII wrapper for AVCodecParameters
 // ==================================
@@ -451,6 +492,10 @@ private:
 // =====================================
 
 namespace YAML {
+
+template <> struct convert<ffmpeg_cpp::Dictionary> {
+  static bool decode(const Node &yaml, ffmpeg_cpp::Dictionary &dict);
+};
 
 template <> struct convert<ffmpeg_cpp::CodecParameters> {
   static bool decode(const Node &yaml, ffmpeg_cpp::CodecParameters &params);

@@ -22,6 +22,7 @@ add_library(
   src/ffmpeg_cpp/codec_parameters.cpp
   src/ffmpeg_cpp/datatypes.cpp
   src/ffmpeg_cpp/decoder.cpp
+  src/ffmpeg_cpp/dictionary.cpp
   src/ffmpeg_cpp/encoder.cpp
   src/ffmpeg_cpp/input.cpp
   src/ffmpeg_cpp/output.cpp
