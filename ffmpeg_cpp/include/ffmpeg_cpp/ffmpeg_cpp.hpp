@@ -172,7 +172,10 @@ public:
   CodecParameters(const std::string &yaml);
   // Create a codec parameters by copying the given codec parameters
   CodecParameters(const CodecParameters &other);
-  CodecParameters &operator=(const CodecParameters &other);
+  CodecParameters &operator=(const CodecParameters &other) {
+    *this = CodecParameters(other);
+    return *this;
+  }
   // We need to define the move constructor and operator explicitly
   // because they are not automatically defined if the copy constructor is manually defined.
   CodecParameters(CodecParameters &&other) = default;

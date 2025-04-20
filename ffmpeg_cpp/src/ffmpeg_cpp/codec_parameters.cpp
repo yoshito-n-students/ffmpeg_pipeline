@@ -42,13 +42,6 @@ CodecParameters::CodecParameters(const CodecParameters &other) : CodecParameters
   }
 }
 
-CodecParameters &CodecParameters::operator=(const CodecParameters &other) {
-  if (const int ret = avcodec_parameters_copy(params_.get(), other.get()); ret < 0) {
-    throw Error("CodecParameters::operator=(): Failed to copy codec parameters", ret);
-  }
-  return *this;
-}
-
 std::string CodecParameters::codec_type_name() const { return to_string(params_->codec_type); }
 
 std::string CodecParameters::codec_name() const { return avcodec_get_name(params_->codec_id); }
