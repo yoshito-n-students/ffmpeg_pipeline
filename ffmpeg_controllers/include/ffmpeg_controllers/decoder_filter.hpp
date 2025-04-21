@@ -89,9 +89,8 @@ protected:
     try {
       // Ensure the decoder is configured for the codec
       if (!decoder_.valid()) {
-        ffmpeg_cpp::Dictionary codec_options(
-            codec_options_); // Copy codec_options_ to avoid modifying it
-        decoder_ = ffmpeg_cpp::Decoder(*codec_params, &codec_options);
+        ffmpeg_cpp::Dictionary options(codec_options_); // Copy codec_options_ to avoid modifying it
+        decoder_ = ffmpeg_cpp::Decoder(*codec_params, &options);
         RCLCPP_INFO(get_logger(), "Configured decoder (codec: %s, hw: %s)",
                     decoder_.codec_name().c_str(), decoder_.hw_type_name().c_str());
       }
