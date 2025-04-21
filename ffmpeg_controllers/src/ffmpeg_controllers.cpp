@@ -1,5 +1,6 @@
 #include <controller_interface/chainable_controller_interface.hpp>
 #include <controller_interface/controller_interface.hpp>
+#include <ffmpeg_controllers/audio_converter_filter.hpp>
 #include <ffmpeg_controllers/compressed_image_broadcaster.hpp>
 // #include <ffmpeg_controllers/frame_broadcaster.hpp>
 #include <ffmpeg_controllers/decoder_filter.hpp>
@@ -15,6 +16,8 @@
 PLUGINLIB_EXPORT_CLASS(ffmpeg_controllers::FrameBroadcaster,
                        controller_interface::ControllerInterface);
 */
+PLUGINLIB_EXPORT_CLASS(ffmpeg_controllers::AudioConverterFilter,
+                       controller_interface::ChainableControllerInterface);
 PLUGINLIB_EXPORT_CLASS(ffmpeg_controllers::CompressedImageBroadcaster,
                        controller_interface::ControllerInterface);
 PLUGINLIB_EXPORT_CLASS(ffmpeg_controllers::DecoderFilter,
@@ -27,7 +30,6 @@ PLUGINLIB_EXPORT_CLASS(ffmpeg_controllers::PacketBroadcaster,
                        controller_interface::ControllerInterface);
 PLUGINLIB_EXPORT_CLASS(ffmpeg_controllers::PacketReceiver,
                        controller_interface::ChainableControllerInterface);
-PLUGINLIB_EXPORT_CLASS(ffmpeg_controllers::PacketWriter,
-                       controller_interface::ControllerInterface);
+PLUGINLIB_EXPORT_CLASS(ffmpeg_controllers::PacketWriter, controller_interface::ControllerInterface);
 PLUGINLIB_EXPORT_CLASS(ffmpeg_controllers::VideoConverterFilter,
                        controller_interface::ChainableControllerInterface);
