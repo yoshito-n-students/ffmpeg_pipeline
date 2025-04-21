@@ -185,6 +185,7 @@ public:
   bool empty() const { return !dict_; }
 
   std::string to_yaml() const;
+  std::string to_flow_style_yaml() const;
 
   // Access to the underlying AVDictionary
   AVDictionary *get() { return dict_.get(); }

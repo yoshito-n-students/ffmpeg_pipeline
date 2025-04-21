@@ -28,6 +28,12 @@ std::string Dictionary::to_yaml() const {
   return yaml_str.str();
 }
 
+std::string Dictionary::to_flow_style_yaml() const {
+  std::ostringstream yaml_str;
+  yaml_str << YAML::Flow << YAML::convert<Dictionary>::encode(*this);
+  return yaml_str.str();
+}
+
 void Dictionary::free_dict(AVDictionary *dict) { av_dict_free(&dict); }
 
 } // namespace ffmpeg_cpp
