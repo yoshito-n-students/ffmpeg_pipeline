@@ -433,8 +433,10 @@ public:
 
   std::string in_ch_layout_str() const;
   std::string in_format_name() const;
+  std::int64_t in_sample_rate() const;
   std::string out_ch_layout_str() const;
   std::string out_format_name() const;
+  std::int64_t out_sample_rate() const;
 
   // Convert the source frame to the destination format
   Frame convert(const Frame &src_frame);

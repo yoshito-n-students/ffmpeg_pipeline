@@ -44,12 +44,20 @@ std::string AudioConverter::in_format_name() const {
   return to_string(get_sample_format(swr_ctx_.get(), "in_sample_fmt"));
 }
 
+std::int64_t AudioConverter::in_sample_rate() const {
+  return get_int64(swr_ctx_.get(), "in_sample_rate", 0);
+}
+
 std::string AudioConverter::out_ch_layout_str() const {
   return to_string(get_channel_layout(swr_ctx_.get(), "out_chlayout"));
 }
 
 std::string AudioConverter::out_format_name() const {
   return to_string(get_sample_format(swr_ctx_.get(), "out_sample_fmt"));
+}
+
+std::int64_t AudioConverter::out_sample_rate() const {
+  return get_int64(swr_ctx_.get(), "out_sample_rate", 0);
 }
 
 Frame AudioConverter::convert(const Frame &in_frame) {
