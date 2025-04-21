@@ -21,7 +21,8 @@ protected:
     }
 
     try {
-      options_ = ffmpeg_cpp::Dictionary(get_node()->declare_parameter<std::string>("options"));
+      options_ =
+          ffmpeg_cpp::Dictionary(get_node()->declare_parameter<std::string>("options", "{}"));
       codec_params_ = ffmpeg_cpp::CodecParameters(
           get_node()->declare_parameter<std::string>("codec_parameters"));
     } catch (const std::runtime_error &error) {
