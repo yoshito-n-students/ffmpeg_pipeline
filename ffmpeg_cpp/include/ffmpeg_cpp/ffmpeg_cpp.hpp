@@ -139,6 +139,7 @@ public:
   bool empty() const { return !frame_ || !frame_->data[0]; }
 
   std::string format_name() const;
+  std::string ch_layout_str() const;
 
   // True if the frame is on a hardware memory, which is not accessible by the CPU
   bool is_hw_frame() const { return frame_ && frame_->hw_frames_ctx; }

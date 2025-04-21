@@ -14,6 +14,8 @@ extern "C" {
 
 #include <ffmpeg_cpp/ffmpeg_cpp.hpp>
 
+#include "internal.hpp"
+
 namespace ffmpeg_cpp {
 
 // ========================================
@@ -143,6 +145,8 @@ std::string Frame::format_name() const {
   }
   return "";
 }
+
+std::string Frame::ch_layout_str() const { return to_string(frame_->ch_layout); }
 
 void Frame::free_frame(AVFrame *frame) { av_frame_free(&frame); }
 
