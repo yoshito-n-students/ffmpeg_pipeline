@@ -14,7 +14,7 @@ namespace ffmpeg_cpp {
 // Decoder - RAII wrapper for AVCodecContext
 // =========================================
 
-static void set_options(AVCodecContext *const encoder_ctx) {
+static void set_context_options(AVCodecContext *const encoder_ctx) {
   // Create a hardware acceleration context supported by the encoder.
   // If multiple hardware devices are supported, the first one is used.
   if (!encoder_ctx->hw_device_ctx) {
@@ -33,7 +33,7 @@ static void set_options(AVCodecContext *const encoder_ctx) {
   }
 }
 
-Encoder::Encoder(const std::string &codec_name, Dictionary *const options)
+Encoder::Encoder(const std::string &codec_name, Dictionary *const codec_options)
     : encoder_ctx_(nullptr, &free_context) {
   // Find the encoder by name
   const AVCodec *const codec = avcodec_find_encoder_by_name(codec_name.c_str());
@@ -46,29 +46,29 @@ Encoder::Encoder(const std::string &codec_name, Dictionary *const options)
   if (!encoder_ctx_) {
     throw Error("Encoder::Encoder(): Failed to allocate codec context");
   }
-  set_options(encoder_ctx_.get());
+  set_context_options(encoder_ctx_.get());
 
   // Open the encoder. avcodec_open2() may free the options,
   // so we release the ownership of it from unique_ptr during calling the function.
   {
-    AVDictionary *options_ptr = options->release();
-    if (const int ret = avcodec_open2(encoder_ctx_.get(), codec, &options_ptr); ret < 0) {
+    AVDictionary *codec_options_ptr = codec_options->release();
+    if (const int ret = avcodec_open2(encoder_ctx_.get(), codec, &codec_options_ptr); ret < 0) {
       throw Error("Encoder::Encoder(): Failed to open codec", ret);
     }
-    *options = Dictionary(options_ptr);
+    *codec_options = Dictionary(codec_options_ptr);
   }
 
   // Check if the encoder accepts all the options
-  if (!options->empty()) {
+  if (!codec_options->empty()) {
     throw Error("Encoder::Encoder(): Encoder does not accept option [" +
-                options->to_flow_style_yaml() + "]");
+                codec_options->to_flow_style_yaml() + "]");
   }
 }
 
-Encoder::Encoder(const CodecParameters &params, Dictionary *const options)
+Encoder::Encoder(const CodecParameters &codec_params, Dictionary *const codec_options)
     : encoder_ctx_(nullptr, &free_context) {
   // Find the encoder by the given id
-  const AVCodec *const codec = avcodec_find_encoder(params->codec_id);
+  const AVCodec *const codec = avcodec_find_encoder(codec_params->codec_id);
   if (!codec) {
     throw Error("Encoder::Encoder(): Faild to find encoder");
   }
@@ -78,26 +78,26 @@ Encoder::Encoder(const CodecParameters &params, Dictionary *const options)
   if (!encoder_ctx_) {
     throw Error("Encoder::Encoder(): Failed to allocate codec context");
   }
-  set_options(encoder_ctx_.get());
+  set_context_options(encoder_ctx_.get());
 
   // Import the codec parameters to the encoder context
-  avcodec_parameters_to_context(encoder_ctx_.get(), params.get());
-  encoder_ctx_->time_base = av_inv_q(params->framerate);
+  avcodec_parameters_to_context(encoder_ctx_.get(), codec_params.get());
+  encoder_ctx_->time_base = av_inv_q(codec_params->framerate);
 
   // Open the encoder. avcodec_open2() may free the options,
   // so we release the ownership of it from unique_ptr during calling the function.
   {
-    AVDictionary *options_ptr = options->release();
-    if (const int ret = avcodec_open2(encoder_ctx_.get(), codec, &options_ptr); ret < 0) {
+    AVDictionary *codec_options_ptr = codec_options->release();
+    if (const int ret = avcodec_open2(encoder_ctx_.get(), codec, &codec_options_ptr); ret < 0) {
       throw Error("Encoder::Encoder(): Failed to open codec", ret);
     }
-    *options = Dictionary(options_ptr);
+    *codec_options = Dictionary(codec_options_ptr);
   }
 
   // Check if the encoder accepts all the options
-  if (!options->empty()) {
+  if (!codec_options->empty()) {
     throw Error("Encoder::Encoder(): Encoder does not accept option [" +
-                options->to_flow_style_yaml() + "]");
+                codec_options->to_flow_style_yaml() + "]");
   }
 }
 

@@ -351,9 +351,9 @@ public:
   Encoder() : encoder_ctx_(nullptr, &free_context) {}
   // Allocate the codec context for the given codec name and options.
   // Parameters can be filled with Parser::parse().
-  Encoder(const std::string &codec_name, Dictionary *const options);
+  Encoder(const std::string &codec_name, Dictionary *const codec_options);
   // Allocate the codec context for the given codec parameters and options
-  Encoder(const CodecParameters &params, Dictionary *const options);
+  Encoder(const CodecParameters &codec_params, Dictionary *const codec_options);
 
   std::string codec_name() const;
   std::string hw_type_name() const;
