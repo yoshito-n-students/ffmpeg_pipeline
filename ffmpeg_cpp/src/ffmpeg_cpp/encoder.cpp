@@ -59,9 +59,8 @@ Encoder::Encoder(const std::string &codec_name, Dictionary *const options)
   }
 
   // Check if the encoder accepts all the options
-  if (const auto remaining_options = options->to_map(); !remaining_options.empty()) {
-    throw Error("Encoder::Encoder(): Encoder does not accept option [" +
-                remaining_options.begin()->first + ", " + remaining_options.begin()->second + "]");
+  if (!options->empty()) {
+    throw Error("Encoder::Encoder(): Encoder does not accept option [" + options->to_yaml() + "]");
   }
 }
 
@@ -95,9 +94,8 @@ Encoder::Encoder(const CodecParameters &params, Dictionary *const options)
   }
 
   // Check if the encoder accepts all the options
-  if (const auto remaining_options = options->to_map(); !remaining_options.empty()) {
-    throw Error("Encoder::Encoder(): Encoder does not accept option [" +
-                remaining_options.begin()->first + ", " + remaining_options.begin()->second + "]");
+  if (!options->empty()) {
+    throw Error("Encoder::Encoder(): Encoder does not accept option [" + options->to_yaml() + "]");
   }
 }
 

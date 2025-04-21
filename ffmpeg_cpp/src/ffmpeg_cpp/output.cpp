@@ -65,10 +65,10 @@ Output::Output(const std::string &oformat_name, const std::string &filename,
     }
   }
 
-  // Check if the input accepts all the options
-  if (const auto remaining_options = options->to_map(); !remaining_options.empty()) {
-    throw Error("Output::Output(): Output " + filename + " does not accept option [" +
-                remaining_options.begin()->first + ", " + remaining_options.begin()->second + "]");
+  // Check if the output accepts all the options
+  if (!options->empty()) {
+    throw Error("Output::Output(): Output " + filename + " does not accept options [" +
+                options->to_yaml() + "]");
   }
 }
 

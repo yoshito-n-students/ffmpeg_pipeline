@@ -1,4 +1,5 @@
 #include <iostream>
+#include <sstream>
 #include <stdexcept>
 
 #include <ffmpeg_cpp/ffmpeg_cpp.hpp>
@@ -11,19 +12,6 @@ Dictionary::Dictionary(const std::string &yaml) : dict_(nullptr, &free_dict) {
   }
 }
 
-Dictionary::Dictionary(const std::map<std::string, std::string> &map) : dict_(nullptr, &free_dict) {
-  AVDictionary *dict = nullptr;
-  for (const auto &[key, value] : map) {
-    if (const int ret = av_dict_set(&dict, key.c_str(), value.c_str(), 0); ret < 0) {
-      av_dict_free(&dict);
-      throw Error("Dictionary::Dictionary(): Failed to set dictionary entry [" + key + ", " +
-                      value + "]",
-                  ret);
-    }
-  }
-  dict_.reset(dict);
-}
-
 Dictionary::Dictionary(const Dictionary &other) : dict_(nullptr, &free_dict) {
   AVDictionary *dict = nullptr;
   const int ret = av_dict_copy(&dict, other.get(), 0);
@@ -34,17 +22,10 @@ Dictionary::Dictionary(const Dictionary &other) : dict_(nullptr, &free_dict) {
   dict_.reset(dict);
 }
 
-std::map<std::string, std::string> Dictionary::to_map() const {
-  const AVDictionaryEntry *entry = nullptr;
-  std::map<std::string, std::string> map;
-  while(true){
-    entry = av_dict_iterate(get(), entry);
-    if (!entry) {
-      break;
-    }
-    map.insert({entry->key, entry->value});
-  }
-  return map;
+std::string Dictionary::to_yaml() const {
+  std::ostringstream yaml_str;
+  yaml_str << YAML::convert<Dictionary>::encode(*this);
+  return yaml_str.str();
 }
 
 void Dictionary::free_dict(AVDictionary *dict) { av_dict_free(&dict); }
@@ -69,6 +50,20 @@ bool convert<ffmpeg_cpp::Dictionary>::decode(const Node &yaml, ffmpeg_cpp::Dicti
     std::cerr << error.what() << std::endl;
     return false;
   }
+}
+
+Node convert<ffmpeg_cpp::Dictionary>::encode(const ffmpeg_cpp::Dictionary &dict) {
+  const AVDictionaryEntry *entry = nullptr;
+  Node yaml;
+  while (true) {
+    entry = av_dict_iterate(dict.get(), entry);
+    if (!entry) {
+      break;
+    }
+    // yaml-cpp does not accept char * as key, so we need to cast it to const char *
+    yaml[static_cast<const char *>(entry->key)] = static_cast<const char *>(entry->value);
+  }
+  return yaml;
 }
 
 } // namespace YAML

@@ -2,7 +2,6 @@
 #define FFMPEG_CPP_FFMPEG_CPP_HPP
 
 #include <cstdint>
-#include <map>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -172,8 +171,6 @@ public:
   Dictionary(AVDictionary *const dict) : dict_(dict, &free_dict) {}
   // Create a dictionary by parsing the given yaml string
   Dictionary(const std::string &yaml);
-  // Create a dictionary by copying the entries from the given map
-  Dictionary(const std::map<std::string, std::string> &map);
   // Create a dictionary by copying the given dictionary
   Dictionary(const Dictionary &other);
   Dictionary &operator=(const Dictionary &other) {
@@ -185,7 +182,9 @@ public:
   Dictionary(Dictionary &&other) = default;
   Dictionary &operator=(Dictionary &&other) = default;
 
-  std::map<std::string, std::string> to_map() const;
+  bool empty() const { return !dict_; }
+
+  std::string to_yaml() const;
 
   // Access to the underlying AVDictionary
   AVDictionary *get() { return dict_.get(); }
@@ -495,6 +494,7 @@ namespace YAML {
 
 template <> struct convert<ffmpeg_cpp::Dictionary> {
   static bool decode(const Node &yaml, ffmpeg_cpp::Dictionary &dict);
+  static Node encode(const ffmpeg_cpp::Dictionary &dict);
 };
 
 template <> struct convert<ffmpeg_cpp::CodecParameters> {

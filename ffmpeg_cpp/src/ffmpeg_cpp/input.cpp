@@ -49,9 +49,9 @@ Input::Input(const std::string &url, const std::string &iformat_name, Dictionary
   }
 
   // Check if the input accepts all the options
-  if (const auto remaining_options = options->to_map(); !remaining_options.empty()) {
-    throw Error("Input::Input(): Input " + url + " does not accept option [" +
-                remaining_options.begin()->first + ", " + remaining_options.begin()->second + "]");
+  if (!options->empty()) {
+    throw Error("Input::Input(): Input " + url + " does not accept option [" + options->to_yaml() +
+                "]");
   }
 
   // Retrieve stream information on the input
