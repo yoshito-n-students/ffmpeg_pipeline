@@ -39,7 +39,8 @@ int main(int argc, char *argv[]) {
 
             // Initialize the decoder if not already done
             if (!decoder.valid()) {
-              decoder = av::Decoder(packet_data->format);
+              av::Dictionary options;
+              decoder = av::Decoder(packet_data->format,&options);
               RCLCPP_INFO(node->get_logger(), "Configured decoder (codec: %s, hw: %s)",
                           decoder.codec_name().c_str(), decoder.hw_type_name().c_str());
             }

@@ -53,7 +53,8 @@ static void set_options(AVCodecContext *const decoder_ctx) {
   }
 }
 
-Decoder::Decoder(const std::string &codec_name) : decoder_ctx_(nullptr, &free_context) {
+Decoder::Decoder(const std::string &codec_name, Dictionary *const options)
+    : decoder_ctx_(nullptr, &free_context) {
   // Find the decoder by name
   const AVCodec *const codec = avcodec_find_decoder_by_name(codec_name.c_str());
   if (!codec) {
@@ -67,13 +68,25 @@ Decoder::Decoder(const std::string &codec_name) : decoder_ctx_(nullptr, &free_co
   }
   set_options(decoder_ctx_.get());
 
-  // Open the decoder
-  if (const int ret = avcodec_open2(decoder_ctx_.get(), codec, nullptr); ret < 0) {
-    throw Error("Decoder::Decoder(): Failed to open codec", ret);
+  // Open the decoder. avcodec_open2() may free the options,
+  // so we release the ownership of it from unique_ptr during calling the function.
+  {
+    AVDictionary *options_ptr = options->release();
+    if (const int ret = avcodec_open2(decoder_ctx_.get(), codec, &options_ptr); ret < 0) {
+      throw Error("Decoder::Decoder(): Failed to open codec", ret);
+    }
+    *options = Dictionary(options_ptr);
+  }
+
+  // Check if the decoder accepts all the options
+  if (!options->empty()) {
+    throw Error("Decoder::Decoder(): Decoder does not accept option [" +
+                options->to_flow_style_yaml() + "]");
   }
 }
 
-Decoder::Decoder(const CodecParameters &params) : decoder_ctx_(nullptr, &free_context) {
+Decoder::Decoder(const CodecParameters &params, Dictionary *const options)
+    : decoder_ctx_(nullptr, &free_context) {
   // Find the decoder by the given id
   const AVCodec *const codec = avcodec_find_decoder(params->codec_id);
   if (!codec) {
@@ -90,9 +103,20 @@ Decoder::Decoder(const CodecParameters &params) : decoder_ctx_(nullptr, &free_co
   // Import the codec parameters to the decoder context
   avcodec_parameters_to_context(decoder_ctx_.get(), params.get());
 
-  // Open the decoder
-  if (const int ret = avcodec_open2(decoder_ctx_.get(), codec, nullptr); ret < 0) {
-    throw Error("Decoder::Decoder(): Failed to open codec", ret);
+  // Open the decoder. avcodec_open2() may free the options,
+  // so we release the ownership of it from unique_ptr during calling the function.
+  {
+    AVDictionary *options_ptr = options->release();
+    if (const int ret = avcodec_open2(decoder_ctx_.get(), codec, &options_ptr); ret < 0) {
+      throw Error("Decoder::Decoder(): Failed to open codec", ret);
+    }
+    *options = Dictionary(options_ptr);
+  }
+
+  // Check if the decoder accepts all the options
+  if (!options->empty()) {
+    throw Error("Decoder::Decoder(): Decoder does not accept option [" +
+                options->to_flow_style_yaml() + "]");
   }
 }
 

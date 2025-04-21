@@ -40,7 +40,8 @@ protected:
                     parser_.codec_names().front().c_str());
       }
       if (!decoder_.valid()) {
-        decoder_ = ffmpeg_cpp::Decoder(fragment->format);
+        ffmpeg_cpp::Dictionary options; // TODO: get options from the node parameter
+        decoder_ = ffmpeg_cpp::Decoder(fragment->format, &options);
         RCLCPP_INFO(node_->get_logger(), "Configured decoder (codec: %s, hw: %s)",
                     decoder_.codec_name().c_str(), decoder_.hw_type_name().c_str());
       }

@@ -18,6 +18,14 @@ protected:
       return base_ret;
     }
 
+    try {
+      options_ =
+          ffmpeg_cpp::Dictionary(get_node()->declare_parameter<std::string>("options", "{}"));
+    } catch (const std::runtime_error &error) {
+      RCLCPP_ERROR(get_logger(), "Error while getting parameter value: %s", error.what());
+      return CallbackReturn::ERROR;
+    }
+
     // Names of intraprocess read-only variables to be exported
     exported_state_interface_names_ = {"frame"};
 
@@ -81,7 +89,8 @@ protected:
     try {
       // Ensure the decoder is configured for the codec
       if (!decoder_.valid()) {
-        decoder_ = ffmpeg_cpp::Decoder(*codec_params);
+        ffmpeg_cpp::Dictionary options(options_); // Copy options_ to avoid modifying it
+        decoder_ = ffmpeg_cpp::Decoder(*codec_params, &options);
         RCLCPP_INFO(get_logger(), "Configured decoder (codec: %s, hw: %s)",
                     decoder_.codec_name().c_str(), decoder_.hw_type_name().c_str());
       }
@@ -124,6 +133,7 @@ protected:
 
 protected:
   ffmpeg_cpp::Decoder decoder_;
+  ffmpeg_cpp::Dictionary options_;
   ffmpeg_cpp::Frame frame_;
   decltype(ffmpeg_cpp::Packet()->dts) prev_dts_;
 };
