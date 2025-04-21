@@ -60,7 +60,8 @@ Encoder::Encoder(const std::string &codec_name, Dictionary *const options)
 
   // Check if the encoder accepts all the options
   if (!options->empty()) {
-    throw Error("Encoder::Encoder(): Encoder does not accept option [" + options->to_yaml() + "]");
+    throw Error("Encoder::Encoder(): Encoder does not accept option [" +
+                options->to_flow_style_yaml() + "]");
   }
 }
 
@@ -95,7 +96,8 @@ Encoder::Encoder(const CodecParameters &params, Dictionary *const options)
 
   // Check if the encoder accepts all the options
   if (!options->empty()) {
-    throw Error("Encoder::Encoder(): Encoder does not accept option [" + options->to_yaml() + "]");
+    throw Error("Encoder::Encoder(): Encoder does not accept option [" +
+                options->to_flow_style_yaml() + "]");
   }
 }
 

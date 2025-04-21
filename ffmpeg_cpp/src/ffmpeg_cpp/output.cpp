@@ -68,7 +68,7 @@ Output::Output(const std::string &oformat_name, const std::string &filename,
   // Check if the output accepts all the options
   if (!options->empty()) {
     throw Error("Output::Output(): Output " + filename + " does not accept options [" +
-                options->to_yaml() + "]");
+                options->to_flow_style_yaml() + "]");
   }
 }
 

@@ -50,8 +50,8 @@ Input::Input(const std::string &url, const std::string &iformat_name, Dictionary
 
   // Check if the input accepts all the options
   if (!options->empty()) {
-    throw Error("Input::Input(): Input " + url + " does not accept option [" + options->to_yaml() +
-                "]");
+    throw Error("Input::Input(): Input " + url + " does not accept option [" +
+                options->to_flow_style_yaml() + "]");
   }
 
   // Retrieve stream information on the input
