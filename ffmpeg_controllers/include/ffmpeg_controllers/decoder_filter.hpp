@@ -19,8 +19,8 @@ protected:
     }
 
     try {
-      options_ =
-          ffmpeg_cpp::Dictionary(get_node()->declare_parameter<std::string>("options", "{}"));
+      codec_options_ =
+          ffmpeg_cpp::Dictionary(get_node()->declare_parameter<std::string>("codec_options", "{}"));
     } catch (const std::runtime_error &error) {
       RCLCPP_ERROR(get_logger(), "Error while getting parameter value: %s", error.what());
       return CallbackReturn::ERROR;
@@ -89,8 +89,9 @@ protected:
     try {
       // Ensure the decoder is configured for the codec
       if (!decoder_.valid()) {
-        ffmpeg_cpp::Dictionary options(options_); // Copy options_ to avoid modifying it
-        decoder_ = ffmpeg_cpp::Decoder(*codec_params, &options);
+        ffmpeg_cpp::Dictionary codec_options(
+            codec_options_); // Copy codec_options_ to avoid modifying it
+        decoder_ = ffmpeg_cpp::Decoder(*codec_params, &codec_options);
         RCLCPP_INFO(get_logger(), "Configured decoder (codec: %s, hw: %s)",
                     decoder_.codec_name().c_str(), decoder_.hw_type_name().c_str());
       }
@@ -133,7 +134,7 @@ protected:
 
 protected:
   ffmpeg_cpp::Decoder decoder_;
-  ffmpeg_cpp::Dictionary options_;
+  ffmpeg_cpp::Dictionary codec_options_;
   ffmpeg_cpp::Frame frame_;
   decltype(ffmpeg_cpp::Packet()->dts) prev_dts_;
 };
