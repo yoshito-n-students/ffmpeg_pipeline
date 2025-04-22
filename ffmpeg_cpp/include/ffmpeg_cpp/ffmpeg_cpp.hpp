@@ -13,6 +13,7 @@
 extern "C" {
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
+#include <libavutil/audio_fifo.h>
 #include <libavutil/avutil.h>
 #include <libswresample/swresample.h>
 #include <libswscale/swscale.h>
@@ -376,6 +377,36 @@ private:
 
 private:
   std::unique_ptr<AVCodecContext, decltype(&free_context)> encoder_ctx_;
+};
+
+// ============================
+// RAII wrapper for AVAudioFifo
+// ============================
+
+class AudioFifo {
+public:
+  AudioFifo() : fifo_(nullptr, &av_audio_fifo_free), template_frame_() {}
+  AudioFifo(const std::string &ch_layout_str, const std::string &format_name,
+            const int sample_rate);
+
+  std::string ch_layout_str() const;
+  std::string format_name() const;
+  int sample_rate() const;
+
+  // Push a frame to the FIFO
+  void write(const Frame &frame);
+
+  // Pop nb_samples samples if available in the FIFO, or return an empty frame
+  Frame read(const int nb_samples);
+
+  // Access to the underlying SwrContext
+  bool valid() const { return fifo_.get(); }
+  AVAudioFifo *get() { return fifo_.get(); }
+  const AVAudioFifo *get() const { return fifo_.get(); }
+
+private:
+  std::unique_ptr<AVAudioFifo, decltype(&av_audio_fifo_free)> fifo_;
+  Frame template_frame_;
 };
 
 // ===========================
