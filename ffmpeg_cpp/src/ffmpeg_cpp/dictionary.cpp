@@ -23,15 +23,15 @@ Dictionary::Dictionary(const Dictionary &other) : dict_(nullptr, &free_dict) {
 }
 
 std::string Dictionary::to_yaml() const {
-  std::ostringstream yaml_str;
-  yaml_str << YAML::convert<Dictionary>::encode(*this);
-  return yaml_str.str();
+  YAML::Emitter emitter;
+  emitter << YAML::convert<Dictionary>::encode(*this);
+  return emitter.c_str();
 }
 
 std::string Dictionary::to_flow_style_yaml() const {
-  std::ostringstream yaml_str;
-  yaml_str << YAML::Flow << YAML::convert<Dictionary>::encode(*this);
-  return yaml_str.str();
+  YAML::Emitter emitter;
+  emitter << YAML::Flow << YAML::convert<Dictionary>::encode(*this);
+  return emitter.c_str();
 }
 
 void Dictionary::free_dict(AVDictionary *dict) { av_dict_free(&dict); }
