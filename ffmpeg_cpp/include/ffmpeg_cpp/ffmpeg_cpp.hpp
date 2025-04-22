@@ -191,8 +191,6 @@ public:
   // Access to the underlying AVDictionary
   AVDictionary *get() { return dict_.get(); }
   const AVDictionary *get() const { return dict_.get(); }
-  AVDictionary *operator->() { return dict_.operator->(); }
-  const AVDictionary *operator->() const { return dict_.operator->(); }
   AVDictionary *release() { return dict_.release(); }
 
 private:
@@ -412,8 +410,6 @@ public:
   bool valid() const { return sws_ctx_.get(); }
   SwsContext *get() { return sws_ctx_.get(); }
   const SwsContext *get() const { return sws_ctx_.get(); }
-  SwsContext *operator->() { return sws_ctx_.operator->(); }
-  const SwsContext *operator->() const { return sws_ctx_.operator->(); }
 
 private:
   std::unique_ptr<SwsContext, decltype(&sws_freeContext)> sws_ctx_;
@@ -445,8 +441,6 @@ public:
   bool valid() const { return swr_ctx_.get(); }
   SwrContext *get() { return swr_ctx_.get(); }
   const SwrContext *get() const { return swr_ctx_.get(); }
-  SwrContext *operator->() { return swr_ctx_.operator->(); }
-  const SwrContext *operator->() const { return swr_ctx_.operator->(); }
 
 private:
   static void free_context(SwrContext *swr_ctx);
