@@ -16,19 +16,21 @@
 
 namespace ffmpeg_controllers {
 
-namespace controller_base_mixin {
+// ============================
+// Tag types for ControllerBase
+// ============================
 
-// ===========================
-// Tag types for mixin classes
-// ===========================
+namespace input_options {
 
-// InputOptions
 // - Read state interface loaned from other hardware or controller
 struct ReadState {};
 // - Subscribe a topic
 template <typename Message> struct Subscribe {};
 
-// OutputOptions
+} // namespace input_options
+
+namespace output_options {
+
 // - Export state interface to other hardware or controller
 struct ExportState {};
 // - Write to command interface loaned from other hardware or controller
@@ -36,11 +38,7 @@ struct WriteCommand {};
 // - Publish messages to a topic
 template <typename Message> struct Publish {};
 
-// Mapping from options to interface types
-template <typename InputOption, typename OutputOption>
-using InterfaceFor = std::conditional_t<std::is_same_v<OutputOption, ExportState>,
-                                        controller_interface::ChainableControllerInterface,
-                                        controller_interface::ControllerInterface>;
+} // namespace output_options
 
 // ===================================
 // Interface adapter for mixin classes
@@ -171,7 +169,7 @@ protected:
 template <typename InputOption, class Interface> class InputMixin;
 
 template <class Interface>
-class InputMixin<ReadState, Interface> : public virtual InterfaceAdapter<Interface> {
+class InputMixin<input_options::ReadState, Interface> : public virtual InterfaceAdapter<Interface> {
 private:
   using Base = InterfaceAdapter<Interface>;
 
@@ -196,7 +194,8 @@ protected:
 };
 
 template <typename Message, class Interface>
-class InputMixin<Subscribe<Message>, Interface> : public virtual InterfaceAdapter<Interface> {
+class InputMixin<input_options::Subscribe<Message>, Interface>
+    : public virtual InterfaceAdapter<Interface> {
 private:
   using Base = InterfaceAdapter<Interface>;
 
@@ -257,10 +256,12 @@ protected:
 template <typename OutputOption, class Interface> class OutputMixin;
 
 template <class Interface>
-class OutputMixin<ExportState, Interface> : public virtual InterfaceAdapter<Interface> {};
+class OutputMixin<output_options::ExportState, Interface>
+    : public virtual InterfaceAdapter<Interface> {};
 
 template <class Interface>
-class OutputMixin<WriteCommand, Interface> : public virtual InterfaceAdapter<Interface> {
+class OutputMixin<output_options::WriteCommand, Interface>
+    : public virtual InterfaceAdapter<Interface> {
 private:
   using Base = InterfaceAdapter<Interface>;
 
@@ -285,7 +286,8 @@ protected:
 };
 
 template <typename Message, class Interface>
-class OutputMixin<Publish<Message>, Interface> : public virtual InterfaceAdapter<Interface> {
+class OutputMixin<output_options::Publish<Message>, Interface>
+    : public virtual InterfaceAdapter<Interface> {
 private:
   using Base = InterfaceAdapter<Interface>;
 
@@ -331,6 +333,12 @@ protected:
 // Mixin class depending on InputOption and OutputOption
 // =====================================================
 
+// Mapping from options to interface types
+template <typename InputOption, typename OutputOption>
+using InterfaceFor = std::conditional_t<std::is_same_v<OutputOption, output_options::ExportState>,
+                                        controller_interface::ChainableControllerInterface,
+                                        controller_interface::ControllerInterface>;
+
 template <typename InputOption, typename OutputOption>
 class InputOutputMixin
     : public virtual InputMixin<InputOption, InterfaceFor<InputOption, OutputOption>>,
@@ -352,25 +360,19 @@ protected:
   }
 };
 
-} // namespace controller_base_mixin
-
 // =====================================================
 // Base classes built with mixin classes for controllers
 // =====================================================
 
 template <typename InputOption, typename OutputOption>
-using ControllerBase = controller_base_mixin::InputOutputMixin<InputOption, OutputOption>;
+using ControllerBase = InputOutputMixin<InputOption, OutputOption>;
 
-using FilterBase =
-    ControllerBase<controller_base_mixin::ReadState, controller_base_mixin::ExportState>;
-using WriterBase =
-    ControllerBase<controller_base_mixin::ReadState, controller_base_mixin::WriteCommand>;
+using FilterBase = ControllerBase<input_options::ReadState, output_options::ExportState>;
+using WriterBase = ControllerBase<input_options::ReadState, output_options::WriteCommand>;
 template <typename Message>
-using BroadcasterBase =
-    ControllerBase<controller_base_mixin::ReadState, controller_base_mixin::Publish<Message>>;
+using BroadcasterBase = ControllerBase<input_options::ReadState, output_options::Publish<Message>>;
 template <typename Message>
-using ReceiverBase =
-    ControllerBase<controller_base_mixin::Subscribe<Message>, controller_base_mixin::ExportState>;
+using ReceiverBase = ControllerBase<input_options::Subscribe<Message>, output_options::ExportState>;
 // ControllerBase<Susbcribe, WriteCommand> is unnecessary
 // because it can be realized by a combination of Receiver and Writer.
 // ControllerBase<Susbcribe, Publish> is also not defined here
