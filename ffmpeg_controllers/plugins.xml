@@ -9,6 +9,15 @@
         </description>
     </class>
 
+    <class name="ffmpeg_controllers/AudioFifoFilter"
+           type="ffmpeg_controllers::AudioFifoFilter"
+           base_class_type="controller_interface::ChainableControllerInterface">
+        <description>
+            This controller reads ffmpeg_cpp::Frame from the state interface owned by other controller
+            and export the converted audio frame on the state interface owned by this controller.
+        </description>
+    </class>
+
     <class name="ffmpeg_controllers/CompressedImageBroadcaster"
            type="ffmpeg_controllers::CompressedImageBroadcaster"
            base_class_type="controller_interface::ControllerInterface">
@@ -35,16 +44,6 @@
             and export encoded packets as ffmpeg_cpp::Packet on the state interface owned by this controller.
         </description>
     </class>
-
-    <!--
-    <class name="ffmpeg_controllers/FrameBroadcaster"
-           type="ffmpeg_controllers::FrameBroadcaster"
-           base_class_type="controller_interface::ControllerInterface">
-        <description>
-            This controller publishes decoded general frames as ffmpeg_pipeline_msgs::Frame read from the input.
-        </description>
-    </class>
-    -->
 
     <class name="ffmpeg_controllers/ImageBroadcaster"
            type="ffmpeg_controllers::ImageBroadcaster"
