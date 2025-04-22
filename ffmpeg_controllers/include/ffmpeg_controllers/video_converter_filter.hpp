@@ -92,11 +92,11 @@ protected:
             // Keep the original size if dst_{width_, height_} are not set
             dst_width_ > 0 ? dst_width_ : (*src_frame)->width,
             dst_height_ > 0 ? dst_height_ : (*src_frame)->height, dst_format_);
-        RCLCPP_INFO(get_logger(), "Configured converter (src: %zdx%zd(%s), dst: %zdx%zd(%s))",
-                    converter_.src_width(), converter_.src_height(),
-                    converter_.src_format_name().c_str(), //
-                    converter_.dst_width(), converter_.dst_height(),
-                    converter_.dst_format_name().c_str());
+        RCLCPP_INFO(get_logger(), "Configured converter ([%s] %zdx%zd -> [%s] %zdx%zd)",
+                    converter_.src_format_name().c_str(), converter_.src_width(),
+                    converter_.src_height(), //
+                    converter_.dst_format_name().c_str(), converter_.dst_width(),
+                    converter_.dst_height());
       }
 
       // Convert the frame to the destination format

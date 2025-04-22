@@ -93,20 +93,23 @@ protected:
       // Ensure the encoder is configured for the codec
       if (!encoder_.valid()) {
         // Fill unspecified codec parameters with those from the source frame
-        if (codec_params_->width <= 0) {
-          codec_params_->width = (*frame)->width;
-        }
-        if (codec_params_->height <= 0) {
-          codec_params_->height = (*frame)->height;
-        }
-        if (codec_params_->sample_rate <= 0) {
-          codec_params_->sample_rate = (*frame)->sample_rate;
-        }
+        ffmpeg_cpp::CodecParameters params(codec_params_);
+        params->width = (params->width <= 0 ? (*frame)->width : params->width);
+        params->height = (params->height <= 0 ? (*frame)->height : params->height);
+        params->sample_rate =
+            (params->sample_rate <= 0 ? (*frame)->sample_rate : params->sample_rate);
 
-        ffmpeg_cpp::Dictionary options(codec_options_); // Copy codec_options_ to avoid modifying it
-        encoder_ = ffmpeg_cpp::Encoder(codec_params_, &options);
-        RCLCPP_INFO(get_logger(), "Configured encoder (codec: %s, hw: %s)",
-                    encoder_.codec_name().c_str(), encoder_.hw_type_name().c_str());
+        // Prepare a copy of codec options to avoid modifying the original
+        ffmpeg_cpp::Dictionary options(codec_options_);
+
+        // Configure the encoder with the codec parameters and options
+        encoder_ = ffmpeg_cpp::Encoder(params, &options);
+        if (const std::string hw_type_name = encoder_.hw_type_name(); hw_type_name == "none") {
+          RCLCPP_INFO(get_logger(), "Configured encoder (%s)", encoder_.codec_name().c_str());
+        } else {
+          RCLCPP_INFO(get_logger(), "Configured encoder (%s|%s)", encoder_.codec_name().c_str(),
+                      hw_type_name.c_str());
+        }
       }
 
       // Put the raw frame into the encoder

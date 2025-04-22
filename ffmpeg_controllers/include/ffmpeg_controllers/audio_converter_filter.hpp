@@ -93,7 +93,7 @@ protected:
             !out_ch_layout_str_.empty() ? out_ch_layout_str_ : in_frame->ch_layout_str(),
             !out_format_name_.empty() ? out_format_name_ : in_frame->format_name(),
             out_sample_rate_ > 0 ? out_sample_rate_ : (*in_frame)->sample_rate);
-        RCLCPP_INFO(get_logger(), "Configured converter (src: %s / %s / %ld, dst: %s / %s / %ld)",
+        RCLCPP_INFO(get_logger(), "Configured converter ([%s] %s @ %ldHz -> [%s] %s @ %ldHz)",
                     converter_.in_ch_layout_str().c_str(), converter_.in_format_name().c_str(),
                     converter_.in_sample_rate(), //
                     converter_.out_ch_layout_str().c_str(), converter_.out_format_name().c_str(),
@@ -104,7 +104,7 @@ protected:
       frame_ = converter_.convert(*in_frame);
       prev_dts_ = frame_->pkt_dts;
     } catch (const std::runtime_error &error) {
-      RCLCPP_ERROR(get_logger(), "Error while decoding packet: %s", error.what());
+      RCLCPP_ERROR(get_logger(), "Error while converting frames: %s", error.what());
       return ControllerReturn::ERROR;
     }
 

@@ -91,8 +91,12 @@ protected:
       if (!decoder_.valid()) {
         ffmpeg_cpp::Dictionary options(codec_options_); // Copy codec_options_ to avoid modifying it
         decoder_ = ffmpeg_cpp::Decoder(*codec_params, &options);
-        RCLCPP_INFO(get_logger(), "Configured decoder (codec: %s, hw: %s)",
-                    decoder_.codec_name().c_str(), decoder_.hw_type_name().c_str());
+        if (const std::string hw_type_name = decoder_.hw_type_name(); hw_type_name == "none") {
+          RCLCPP_INFO(get_logger(), "Configured decoder (%s)", decoder_.codec_name().c_str());
+        } else {
+          RCLCPP_INFO(get_logger(), "Configured decoder (%s|%s)", decoder_.codec_name().c_str(),
+                      hw_type_name.c_str());
+        }
       }
 
       // Put the compressed data into the decoder
