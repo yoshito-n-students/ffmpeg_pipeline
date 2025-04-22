@@ -64,7 +64,9 @@ Frame AudioConverter::convert(const Frame &in_frame) {
   // Fill required fields in the output frame
   Frame out_frame;
   const AVChannelLayout out_ch_layout = get_channel_layout(swr_ctx_.get(), "out_chlayout");
-  av_channel_layout_copy(&out_frame->ch_layout, &out_ch_layout);
+  if (const int ret = av_channel_layout_copy(&out_frame->ch_layout, &out_ch_layout); ret < 0) {
+    throw Error("AudioConverter::convert(): Failed to copy channel layout", ret);
+  }
   out_frame->format = get_sample_format(swr_ctx_.get(), "out_sample_fmt");
   out_frame->sample_rate = get_int64(swr_ctx_.get(), "out_sample_rate", 0);
 
