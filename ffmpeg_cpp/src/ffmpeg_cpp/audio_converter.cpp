@@ -94,6 +94,10 @@ Frame AudioConverter::convert(const Frame &_in_frame) {
     throw Error("AudioConverter::convert(): Failed to convert frame", ret);
   }
 
+  // Copy the timestamps from the input frame to the output frame
+  out_frame->pts = in_frame->pts;
+  out_frame->pkt_dts = in_frame->pkt_dts;
+
   return out_frame;
 }
 
