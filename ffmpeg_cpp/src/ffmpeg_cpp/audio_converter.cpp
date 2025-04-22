@@ -36,8 +36,19 @@ AudioConverter::AudioConverter(const std::string &in_ch_layout_str,
   }
 }
 
+// Helper to convert to the channel layout used internally by libswresample
+static AVChannelLayout to_swr_channel_layout(const AVChannelLayout &ch_layout) {
+  if (ch_layout.order != AV_CHANNEL_ORDER_UNSPEC) {
+    return ch_layout;
+  } else {
+    AVChannelLayout swr_ch_layout;
+    av_channel_layout_default(&swr_ch_layout, ch_layout.nb_channels);
+    return swr_ch_layout;
+  }
+}
+
 std::string AudioConverter::in_ch_layout_str() const {
-  return to_string(get_channel_layout(swr_ctx_.get(), "in_chlayout"));
+  return to_string(to_swr_channel_layout(get_channel_layout(swr_ctx_.get(), "in_chlayout")));
 }
 
 std::string AudioConverter::in_format_name() const {
@@ -49,7 +60,7 @@ std::int64_t AudioConverter::in_sample_rate() const {
 }
 
 std::string AudioConverter::out_ch_layout_str() const {
-  return to_string(get_channel_layout(swr_ctx_.get(), "out_chlayout"));
+  return to_string(to_swr_channel_layout(get_channel_layout(swr_ctx_.get(), "out_chlayout")));
 }
 
 std::string AudioConverter::out_format_name() const {
@@ -60,12 +71,20 @@ std::int64_t AudioConverter::out_sample_rate() const {
   return get_int64(swr_ctx_.get(), "out_sample_rate", 0);
 }
 
-Frame AudioConverter::convert(const Frame &in_frame) {
-  // Fill required fields in the output frame
+Frame AudioConverter::convert(const Frame &_in_frame) {
+  // Prepare the input frame with the modified channel layout
+  Frame in_frame(_in_frame); // This is a shallow copy
+  const AVChannelLayout swr_in_ch_layout = to_swr_channel_layout(in_frame->ch_layout);
+  if (const int ret = av_channel_layout_copy(&in_frame->ch_layout, &swr_in_ch_layout); ret < 0) {
+    throw Error("AudioConverter::convert(): Failed to set input channel layout", ret);
+  }
+
+  // Prepare the output frame with the required fields
   Frame out_frame;
-  const AVChannelLayout out_ch_layout = get_channel_layout(swr_ctx_.get(), "out_chlayout");
-  if (const int ret = av_channel_layout_copy(&out_frame->ch_layout, &out_ch_layout); ret < 0) {
-    throw Error("AudioConverter::convert(): Failed to copy channel layout", ret);
+  const AVChannelLayout swr_out_ch_layout =
+      to_swr_channel_layout(get_channel_layout(swr_ctx_.get(), "out_chlayout"));
+  if (const int ret = av_channel_layout_copy(&out_frame->ch_layout, &swr_out_ch_layout); ret < 0) {
+    throw Error("AudioConverter::convert(): Failed to set output channel layout", ret);
   }
   out_frame->format = get_sample_format(swr_ctx_.get(), "out_sample_fmt");
   out_frame->sample_rate = get_int64(swr_ctx_.get(), "out_sample_rate", 0);
