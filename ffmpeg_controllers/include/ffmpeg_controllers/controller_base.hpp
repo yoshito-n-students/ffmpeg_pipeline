@@ -223,16 +223,11 @@ protected:
     return Base::NodeReturn::SUCCESS;
   }
 
-  typename Base::NodeReturn
-  on_deactivate(const rclcpp_lifecycle::State & /*previous_state*/) override {
-    msg_buffer_ = realtime_tools::RealtimeBuffer<typename InputMessage::ConstSharedPtr>();
-    return Base::NodeReturn::SUCCESS;
-  }
-
   typename Base::ControllerReturn on_update(const rclcpp::Time &time,
                                             const rclcpp::Duration &period) override {
     if (const typename InputMessage::ConstSharedPtr msg = *msg_buffer_.readFromRT(); msg) {
       // If the message is available, process it by the derived class
+      // TODO: Check if the message is updated?
       return on_process(time, period, *msg);
     } else {
       // If no message is available, just return OK
