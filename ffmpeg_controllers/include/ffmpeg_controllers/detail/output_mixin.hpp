@@ -189,6 +189,11 @@ private:
 protected:
   using OutputMessage = Message;
 
+  typename Base::NodeReturn on_init() override {
+    output_topic_ = "~/output";
+    return Base::NodeReturn::SUCCESS;
+  }
+
   typename Base::NodeReturn
   on_configure(const rclcpp_lifecycle::State & /*previous_state*/) override {
     try {

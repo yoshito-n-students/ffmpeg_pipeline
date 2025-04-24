@@ -206,6 +206,11 @@ private:
 protected:
   using InputMessage = Message;
 
+  typename Base::NodeReturn on_init() override {
+    input_topic_ = "~/input";
+    return Base::NodeReturn::SUCCESS;
+  }
+
   typename Base::NodeReturn
   on_configure(const rclcpp_lifecycle::State & /*previous_state*/) override {
     try {
