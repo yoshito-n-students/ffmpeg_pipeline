@@ -1,22 +1,26 @@
 #ifndef FFMPEG_CONTROLLERS_ENCODER_FILTER_HPP
 #define FFMPEG_CONTROLLERS_ENCODER_FLITER_HPP
 
+#include <optional>
+#include <stdexcept>
 #include <string>
+#include <utility> // for std::move()
 
 #include <ffmpeg_controllers/controller_base.hpp>
 #include <ffmpeg_cpp/ffmpeg_cpp.hpp>
+#include <rclcpp/logging.hpp>
 
 namespace ffmpeg_controllers {
 
-class EncoderFilter : public FilterBase {
-protected:
-  // ===================
-  // AS a lifecycle node
-  // ===================
+class EncoderFilter
+    : public ControllerBase<input_options::ReadFrame, output_options::ExportPacketWithParams> {
+private:
+  using Base = ControllerBase<input_options::ReadFrame, output_options::ExportPacketWithParams>;
 
+protected:
   NodeReturn on_init() override {
     // Initialize the base class first
-    if (const NodeReturn base_ret = FilterBase::on_init(); base_ret != NodeReturn::SUCCESS) {
+    if (const NodeReturn base_ret = Base::on_init(); base_ret != NodeReturn::SUCCESS) {
       return base_ret;
     }
 
@@ -27,83 +31,34 @@ protected:
           get_node()->declare_parameter<std::string>("codec_parameters"));
     } catch (const std::runtime_error &error) {
       RCLCPP_ERROR(get_logger(), "Error while getting parameter value: %s", error.what());
-      return CallbackReturn::ERROR;
+      return NodeReturn::ERROR;
     }
-
-    // Names of intraprocess read-only variables to be exported
-    exported_state_interface_names_ = {"codec_parameters", "packet"};
 
     return NodeReturn::SUCCESS;
   }
 
-  NodeReturn on_activate(const rclcpp_lifecycle::State &previous_state) override {
-    // Activate the base class first
-    if (const NodeReturn base_ret = FilterBase::on_activate(previous_state);
-        base_ret != NodeReturn::SUCCESS) {
-      return base_ret;
-    }
-
-    // Register the packet to state interface owned by this controller
-    if (!set_state_from_pointer("codec_parameters", &codec_params_) ||
-        !set_state_from_pointer("packet", &packet_)) {
-      return NodeReturn::ERROR;
-    }
-
-    // Reset the previous dts
-    prev_dts_ = 0;
-
-    return NodeReturn::SUCCESS;
-  }
-
-  NodeReturn on_deactivate(const rclcpp_lifecycle::State &previous_state) override {
-    // Unregister the frame from state interface owned by this controller
-    if (!set_state_from_pointer("codec_parameters", nullptr) ||
-        !set_state_from_pointer("packet", nullptr)) {
-      return NodeReturn::ERROR;
-    }
-
-    // Deactivate the base class in the end
-    return FilterBase::on_deactivate(previous_state);
-  }
-
-  // ===============
-  // As a controller
-  // ===============
-
-  controller_interface::InterfaceConfiguration state_interface_configuration() const override {
-    return {controller_interface::interface_configuration_type::INDIVIDUAL,
-            {input_name_ + "/frame"}};
-  }
-
-  ControllerReturn on_update(const rclcpp::Time & /*time*/,
-                             const rclcpp::Duration & /*period*/) override {
-    // Try to get the input frame owned by the hardware or other chained controller
-    const ffmpeg_cpp::Frame *const frame = get_state_as_pointer<ffmpeg_cpp::Frame>("frame");
-    if (!frame) {
-      RCLCPP_WARN(get_logger(), "Failed to get input frame. Will skip this update.");
-      return ControllerReturn::OK;
-    }
-
-    // Skip encoding the frame if it is not new
-    if ((*frame)->pkt_dts <= prev_dts_) {
-      return ControllerReturn::OK;
-    }
-
+  std::pair<ControllerReturn, std::optional<Outputs>>
+  on_generate(const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/,
+              const ffmpeg_cpp::Frame &input_frame) override {
     try {
       // Ensure the encoder is configured for the codec
       if (!encoder_.valid()) {
         // Fill unspecified codec parameters with those from the source frame
-        ffmpeg_cpp::CodecParameters params(codec_params_);
-        params->width = (params->width <= 0 ? (*frame)->width : params->width);
-        params->height = (params->height <= 0 ? (*frame)->height : params->height);
-        params->sample_rate =
-            (params->sample_rate <= 0 ? (*frame)->sample_rate : params->sample_rate);
+        if (codec_params_->width <= 0) {
+          codec_params_->width = input_frame->width;
+        }
+        if (codec_params_->height <= 0) {
+          codec_params_->height = input_frame->height;
+        }
+        if (codec_params_->sample_rate <= 0) {
+          codec_params_->sample_rate = input_frame->sample_rate;
+        }
 
         // Prepare a copy of codec options to avoid modifying the original
         ffmpeg_cpp::Dictionary options(codec_options_);
 
         // Configure the encoder with the codec parameters and options
-        encoder_ = ffmpeg_cpp::Encoder(params, &options);
+        encoder_ = ffmpeg_cpp::Encoder(codec_params_, &options);
         if (const std::string hw_type_name = encoder_.hw_type_name(); hw_type_name == "none") {
           RCLCPP_INFO(get_logger(), "Configured encoder (%s)", encoder_.codec_name().c_str());
         } else {
@@ -113,7 +68,7 @@ protected:
       }
 
       // Put the raw frame into the encoder
-      encoder_.send_frame(*frame);
+      encoder_.send_frame(input_frame);
 
       // Extract as many packets as possible from the encoder and keep only the latest packet.
       // According to the ffmpeg's reference, there should be only one packet per frame
@@ -128,26 +83,22 @@ protected:
       }
       if (packet.empty()) {
         RCLCPP_WARN(get_logger(), "No packets available although frame was processed");
-        return ControllerReturn::OK;
+        return {ControllerReturn::OK, std::nullopt};
       }
 
       // Move the encoded packet to the exported state interface
-      packet_ = std::move(packet);
-      prev_dts_ = packet_->dts;
+      return {ControllerReturn::OK,
+              Outputs{std::move(packet), ffmpeg_cpp::CodecParameters(codec_params_)}};
     } catch (const std::runtime_error &error) {
       RCLCPP_ERROR(get_logger(), "Error while encoding frame: %s", error.what());
-      return ControllerReturn::ERROR;
+      return {ControllerReturn::ERROR, std::nullopt};
     }
-
-    return ControllerReturn::OK;
   }
 
 protected:
   ffmpeg_cpp::Encoder encoder_;
   ffmpeg_cpp::Dictionary codec_options_;
   ffmpeg_cpp::CodecParameters codec_params_;
-  ffmpeg_cpp::Packet packet_;
-  decltype(ffmpeg_cpp::Packet()->dts) prev_dts_;
 };
 
 } // namespace ffmpeg_controllers
