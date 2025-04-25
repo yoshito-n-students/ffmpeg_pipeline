@@ -56,7 +56,7 @@ protected:
     }
 
     const auto on_generate_f = [&, this](auto &&...args) {
-      return this->on_generate(time, period, args...);
+      return this->on_generate(time, period, args.get()...);
     };
     auto [generate_ret, write_args] = std::apply(on_generate_f, *generate_args);
     if (generate_ret != BaseCommon::ControllerReturn::OK || !write_args) {
