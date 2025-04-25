@@ -51,9 +51,21 @@ protected:
       // Push the input frame to the FIFO
       fifo_.write(input_frame);
 
-      // Try to pop the output frame from the FIFO
-      ffmpeg_cpp::Frame output_frame = fifo_.read(nb_samples_);
+      // Take the latest frame from the FIFO
+      ffmpeg_cpp::Frame output_frame;
+      while (true) {
+        if (ffmpeg_cpp::Frame tmp_frame = fifo_.read(nb_samples_); !tmp_frame.empty()) {
+          if (!output_frame.empty()) {
+            RCLCPP_WARN(get_logger(),
+                        "Multiple frames available in the FIFO, discarding the previous one");
+          }
+          output_frame = std::move(tmp_frame); // Keep the latest frame
+        } else {
+          break; // No more frames available
+        }
+      }
       if (output_frame.empty()) {
+        // No frames available
         return {ControllerReturn::OK, std::nullopt};
       }
 
