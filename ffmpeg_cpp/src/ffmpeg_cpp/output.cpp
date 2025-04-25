@@ -13,7 +13,7 @@ namespace ffmpeg_cpp {
 // Output - RAII wrapper for AVFormatContext
 // =========================================
 
-Output::Output(const std::string &oformat_name, const std::string &filename,
+Output::Output(const std::string &format_name, const std::string &url,
                const CodecParameters &codec_params, Dictionary *const options)
     : oformat_ctx_(nullptr, &close_output), ostream_(nullptr), increasing_dts_(0) {
   // Register all the input format types
@@ -22,11 +22,11 @@ Output::Output(const std::string &oformat_name, const std::string &filename,
   // Allocate the output format context and set the non-blocking flag
   {
     AVFormatContext *oformat_ctx = nullptr;
-    if (const int ret = avformat_alloc_output_context2(&oformat_ctx, nullptr, oformat_name.c_str(),
-                                                       filename.c_str());
+    if (const int ret =
+            avformat_alloc_output_context2(&oformat_ctx, nullptr, format_name.c_str(), url.c_str());
         ret < 0) {
-      throw Error("Output::Output(): Failed to allocate AVFormatContext (format: " + oformat_name +
-                      ", filename: " + filename + ")",
+      throw Error("Output::Output(): Failed to allocate AVFormatContext ([" + format_name + "] " +
+                      url + ")",
                   ret);
     }
     oformat_ctx->flags |= AVFMT_FLAG_NONBLOCK;
@@ -48,8 +48,8 @@ Output::Output(const std::string &oformat_name, const std::string &filename,
 
   // Open the file for writing if the format requires it
   if (!(oformat_ctx_->oformat->flags & AVFMT_NOFILE)) {
-    if (const int ret = avio_open(&oformat_ctx_->pb, filename.c_str(), AVIO_FLAG_WRITE); ret < 0) {
-      throw Error("Output::Output(): Failed to open output file " + filename, ret);
+    if (const int ret = avio_open(&oformat_ctx_->pb, url.c_str(), AVIO_FLAG_WRITE); ret < 0) {
+      throw Error("Output::Output(): Failed to open output file " + url, ret);
     }
   }
 
@@ -67,7 +67,7 @@ Output::Output(const std::string &oformat_name, const std::string &filename,
 
   // Check if the output accepts all the options
   if (!options->empty()) {
-    throw Error("Output::Output(): Output " + filename + " does not accept options [" +
+    throw Error("Output::Output(): Output " + url + " does not accept options [" +
                 options->to_flow_style_yaml() + "]");
   }
 }

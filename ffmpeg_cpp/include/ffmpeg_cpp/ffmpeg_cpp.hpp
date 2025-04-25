@@ -488,9 +488,9 @@ class Output {
 public:
   // Construct without underlying AVFormatContext
   Output() : oformat_ctx_(nullptr, &close_output), ostream_(nullptr), increasing_dts_(0) {}
-  // Open the output device with the given format name and filename,
+  // Open the output device with the given format name and url,
   // and set the codec parameters and options to the stream
-  Output(const std::string &oformat_name, const std::string &filename,
+  Output(const std::string &format_name, const std::string &url,
          const CodecParameters &codec_params, Dictionary *const options);
 
   // Write a frame to the stream of interest in a NON-BLOCKING way.
