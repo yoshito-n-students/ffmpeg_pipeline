@@ -94,6 +94,23 @@ bool Output::write_frame(const Packet &packet) {
   }
 }
 
+bool Output::write_uncoded_frame(const Frame &frame) {
+  // Set the timestamps of the copied frame
+  Frame output_frame(frame);
+  output_frame->pts = output_frame->pkt_dts = increasing_dts_++;
+
+  // Write the uncoded frame to the output stream
+  if (const int ret =
+          av_write_uncoded_frame(oformat_ctx_.get(), ostream_->index, output_frame.get());
+      ret >= 0) {
+    return true; // Successfully written
+  } else if (ret == AVERROR(EAGAIN)) {
+    return false; // The output device is not ready to accept more data
+  } else {
+    throw Error("Output::write_uncoded_frame(): Failed to write uncoded frame", ret);
+  }
+}
+
 void Output::close_output(AVFormatContext *oformat_ctx) {
   av_write_trailer(oformat_ctx);
   if (!(oformat_ctx->oformat->flags & AVFMT_NOFILE)) {
