@@ -38,8 +38,8 @@ protected:
 
       // Open the input with the parameters
       input_ = ffmpeg_cpp::Input(url, input_format, &options, media_type);
-      RCLCPP_INFO(get_logger(), "Configured the input (URL: %s, format: %s)", url.c_str(),
-                  input_format.c_str());
+      RCLCPP_INFO(get_logger(), "Configured the input ([%s] %s)", input_.format_name().c_str(),
+                  input_.url().c_str());
 
       // Initialize the codec params and packet by reading them from the input
       codec_params_ = input_.codec_parameters();
