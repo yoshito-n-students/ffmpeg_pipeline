@@ -13,7 +13,7 @@ namespace ffmpeg_cpp {
 // Input - RAII wrapper for AVFormatContext
 // ========================================
 
-Input::Input(const std::string &url, const std::string &iformat_name, Dictionary *const options,
+Input::Input(const std::string &url, const std::string &format_name, Dictionary *const options,
              const std::string &media_type_name)
     : iformat_ctx_(nullptr, &close_input), istream_id_(-1) {
   // Register all the input format types
@@ -29,9 +29,9 @@ Input::Input(const std::string &url, const std::string &iformat_name, Dictionary
 
   // Find the input format by name
   const AVInputFormat *iformat =
-      (iformat_name.empty() ? nullptr : av_find_input_format(iformat_name.c_str()));
-  if (!iformat_name.empty() && iformat == nullptr) {
-    throw Error("Input::Input(): " + iformat_name + " was not recognized as an input format");
+      (format_name.empty() ? nullptr : av_find_input_format(format_name.c_str()));
+  if (!format_name.empty() && iformat == nullptr) {
+    throw Error("Input::Input(): " + format_name + " was not recognized as an input format");
   }
 
   // Open the input with the URL, format and options.
@@ -87,6 +87,16 @@ Input::Input(const std::string &url, const std::string &iformat_name, Dictionary
     throw Error("Input::Input(): Failed to find the best stream of media type " + media_type_name,
                 istream_id_);
   }
+}
+
+std::string Input::format_name() const {
+  return (iformat_ctx_ && iformat_ctx_->iformat && iformat_ctx_->iformat->name)
+             ? iformat_ctx_->iformat->name
+             : "";
+}
+
+std::string Input::url() const {
+  return (iformat_ctx_ && iformat_ctx_->url) ? iformat_ctx_->url : "";
 }
 
 CodecParameters Input::codec_parameters() const {

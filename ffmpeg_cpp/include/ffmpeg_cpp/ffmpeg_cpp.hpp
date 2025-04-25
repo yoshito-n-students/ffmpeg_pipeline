@@ -250,9 +250,11 @@ public:
   Input() : iformat_ctx_(nullptr, &close_input), istream_id_(-1) {}
   // Open the input device by avformat_open_input() with the given URL, format name, and options,
   // and find the best stream of the given media type
-  Input(const std::string &url, const std::string &iformat_name, Dictionary *const options,
+  Input(const std::string &url, const std::string &format_name, Dictionary *const options,
         const std::string &media_type_name);
 
+  std::string format_name() const;
+  std::string url() const;
   CodecParameters codec_parameters() const;
 
   // Get a frame from the stream of interest in a NON-BLOCKING way.
