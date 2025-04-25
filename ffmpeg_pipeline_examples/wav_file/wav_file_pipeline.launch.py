@@ -50,7 +50,15 @@ def generate_launch_description():
     packet_broadcaster_spawner = Node(
         package='controller_manager',
         executable='spawner',
-        arguments=['packet_broadcaster', '--param-file', robot_controllers],
+        arguments=['--param-file', 
+                   robot_controllers,
+                   '--activate-as-group', 
+                   'decoder_filter', 
+                   'sample_rate_converter', 
+                   'frame_size_converter', 
+                   'encoder_filter',
+                   'packet_broadcaster',
+                ],
     )
 
     nodes = [

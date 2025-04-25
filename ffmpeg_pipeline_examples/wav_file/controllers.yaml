@@ -1,8 +1,46 @@
 controller_manager:
   ros__parameters:
-    update_rate: 50  # Hz
+    # The sample rate of example.wav is 44100 Hz, and the number of samples per frame is 1024.
+    # To play it at normal speed, we need to process frames at a rate of 44100 / 1024 = 43.066... Hz.
+    update_rate: 43 # must be integer
 
+# Decompress the packets from the input file
+decoder_filter:
+  ros__parameters:
+    type: ffmpeg_controllers/DecoderFilter
+    input_name: audio_streamer
+
+# Resample the uncompressed frame to a sample rate that the encoder can process
+sample_rate_converter:
+  ros__parameters:
+    type: ffmpeg_controllers/AudioConverterFilter
+    input_name: decoder_filter
+    out_sample_rate: 48000
+
+# Buffer the resampled frame to a size that the encoder can process
+frame_size_converter:
+  ros__parameters:
+    type: ffmpeg_controllers/AudioFifoFilter
+    input_name: sample_rate_converter
+    nb_samples: 1920
+
+# Compress the frames to a format that can be sent over the network
+encoder_filter:
+  ros__parameters:
+    type: ffmpeg_controllers/EncoderFilter
+    input_name: frame_size_converter
+    codec_parameters: |
+      codec: opus
+      bit_rate: 64000
+      format: s16
+      ch_layout: stereo
+      framerate: [25, 1]
+    codec_options: |
+      application: lowdelay
+      frame_duration: 40
+
+# Send the packets to the network
 packet_broadcaster:
   ros__parameters:
     type: ffmpeg_controllers/PacketBroadcaster
-    input_name: audio_streamer
+    input_name: encoder_filter
