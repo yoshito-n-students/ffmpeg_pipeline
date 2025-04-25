@@ -24,12 +24,17 @@ protected:
 
       // Open the input with the parameters
       output_ = ffmpeg_cpp::Output(format, filename, codec_params, &options);
-      RCLCPP_INFO(get_logger(), "Configured the output (filename: %s, format: %s)",
-                  filename.c_str(), format.c_str());
+      RCLCPP_INFO(get_logger(), "Configured the output ([%s] %s)", output_.format_name().c_str(),
+                  output_.url().c_str());
+
+      // Initialize the command variables
+      packet_ = ffmpeg_cpp::Packet();
+      frame_ = ffmpeg_cpp::Frame();
+      packet_->dts = frame_->pkt_dts = prev_dts_ = 0;
 
       // Register the command variables to the interface
       set_command_from_pointer("packet", &packet_);
-      prev_dts_ = 0;
+      set_command_from_pointer("frame", &frame_);
 
       return CallbackReturn::SUCCESS;
     } catch (const std::runtime_error &error) {
@@ -42,6 +47,11 @@ protected:
     try {
       // Unregister the command variables to the interface
       set_command_from_pointer("packet", nullptr);
+      set_command_from_pointer("frame", nullptr);
+
+      // Free the command variables
+      packet_ = ffmpeg_cpp::Packet();
+      frame_ = ffmpeg_cpp::Frame();
 
       // Close the output device
       output_ = ffmpeg_cpp::Output();
@@ -59,26 +69,46 @@ protected:
 
   std::vector<hardware_interface::InterfaceDescription>
   export_unlisted_command_interface_descriptions() override {
-    return {make_interface_description("packet", "ffmpeg_cpp::Packet*")};
+    return {make_interface_description("packet", "ffmpeg_cpp::Packet*"),
+            make_interface_description("frame", "ffmpeg_cpp::Frame*")};
   }
 
   hardware_interface::return_type read(const rclcpp::Time & /*time*/,
                                        const rclcpp::Duration & /*period*/) override {
-    // Nothing to read
+    // Nothing to read from the output device
     return hardware_interface::return_type::OK;
   }
 
   hardware_interface::return_type write(const rclcpp::Time & /*time*/,
                                         const rclcpp::Duration & /*period*/) override {
     try {
-      // Write the packet to the output device if the packet is newer than the previous one
-      if (packet_->dts > prev_dts_) {
+      // Write packet_ and frame_ to the output device
+      // if their timestamp is newer than the previous one.
+      // If both timestamps are newer, write the one with the older timestamp first.
+      if (packet_->dts > prev_dts_ && frame_->pkt_dts > prev_dts_) {
+        if (packet_->dts > frame_->pkt_dts) {
+          // prev < frame < packet
+          output_.write_uncoded_frame(frame_);
+          output_.write_frame(packet_);
+          prev_dts_ = packet_->dts;
+        } else {
+          // prev < packet <= frame
+          output_.write_frame(packet_);
+          output_.write_uncoded_frame(frame_);
+          prev_dts_ = frame_->pkt_dts;
+        }
+      } else if (packet_->dts > prev_dts_) {
+        // frame <= prev < packet
         output_.write_frame(packet_);
         prev_dts_ = packet_->dts;
+      } else if (frame_->pkt_dts > prev_dts_) {
+        // packet <= prev < frame
+        output_.write_uncoded_frame(frame_);
+        prev_dts_ = frame_->pkt_dts;
       }
       return hardware_interface::return_type::OK;
     } catch (const std::runtime_error &error) {
-      RCLCPP_ERROR(get_logger(), "Failed to write the packet: %s", error.what());
+      RCLCPP_ERROR(get_logger(), "Failed to write the frame: %s", error.what());
       return hardware_interface::return_type::ERROR;
     }
   }
@@ -86,7 +116,9 @@ protected:
 protected:
   ffmpeg_cpp::Output output_;
   ffmpeg_cpp::Packet packet_;
-  decltype(ffmpeg_cpp::Packet()->dts) prev_dts_;
+  ffmpeg_cpp::Frame frame_;
+  std::common_type_t<decltype(ffmpeg_cpp::Packet()->dts), decltype(ffmpeg_cpp::Frame()->pkt_dts)>
+      prev_dts_;
 };
 
 } // namespace ffmpeg_hardware
