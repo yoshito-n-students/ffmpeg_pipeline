@@ -18,7 +18,6 @@ AudioFifo::AudioFifo(const std::string &ch_layout_str, const std::string &format
   av_channel_layout_copy(&template_frame_->ch_layout, &ch_layout);
   template_frame_->format = format;
   template_frame_->sample_rate = sample_rate;
-  template_frame_->nb_samples = 0;
 
   // Allocate the AVAudioFifo
   fifo_.reset(av_audio_fifo_alloc(format, ch_layout.nb_channels, 1));
@@ -44,9 +43,15 @@ void AudioFifo::write(const Frame &frame) {
 }
 
 Frame AudioFifo::read(const int nb_samples) {
-  // Return a copy of the template frame with empty data
-  // if the number of samples in the FIFO is less than nb_samples
-  Frame frame(template_frame_);
+  // Prepare the empty frame with the same parameters as the template frame.
+  // We do not copy parameters by Frame::Frame(const Frame&)
+  // because the constructor copies the buffer as well.
+  Frame frame;
+  av_channel_layout_copy(&frame->ch_layout, &template_frame_->ch_layout);
+  frame->format = template_frame_->format;
+  frame->sample_rate = template_frame_->sample_rate;
+
+  // Return the empty frame if the number of samples in the FIFO is less than required
   if (av_audio_fifo_size(fifo_.get()) < nb_samples) {
     return frame;
   }
