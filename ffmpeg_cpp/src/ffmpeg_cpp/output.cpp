@@ -72,6 +72,16 @@ Output::Output(const std::string &format_name, const std::string &url,
   }
 }
 
+std::string Output::format_name() const {
+  return (oformat_ctx_ && oformat_ctx_->oformat && oformat_ctx_->oformat->name)
+             ? oformat_ctx_->oformat->name
+             : "";
+}
+
+std::string Output::url() const {
+  return (oformat_ctx_ && oformat_ctx_->url) ? oformat_ctx_->url : "";
+}
+
 bool Output::write_frame(const Packet &packet) {
   // Create a copy (shallow copy if possible) of the packet
   // and modify the properties for the output stream

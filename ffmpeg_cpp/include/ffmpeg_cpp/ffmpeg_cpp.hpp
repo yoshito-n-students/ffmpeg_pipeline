@@ -493,6 +493,9 @@ public:
   Output(const std::string &format_name, const std::string &url,
          const CodecParameters &codec_params, Dictionary *const options);
 
+  std::string format_name() const;
+  std::string url() const;
+
   // Write a frame to the stream of interest in a NON-BLOCKING way.
   // False if the output stream is not ready to accept the data for some temporary reason.
   bool write_frame(const Packet &packet);
