@@ -8,12 +8,13 @@
 
 namespace ffmpeg_controllers {
 
-class PacketWriter : public ControllerBase<input_options::ReadPacket, output_options::WritePacket> {
+class PacketWriter : public ControllerBase<input_options::Read<ffmpeg_cpp::Packet>,
+                                           output_options::Write<ffmpeg_cpp::Packet>> {
 protected:
-  std::pair<ControllerReturn, std::optional<Outputs>>
+  OnGenerateReturn<output_options::Write<ffmpeg_cpp::Packet>>
   on_generate(const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/,
               const ffmpeg_cpp::Packet &input_packet) override {
-    return {ControllerReturn::OK, {input_packet}};
+    return {ControllerReturn::OK, input_packet};
   }
 };
 

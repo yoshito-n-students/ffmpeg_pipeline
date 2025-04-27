@@ -11,10 +11,11 @@
 
 namespace ffmpeg_controllers {
 
-class AudioFifoFilter
-    : public ControllerBase<input_options::ReadFrame, output_options::ExportFrame> {
+class AudioFifoFilter : public ControllerBase<input_options::Read<ffmpeg_cpp::Frame>,
+                                              output_options::Export<ffmpeg_cpp::Frame>> {
 private:
-  using Base = ControllerBase<input_options::ReadFrame, output_options::ExportFrame>;
+  using Base = ControllerBase<input_options::Read<ffmpeg_cpp::Frame>,
+                              output_options::Export<ffmpeg_cpp::Frame>>;
 
 protected:
   NodeReturn on_init() override {
@@ -34,7 +35,7 @@ protected:
     return NodeReturn::SUCCESS;
   }
 
-  std::pair<ControllerReturn, std::optional<Outputs>>
+  OnGenerateReturn<output_options::Export<ffmpeg_cpp::Frame>>
   on_generate(const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/,
               const ffmpeg_cpp::Frame &input_frame) override {
     try {
@@ -71,7 +72,7 @@ protected:
 
       output_frame->pts = input_frame->pts;
       output_frame->pkt_dts = input_frame->pkt_dts;
-      return {ControllerReturn::OK, {std::move(output_frame)}};
+      return {ControllerReturn::OK, std::move(output_frame)};
     } catch (const std::runtime_error &error) {
       RCLCPP_ERROR(get_logger(), "Error while converting frames: %s", error.what());
       return {ControllerReturn::ERROR, std::nullopt};

@@ -16,25 +16,47 @@
 
 namespace ffmpeg_controllers {
 
+// ========================================================================
+// Helper class to define the pure virtual function OutputMixin::on_write()
+// which is used to write the input
+// ========================================================================
+
+template <typename OutputOption> class OnWriteDefinition {
+protected:
+  // Default version
+  virtual controller_interface::return_type on_write(const rclcpp::Time &time,
+                                                     const rclcpp::Duration &period,
+                                                     OutputFor<OutputOption> &&input) = 0;
+};
+template <typename... OutputOptions> class OnWriteDefinition<std::tuple<OutputOptions...>> {
+protected:
+  // Tuple version
+  virtual controller_interface::return_type on_write(const rclcpp::Time &time,
+                                                     const rclcpp::Duration &period,
+                                                     OutputFor<OutputOptions> &&...inputs) = 0;
+
+  // Provide the signature as same as the default version
+  controller_interface::return_type on_write(const rclcpp::Time &time,
+                                             const rclcpp::Duration &period,
+                                             std::tuple<OutputFor<OutputOptions>...> &&inputs) {
+    return std::apply(
+        [&, this](auto &&...args) {
+          return on_write(time, period, std::forward<decltype(args)>(args)...);
+        },
+        std::forward<decltype(inputs)>(inputs));
+  }
+};
+
 // =====================================
 // Mixin class depending on OutputOption
 // =====================================
 
 template <typename OutputOption, class Interface> class OutputMixin;
 
-// By inheriting this class in each OutputMixin<>, we force the intended on_write() signature
-template <typename Outputs> class OnWriteDefinition;
-template <typename... OutputElements> class OnWriteDefinition<std::tuple<OutputElements...>> {
-protected:
-  virtual controller_interface::return_type on_write(const rclcpp::Time &time,
-                                                     const rclcpp::Duration &period,
-                                                     OutputElements &&...outputs) = 0;
-};
-
 template <class Interface>
-class OutputMixin<output_options::ExportFrame, Interface>
+class OutputMixin<output_options::Export<ffmpeg_cpp::Frame>, Interface>
     : public virtual InterfaceAdapter<Interface>,
-      public OnWriteDefinition<OutputsFor<output_options::ExportFrame>> {
+      public OnWriteDefinition<output_options::Export<ffmpeg_cpp::Frame>> {
 private:
   using Base = InterfaceAdapter<Interface>;
 
@@ -66,9 +88,9 @@ private:
 };
 
 template <class Interface>
-class OutputMixin<output_options::ExportPacket, Interface>
+class OutputMixin<output_options::Export<ffmpeg_cpp::Packet>, Interface>
     : public virtual InterfaceAdapter<Interface>,
-      public OnWriteDefinition<OutputsFor<output_options::ExportPacket>> {
+      public OnWriteDefinition<output_options::Export<ffmpeg_cpp::Packet>> {
 private:
   using Base = InterfaceAdapter<Interface>;
 
@@ -100,50 +122,44 @@ private:
 };
 
 template <class Interface>
-class OutputMixin<output_options::ExportPacketWithParams, Interface>
+class OutputMixin<output_options::Export<ffmpeg_cpp::CodecParameters>, Interface>
     : public virtual InterfaceAdapter<Interface>,
-      public OnWriteDefinition<OutputsFor<output_options::ExportPacketWithParams>> {
+      public OnWriteDefinition<output_options::Export<ffmpeg_cpp::CodecParameters>> {
 private:
   using Base = InterfaceAdapter<Interface>;
 
 protected:
   typename Base::NodeReturn on_init() override {
     // Names of intraprocess read-only variables to be exported
-    Base::exported_state_interface_names_ = {"packet", "codec_parameters"};
+    Base::exported_state_interface_names_ = {"codec_parameters"};
     return Base::NodeReturn::SUCCESS;
   }
 
   typename Base::NodeReturn
   on_deactivate(const rclcpp_lifecycle::State & /*previous_state*/) override {
     // Unregister the frame from state interface owned by this controller
-    return (Base::set_state_from_pointer("packet", nullptr) &&
-            Base::set_state_from_pointer("codec_parameters", nullptr))
-               ? Base::NodeReturn::SUCCESS
-               : Base::NodeReturn::ERROR;
+    return (Base::set_state_from_pointer("codec_parameters", nullptr)) ? Base::NodeReturn::SUCCESS
+                                                                       : Base::NodeReturn::ERROR;
   }
 
   typename Base::ControllerReturn on_write(const rclcpp::Time & /*time*/,
                                            const rclcpp::Duration & /*period*/,
-                                           ffmpeg_cpp::Packet &&input_packet,
                                            ffmpeg_cpp::CodecParameters &&codec_params) override {
     // Export the given codec parameters and packet to the state interfaces owned by this controller
-    output_packet_ = std::move(input_packet);
     codec_params_ = std::move(codec_params);
-    return (Base::set_state_from_pointer("packet", &output_packet_) &&
-            Base::set_state_from_pointer("codec_parameters", &codec_params_))
+    return Base::set_state_from_pointer("codec_parameters", &codec_params_)
                ? Base::ControllerReturn::OK
                : Base::ControllerReturn::ERROR;
   }
 
 private:
-  ffmpeg_cpp::Packet output_packet_;
   ffmpeg_cpp::CodecParameters codec_params_;
 };
 
 template <class Interface>
-class OutputMixin<output_options::WritePacket, Interface>
+class OutputMixin<output_options::Write<ffmpeg_cpp::Packet>, Interface>
     : public virtual InterfaceAdapter<Interface>,
-      public OnWriteDefinition<OutputsFor<output_options::WritePacket>> {
+      public OnWriteDefinition<output_options::Write<ffmpeg_cpp::Packet>> {
 private:
   using Base = InterfaceAdapter<Interface>;
 
@@ -182,7 +198,7 @@ private:
 template <typename Message, class Interface>
 class OutputMixin<output_options::Publish<Message>, Interface>
     : public virtual InterfaceAdapter<Interface>,
-      public OnWriteDefinition<OutputsFor<output_options::Publish<Message>>> {
+      public OnWriteDefinition<output_options::Publish<Message>> {
 private:
   using Base = InterfaceAdapter<Interface>;
 
@@ -210,10 +226,10 @@ protected:
 
   typename Base::ControllerReturn on_write(const rclcpp::Time & /*time*/,
                                            const rclcpp::Duration & /*period*/,
-                                           OutputMessage &&output_msg) override {
+                                           OutputMessage &&input_msg) override {
     // Publish a message if the message is generated and the publisher can be locked
     if (async_publisher_->trylock()) {
-      async_publisher_->msg_ = std::move(output_msg);
+      async_publisher_->msg_ = std::move(input_msg);
       async_publisher_->unlockAndPublish();
     }
     return Base::ControllerReturn::OK;
@@ -225,6 +241,48 @@ protected:
 private:
   typename rclcpp::Publisher<OutputMessage>::SharedPtr underlying_publisher_;
   std::unique_ptr<realtime_tools::RealtimePublisher<OutputMessage>> async_publisher_;
+};
+
+template <typename... OutputOptions, class Interface>
+class OutputMixin<std::tuple<OutputOptions...>, Interface>
+    : public OutputMixin<OutputOptions, Interface>...,
+      public OnWriteDefinition<std::tuple<OutputOptions...>> {
+private:
+  using BaseCommon = InterfaceAdapter<Interface>;
+  template <typename OutputOption> using BaseOutput = OutputMixin<OutputOption, Interface>;
+
+protected:
+  typename BaseCommon::NodeReturn on_init() override {
+    const std::array<typename BaseCommon::NodeReturn, sizeof...(OutputOptions)> results = {
+        BaseOutput<OutputOptions>::on_init()...};
+    return std::all_of(results.begin(), results.end(),
+                       [](const auto result) { return result == BaseCommon::NodeReturn::SUCCESS; })
+               ? BaseCommon::NodeReturn::SUCCESS
+               : BaseCommon::NodeReturn::ERROR;
+  }
+
+  typename BaseCommon::NodeReturn
+  on_deactivate(const rclcpp_lifecycle::State &previous_state) override {
+    const std::array<typename BaseCommon::NodeReturn, sizeof...(OutputOptions)> results = {
+        BaseOutput<OutputOptions>::on_deactivate(previous_state)...};
+    return std::all_of(results.begin(), results.end(),
+                       [](const auto result) { return result == BaseCommon::NodeReturn::SUCCESS; })
+               ? BaseCommon::NodeReturn::SUCCESS
+               : BaseCommon::NodeReturn::ERROR;
+  }
+
+  typename BaseCommon::ControllerReturn on_write(const rclcpp::Time &time,
+                                                 const rclcpp::Duration &period,
+                                                 OutputFor<OutputOptions> &&...inputs) override {
+    // Call on_read() for each input option and collect the results
+    const std::array<typename BaseCommon::ControllerReturn, sizeof...(OutputOptions)> results = {
+        OnWriteDefinition<OutputOptions>::on_write(time, period,
+                                                   std::forward<decltype(inputs)>(inputs))...};
+    return std::all_of(results.begin(), results.end(),
+                       [](const auto result) { return result == BaseCommon::ControllerReturn::OK; })
+               ? BaseCommon::ControllerReturn::OK
+               : BaseCommon::ControllerReturn::ERROR;
+  }
 };
 
 } // namespace ffmpeg_controllers

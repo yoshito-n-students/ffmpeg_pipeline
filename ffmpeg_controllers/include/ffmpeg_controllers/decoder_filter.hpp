@@ -13,9 +13,13 @@
 namespace ffmpeg_controllers {
 
 class DecoderFilter
-    : public ControllerBase<input_options::ReadPacketWithParams, output_options::ExportFrame> {
+    : public ControllerBase<std::tuple<input_options::Read<ffmpeg_cpp::Packet>,
+                                       input_options::Read<ffmpeg_cpp::CodecParameters>>,
+                            output_options::Export<ffmpeg_cpp::Frame>> {
 private:
-  using Base = ControllerBase<input_options::ReadPacketWithParams, output_options::ExportFrame>;
+  using Base = ControllerBase<std::tuple<input_options::Read<ffmpeg_cpp::Packet>,
+                                         input_options::Read<ffmpeg_cpp::CodecParameters>>,
+                              output_options::Export<ffmpeg_cpp::Frame>>;
 
 protected:
   NodeReturn on_init() override {
@@ -35,7 +39,7 @@ protected:
     return NodeReturn::SUCCESS;
   }
 
-  std::pair<ControllerReturn, std::optional<Outputs>>
+  OnGenerateReturn<output_options::Export<ffmpeg_cpp::Frame>>
   on_generate(const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/,
               const ffmpeg_cpp::Packet &input_packet,
               const ffmpeg_cpp::CodecParameters &codec_params) override {
@@ -78,7 +82,7 @@ protected:
       }
 
       // Move the decoded frame to the exported state interface
-      return {ControllerReturn::OK, {std::move(frame)}};
+      return {ControllerReturn::OK, std::move(frame)};
     } catch (const std::runtime_error &error) {
       RCLCPP_ERROR(get_logger(), "Error while decoding packet: %s", error.what());
       return {ControllerReturn::ERROR, std::nullopt};

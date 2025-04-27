@@ -14,28 +14,58 @@
 
 namespace ffmpeg_controllers {
 
+// ================================================================================
+// Helper class to define the pure virtual function InputOutputMixin::on_generate()
+// which is used to generate the output from the input
+// ================================================================================
+
+// Return type of InputOutputMixin::on_generate()
+template <typename OutputOption> struct GetOnGenerateReturn {
+  using Result =
+      std::pair<controller_interface::return_type, std::optional<OutputFor<OutputOption>>>;
+};
+template <typename... OutputOptions> struct GetOnGenerateReturn<std::tuple<OutputOptions...>> {
+  using Result = std::pair<controller_interface::return_type,
+                           std::optional<std::tuple<OutputFor<OutputOptions>...>>>;
+};
+template <typename OutputOption>
+using OnGenerateReturn = typename GetOnGenerateReturn<OutputOption>::Result;
+
+// Definition of InputOutputMixin::on_generate()
+template <typename InputOption, typename OutputOption> class OnGenerateDefinition {
+protected:
+  // Default version
+  virtual OnGenerateReturn<OutputOption> on_generate(const rclcpp::Time &time,
+                                                     const rclcpp::Duration &period,
+                                                     const InputFor<InputOption> &input) = 0;
+};
+template <typename... InputOptions, typename OutputOption>
+class OnGenerateDefinition<std::tuple<InputOptions...>, OutputOption> {
+protected:
+  // Tuple version
+  virtual OnGenerateReturn<OutputOption> on_generate(const rclcpp::Time &time,
+                                                     const rclcpp::Duration &period,
+                                                     const InputFor<InputOptions> &...inputs) = 0;
+
+  // Provide the signature as same as the default version
+  OnGenerateReturn<OutputOption>
+  on_generate(const rclcpp::Time &time, const rclcpp::Duration &period,
+              const std::tuple<std::reference_wrapper<const InputFor<InputOptions>>...> &inputs) {
+    return std::apply(
+        [&, this](auto &&...args) { return on_generate(time, period, args.get()...); }, inputs);
+  }
+};
+
 // =====================================================
 // Mixin class depending on InputOption and OutputOption
 // =====================================================
 
-template <typename Inputs, typename Outputs> class OnGenerateDefinition;
-template <typename... InputElements, typename... OutputElements>
-class OnGenerateDefinition<std::tuple<InputElements...>, std::tuple<OutputElements...>> {
-protected:
-  using Outputs = std::tuple<OutputElements...>;
-
-  virtual std::pair<controller_interface::return_type, std::optional<Outputs>>
-  on_generate(const rclcpp::Time &time, const rclcpp::Duration &period,
-              const InputElements &...inputs) = 0;
-};
-
 template <typename InputOption, typename OutputOption>
-class InputOutputMixin
-    : public InputMixin<InputOption, CommonInterfaceFor<InputOption, OutputOption>>,
-      public OutputMixin<OutputOption, CommonInterfaceFor<InputOption, OutputOption>>,
-      public OnGenerateDefinition<InputsFor<InputOption>, OutputsFor<OutputOption>> {
+class InputOutputMixin : public InputMixin<InputOption, InterfaceFor<InputOption, OutputOption>>,
+                         public OutputMixin<OutputOption, InterfaceFor<InputOption, OutputOption>>,
+                         public OnGenerateDefinition<InputOption, OutputOption> {
 private:
-  using Interface = CommonInterfaceFor<InputOption, OutputOption>;
+  using Interface = InterfaceFor<InputOption, OutputOption>;
   using BaseCommon = InterfaceAdapter<Interface>;
   using BaseInput = InputMixin<InputOption, Interface>;
   using BaseOutput = OutputMixin<OutputOption, Interface>;
@@ -50,23 +80,19 @@ protected:
 
   typename BaseCommon::ControllerReturn on_update(const rclcpp::Time &time,
                                                   const rclcpp::Duration &period) override {
-    const auto [read_ret, generate_args] = BaseInput::on_read(time, period);
+    const auto [read_ret, generate_args] = OnReadDefinition<InputOption>::on_read(time, period);
     if (read_ret != BaseCommon::ControllerReturn::OK || !generate_args) {
       return read_ret;
     }
 
-    const auto on_generate_f = [&, this](auto &&...args) {
-      return this->on_generate(time, period, args.get()...);
-    };
-    auto [generate_ret, write_args] = std::apply(on_generate_f, *generate_args);
+    auto [generate_ret, write_args] =
+        OnGenerateDefinition<InputOption, OutputOption>::on_generate(time, period, *generate_args);
     if (generate_ret != BaseCommon::ControllerReturn::OK || !write_args) {
       return generate_ret;
     }
 
-    const auto on_write_f = [&, this](auto &&...args) {
-      return BaseOutput::on_write(time, period, std::forward<decltype(args)>(args)...);
-    };
-    const auto write_ret = std::apply(on_write_f, std::move(*write_args));
+    const auto write_ret =
+        OnWriteDefinition<OutputOption>::on_write(time, period, std::move(*write_args));
     if (write_ret != BaseCommon::ControllerReturn::OK) {
       return write_ret;
     }

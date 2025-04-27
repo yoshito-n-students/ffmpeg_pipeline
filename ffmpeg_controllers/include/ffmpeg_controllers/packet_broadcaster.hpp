@@ -10,10 +10,12 @@
 namespace ffmpeg_controllers {
 
 class PacketBroadcaster
-    : public ControllerBase<input_options::ReadPacketWithParams,
+    : public ControllerBase<std::tuple<input_options::Read<ffmpeg_cpp::Packet>,
+                                       input_options::Read<ffmpeg_cpp::CodecParameters>>,
                             output_options::Publish<ffmpeg_pipeline_msgs::msg::Packet>> {
 private:
-  using Base = ControllerBase<input_options::ReadPacketWithParams,
+  using Base = ControllerBase<std::tuple<input_options::Read<ffmpeg_cpp::Packet>,
+                                         input_options::Read<ffmpeg_cpp::CodecParameters>>,
                               output_options::Publish<ffmpeg_pipeline_msgs::msg::Packet>>;
 
 protected:
@@ -29,12 +31,12 @@ protected:
     return NodeReturn::SUCCESS;
   }
 
-  std::pair<ControllerReturn, std::optional<Outputs>>
+  OnGenerateReturn<output_options::Publish<ffmpeg_pipeline_msgs::msg::Packet>>
   on_generate(const rclcpp::Time &time, const rclcpp::Duration & /*period*/,
               const ffmpeg_cpp::Packet &input_packet,
               const ffmpeg_cpp::CodecParameters &codec_params) override {
     // Generate the message with the new packet
-    return {ControllerReturn::OK, {input_packet.to_msg(time, codec_params.codec_name())}};
+    return {ControllerReturn::OK, input_packet.to_msg(time, codec_params.codec_name())};
   }
 };
 

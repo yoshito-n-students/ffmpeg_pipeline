@@ -17,104 +17,69 @@ namespace ffmpeg_controllers {
 
 namespace input_options {
 
-struct ReadFrame {}; // Read state interface loaned from other hardware or controller
-struct ReadPacket {};
-struct ReadPacketWithParams {};
-template <typename Message> struct Subscribe {}; // Subscribe a topic
+// Read state interface loaned from other hardware or controller
+template <typename Object> struct Read {};
+// Subscribe a topic
+template <typename Message> struct Subscribe {};
 
 } // namespace input_options
 
 namespace output_options {
 
-struct ExportFrame {}; // Export state interface to other hardware or controller
-struct ExportPacket {};
-struct ExportPacketWithParams {};
-struct WritePacket {}; // Write to command interface loaned from other hardware or controller
-template <typename Message> struct Publish {}; // Publish messages to a topic
+// Export state interface to other hardware or controller
+template <typename Object> struct Export {};
+// Write to command interface loaned from other hardware or controller
+template <typename Object> struct Write {};
+// Publish messages to a topic
+template <typename Message> struct Publish {};
 
 } // namespace output_options
-
-// =====================================
-// Helper metafunctions for std::tuple<>
-// =====================================
-
-// Add std::reference_wrapper<const T> to each element of std::tuple<T0, T1, ...>
-template <typename T> struct AddCRefToElements;
-template <typename... Ts> struct AddCRefToElements<std::tuple<Ts...>> {
-  using Result = std::tuple<std::reference_wrapper<const Ts>...>;
-};
-template <typename T> using ElementwiseCRef = typename AddCRefToElements<T>::Result;
-
-// Find the first type in std::tuple<T0, T1, ...> that is also in std::tuple<U0, U1, ...>
-template <typename T, typename U> struct FindFirstCommonElement;
-template <typename... Us> struct FindFirstCommonElement<std::tuple<>, std::tuple<Us...>> {
-  using Result = void;
-};
-template <typename T0, typename... Ts, typename... Us>
-struct FindFirstCommonElement<std::tuple<T0, Ts...>, std::tuple<Us...>> {
-  using Result = typename std::conditional_t<
-      std::disjunction_v<std::is_same<T0, Us>...>, T0,
-      typename FindFirstCommonElement<std::tuple<Ts...>, std::tuple<Us...>>::Result>;
-};
-template <typename T, typename U>
-using FirstCommonElement = typename FindFirstCommonElement<T, U>::Result;
 
 // ===============================
 // Traits for input/output options
 // ===============================
 
-// Tuple of input types for the given input option
-template <typename InputOption> struct GetInputsFor;
-template <> struct GetInputsFor<input_options::ReadFrame> {
-  using Result = std::tuple<ffmpeg_cpp::Frame>;
+// Object type to be read or subscribed for the given input option
+template <typename InputOption> struct GetInputFor;
+template <typename Object> struct GetInputFor<input_options::Read<Object>> {
+  using Result = Object;
 };
-template <> struct GetInputsFor<input_options::ReadPacket> {
-  using Result = std::tuple<ffmpeg_cpp::Packet>;
+template <typename Message> struct GetInputFor<input_options::Subscribe<Message>> {
+  using Result = Message;
 };
-template <> struct GetInputsFor<input_options::ReadPacketWithParams> {
-  using Result = std::tuple<ffmpeg_cpp::Packet, ffmpeg_cpp::CodecParameters>;
-};
-template <typename Message> struct GetInputsFor<input_options::Subscribe<Message>> {
-  using Result = std::tuple<Message>;
-};
-template <typename InputOption> using InputsFor = typename GetInputsFor<InputOption>::Result;
+template <typename InputOption> using InputFor = typename GetInputFor<InputOption>::Result;
 
-// Add std::reference_wrapper<const T> to each element of InputsFor<InputOption>
-template <typename InputOption> using CRefInputsFor = ElementwiseCRef<InputsFor<InputOption>>;
+// Object type to be exported, written or published for the given output option
+template <typename OutputOption> struct GetOutputFor;
+template <typename Object> struct GetOutputFor<output_options::Export<Object>> {
+  using Result = Object;
+};
+template <typename Object> struct GetOutputFor<output_options::Write<Object>> {
+  using Result = Object;
+};
+template <typename Message> struct GetOutputFor<output_options::Publish<Message>> {
+  using Result = Message;
+};
+template <typename OutputOption> using OutputFor = typename GetOutputFor<OutputOption>::Result;
 
-// Tuple of output types for the given output option
-template <typename OutputOption> struct GetOutputsFor;
-template <> struct GetOutputsFor<output_options::ExportFrame> {
-  using Result = std::tuple<ffmpeg_cpp::Frame>;
+// Supported interface type for the given input and output options
+template <typename InputOption, typename OutputOption> struct GetInterfaceFor {
+  using Result = controller_interface::ControllerInterface;
 };
-template <> struct GetOutputsFor<output_options::ExportPacket> {
-  using Result = std::tuple<ffmpeg_cpp::Packet>;
+template <typename InputOption, typename Object>
+struct GetInterfaceFor<InputOption, output_options::Export<Object>> {
+  using Result = controller_interface::ChainableControllerInterface;
 };
-template <> struct GetOutputsFor<output_options::ExportPacketWithParams> {
-  using Result = std::tuple<ffmpeg_cpp::Packet, ffmpeg_cpp::CodecParameters>;
+template <typename InputOption, typename... OutputOptions>
+struct GetInterfaceFor<InputOption, std::tuple<OutputOptions...>> {
+  using Result = std::conditional_t<
+      std::disjunction_v<std::is_same<typename GetInterfaceFor<InputOption, OutputOptions>::Result,
+                                      controller_interface::ChainableControllerInterface>...>,
+      controller_interface::ChainableControllerInterface,
+      controller_interface::ControllerInterface>;
 };
-template <> struct GetOutputsFor<output_options::WritePacket> {
-  using Result = std::tuple<ffmpeg_cpp::Packet>;
-};
-template <typename Message> struct GetOutputsFor<output_options::Publish<Message>> {
-  using Result = std::tuple<Message>;
-};
-template <typename OutputOption> using OutputsFor = typename GetOutputsFor<OutputOption>::Result;
-
-// Supported interface types for the given input/output option
-template <typename Option>
-using InterfacesFor =
-    std::conditional_t<(std::is_same_v<Option, output_options::ExportFrame> ||
-                        std::is_same_v<Option, output_options::ExportPacket> ||
-                        std::is_same_v<Option, output_options::ExportPacketWithParams>),
-                       std::tuple<controller_interface::ChainableControllerInterface>,
-                       std::tuple<controller_interface::ControllerInterface,
-                                  controller_interface::ChainableControllerInterface>>;
-
-// First common interface types that the given input and output options support
 template <typename InputOption, typename OutputOption>
-using CommonInterfaceFor =
-    FirstCommonElement<InterfacesFor<InputOption>, InterfacesFor<OutputOption>>;
+using InterfaceFor = typename GetInterfaceFor<InputOption, OutputOption>::Result;
 
 } // namespace ffmpeg_controllers
 

@@ -12,10 +12,11 @@
 
 namespace ffmpeg_controllers {
 
-class VideoConverterFilter
-    : public ControllerBase<input_options::ReadFrame, output_options::ExportFrame> {
+class VideoConverterFilter : public ControllerBase<input_options::Read<ffmpeg_cpp::Frame>,
+                                                   output_options::Export<ffmpeg_cpp::Frame>> {
 private:
-  using Base = ControllerBase<input_options::ReadFrame, output_options::ExportFrame>;
+  using Base = ControllerBase<input_options::Read<ffmpeg_cpp::Frame>,
+                              output_options::Export<ffmpeg_cpp::Frame>>;
 
 protected:
   NodeReturn on_init() override {
@@ -36,7 +37,7 @@ protected:
     return NodeReturn::SUCCESS;
   }
 
-  std::pair<ControllerReturn, std::optional<Outputs>>
+  OnGenerateReturn<output_options::Export<ffmpeg_cpp::Frame>>
   on_generate(const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/,
               const ffmpeg_cpp::Frame &input_frame) override {
     try {
@@ -57,7 +58,7 @@ protected:
 
       // Convert the frame to the destination format
       ffmpeg_cpp::Frame output_frame = converter_.convert(input_frame);
-      return {ControllerReturn::OK, {std::move(output_frame)}};
+      return {ControllerReturn::OK, std::move(output_frame)};
     } catch (const std::runtime_error &error) {
       RCLCPP_ERROR(get_logger(), "Error while decoding packet: %s", error.what());
       return {ControllerReturn::ERROR, std::nullopt};

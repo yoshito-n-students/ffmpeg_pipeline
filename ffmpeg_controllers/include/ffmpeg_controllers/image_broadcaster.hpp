@@ -12,11 +12,11 @@
 
 namespace ffmpeg_controllers {
 
-class ImageBroadcaster : public ControllerBase<input_options::ReadFrame,
+class ImageBroadcaster : public ControllerBase<input_options::Read<ffmpeg_cpp::Frame>,
                                                output_options::Publish<sensor_msgs::msg::Image>> {
 private:
-  using Base =
-      ControllerBase<input_options::ReadFrame, output_options::Publish<sensor_msgs::msg::Image>>;
+  using Base = ControllerBase<input_options::Read<ffmpeg_cpp::Frame>,
+                              output_options::Publish<sensor_msgs::msg::Image>>;
 
 protected:
   NodeReturn on_init() override {
@@ -31,7 +31,7 @@ protected:
     return NodeReturn::SUCCESS;
   }
 
-  std::pair<ControllerReturn, std::optional<Outputs>>
+  OnGenerateReturn<output_options::Publish<sensor_msgs::msg::Image>>
   on_generate(const rclcpp::Time &time, const rclcpp::Duration & /*period*/,
               const ffmpeg_cpp::Frame &input_frame) override {
     OutputMessage msg;

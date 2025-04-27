@@ -14,10 +14,10 @@ namespace ffmpeg_controllers {
 
 class PacketReceiver
     : public ControllerBase<input_options::Subscribe<ffmpeg_pipeline_msgs::msg::Packet>,
-                            output_options::ExportPacket> {
+                            output_options::Export<ffmpeg_cpp::Packet>> {
 private:
   using Base = ControllerBase<input_options::Subscribe<ffmpeg_pipeline_msgs::msg::Packet>,
-                              output_options::ExportPacket>;
+                              output_options::Export<ffmpeg_cpp::Packet>>;
 
 protected:
   NodeReturn on_init() override {
@@ -32,11 +32,11 @@ protected:
     return NodeReturn::SUCCESS;
   }
 
-  std::pair<ControllerReturn, std::optional<Outputs>>
+  OnGenerateReturn<output_options::Export<ffmpeg_cpp::Packet>>
   on_generate(const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/,
               const ffmpeg_pipeline_msgs::msg::Packet &input_msg) override {
     try {
-      return {ControllerReturn::OK, {ffmpeg_cpp::Packet(input_msg)}};
+      return {ControllerReturn::OK, ffmpeg_cpp::Packet(input_msg)};
     } catch (const std::runtime_error &error) {
       RCLCPP_ERROR(get_logger(), "Error while updating packet: %s", error.what());
       return {ControllerReturn::ERROR, std::nullopt};

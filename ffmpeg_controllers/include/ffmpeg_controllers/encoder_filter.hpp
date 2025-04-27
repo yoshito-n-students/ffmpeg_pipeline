@@ -13,9 +13,13 @@
 namespace ffmpeg_controllers {
 
 class EncoderFilter
-    : public ControllerBase<input_options::ReadFrame, output_options::ExportPacketWithParams> {
+    : public ControllerBase<input_options::Read<ffmpeg_cpp::Frame>,
+                            std::tuple<output_options::Export<ffmpeg_cpp::Packet>,
+                                       output_options::Export<ffmpeg_cpp::CodecParameters>>> {
 private:
-  using Base = ControllerBase<input_options::ReadFrame, output_options::ExportPacketWithParams>;
+  using Base = ControllerBase<input_options::Read<ffmpeg_cpp::Frame>,
+                              std::tuple<output_options::Export<ffmpeg_cpp::Packet>,
+                                         output_options::Export<ffmpeg_cpp::CodecParameters>>>;
 
 protected:
   NodeReturn on_init() override {
@@ -37,7 +41,8 @@ protected:
     return NodeReturn::SUCCESS;
   }
 
-  std::pair<ControllerReturn, std::optional<Outputs>>
+  OnGenerateReturn<std::tuple<output_options::Export<ffmpeg_cpp::Packet>,
+                              output_options::Export<ffmpeg_cpp::CodecParameters>>>
   on_generate(const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/,
               const ffmpeg_cpp::Frame &input_frame) override {
     try {
@@ -88,7 +93,7 @@ protected:
 
       // Move the encoded packet to the exported state interface
       return {ControllerReturn::OK,
-              Outputs{std::move(packet), ffmpeg_cpp::CodecParameters(codec_params_)}};
+              std::make_tuple(std::move(packet), ffmpeg_cpp::CodecParameters(codec_params_))};
     } catch (const std::runtime_error &error) {
       RCLCPP_ERROR(get_logger(), "Error while encoding frame: %s", error.what());
       return {ControllerReturn::ERROR, std::nullopt};
