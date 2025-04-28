@@ -1,43 +1,18 @@
-#ifndef FFMPEG_CONTROLLERS_DETAIL_INPUT_OUTPUT_OPTIONS_HPP
-#define FFMPEG_CONTROLLERS_DETAIL_INPUT_OUTPUT_OPTIONS_HPP
+#ifndef FFMPEG_CONTROLLERS_DETAIL_CONTROLLER_TRAITS_HPP
+#define FFMPEG_CONTROLLERS_DETAIL_CONTROLLER_TRAITS_HPP
 
-#include <functional> // for std::reference_wrapper<>
 #include <tuple>
 #include <type_traits>
 
 #include <controller_interface/chainable_controller_interface.hpp>
 #include <controller_interface/controller_interface.hpp>
-#include <ffmpeg_cpp/ffmpeg_cpp.hpp>
+#include <ffmpeg_controllers/controller_options.hpp>
 
 namespace ffmpeg_controllers {
 
-// =========================================
-// Input/Output options for ControllerBase<>
-// =========================================
-
-namespace input_options {
-
-// Read state interface loaned from other hardware or controller
-template <typename Object> struct Read {};
-// Subscribe a topic
-template <typename Message> struct Subscribe {};
-
-} // namespace input_options
-
-namespace output_options {
-
-// Export state interface to other hardware or controller
-template <typename Object> struct Export {};
-// Write to command interface loaned from other hardware or controller
-template <typename Object> struct Write {};
-// Publish messages to a topic
-template <typename Message> struct Publish {};
-
-} // namespace output_options
-
-// ===============================
-// Traits for input/output options
-// ===============================
+// =============================
+// Traits for controller options
+// =============================
 
 // Object type to be read or subscribed for the given input option
 template <typename InputOption> struct GetInputFor;

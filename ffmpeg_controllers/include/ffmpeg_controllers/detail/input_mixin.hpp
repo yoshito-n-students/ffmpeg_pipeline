@@ -7,7 +7,8 @@
 #include <string>
 #include <utility> // for std::pair<>
 
-#include <ffmpeg_controllers/detail/input_output_options.hpp>
+#include <ffmpeg_controllers/controller_options.hpp>
+#include <ffmpeg_controllers/detail/controller_traits.hpp>
 #include <ffmpeg_controllers/detail/interface_adapter.hpp>
 #include <ffmpeg_cpp/ffmpeg_cpp.hpp>
 #include <message_filters/message_event.h>

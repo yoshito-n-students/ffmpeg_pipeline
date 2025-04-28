@@ -3,7 +3,7 @@
 
 #include <ffmpeg_controllers/detail/input_output_mixin.hpp>
 // This makes options available in files that include this header
-#include <ffmpeg_controllers/detail/input_output_options.hpp>
+#include <ffmpeg_controllers/controller_options.hpp>
 
 namespace ffmpeg_controllers {
 

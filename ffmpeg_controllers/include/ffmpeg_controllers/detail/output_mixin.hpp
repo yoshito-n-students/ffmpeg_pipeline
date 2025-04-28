@@ -6,7 +6,8 @@
 #include <tuple>
 
 #include <controller_interface/controller_interface_base.hpp> // for controller_interface::return_type
-#include <ffmpeg_controllers/detail/input_output_options.hpp>
+#include <ffmpeg_controllers/controller_options.hpp>
+#include <ffmpeg_controllers/detail/controller_traits.hpp>
 #include <ffmpeg_controllers/detail/interface_adapter.hpp>
 #include <ffmpeg_cpp/ffmpeg_cpp.hpp>
 #include <rclcpp/duration.hpp>
