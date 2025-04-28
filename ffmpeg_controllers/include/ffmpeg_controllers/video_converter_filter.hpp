@@ -26,9 +26,9 @@ protected:
     }
 
     try {
-      dst_width_ = get_node()->declare_parameter("dst_width", 0);
-      dst_height_ = get_node()->declare_parameter("dst_height", 0);
-      dst_format_ = get_node()->declare_parameter<std::string>("dst_format", "");
+      dst_width_ = declare_or_get_parameter<int>("dst_width", 0);
+      dst_height_ = declare_or_get_parameter<int>("dst_height", 0);
+      dst_format_ = declare_or_get_parameter<std::string>("dst_format", "");
     } catch (const std::runtime_error &error) {
       RCLCPP_ERROR(get_logger(), "Error while getting parameter value: %s", error.what());
       return NodeReturn::ERROR;

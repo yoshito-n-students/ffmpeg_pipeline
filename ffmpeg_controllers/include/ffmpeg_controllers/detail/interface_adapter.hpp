@@ -46,6 +46,25 @@ protected:
 
   rclcpp::Logger get_logger() const { return Interface::get_node()->get_logger(); }
 
+  template <typename T> T declare_or_get_parameter(const std::string &name) {
+    if (!Interface::get_node()->has_parameter(name)) {
+      return Interface::get_node()->template declare_parameter<T>(name);
+    } else {
+      return Interface::get_node()->get_parameter(name).template get_value<T>();
+    }
+  }
+
+  template <typename T>
+  T declare_or_get_parameter(const std::string &name, const T &default_value) {
+    if (!Interface::get_node()->has_parameter(name)) {
+      return Interface::get_node()->template declare_parameter<T>(name, default_value);
+    } else {
+      T value;
+      Interface::get_node()->get_parameter_or(name, value, default_value);
+      return value;
+    }
+  }
+
   // Get the pointer value stored in the state interface loaned from other classes
   template <typename T>
   const T *get_state_as_pointer(const std::string &prefix_name,

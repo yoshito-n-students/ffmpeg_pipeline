@@ -67,7 +67,7 @@ protected:
   typename Base::NodeReturn on_init() override {
     try {
       // The name of the hardware or controller from which the state interface is loaned
-      input_name_ = Base::get_node()->template declare_parameter<std::string>("input_name");
+      input_name_ = Base::template declare_or_get_parameter<std::string>("input_name");
       return Base::NodeReturn::SUCCESS;
     } catch (const std::runtime_error &error) {
       RCLCPP_ERROR(Base::get_logger(), "Error while getting parameter value: %s", error.what());
@@ -121,7 +121,7 @@ protected:
   typename Base::NodeReturn on_init() override {
     try {
       // The name of the hardware or controller from which the state interface is loaned
-      input_name_ = Base::get_node()->template declare_parameter<std::string>("input_name");
+      input_name_ = Base::template declare_or_get_parameter<std::string>("input_name");
       return Base::NodeReturn::SUCCESS;
     } catch (const std::runtime_error &error) {
       RCLCPP_ERROR(Base::get_logger(), "Error while getting parameter value: %s", error.what());
@@ -175,7 +175,7 @@ protected:
   typename Base::NodeReturn on_init() override {
     try {
       // The name of the hardware or controller from which the state interface is loaned
-      input_name_ = Base::get_node()->template declare_parameter<std::string>("input_name");
+      input_name_ = Base::template declare_or_get_parameter<std::string>("input_name");
       return Base::NodeReturn::SUCCESS;
     } catch (const std::runtime_error &error) {
       RCLCPP_ERROR(Base::get_logger(), "Error while getting parameter value: %s", error.what());
