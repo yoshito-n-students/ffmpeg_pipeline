@@ -43,11 +43,6 @@ protected:
   // and not supposed to be used. This allows multiple OnReadDefinition to be inherited.
   virtual OnReadReturn<InputOption> on_read(const rclcpp::Time &time,
                                             const rclcpp::Duration &period, InputOption) = 0;
-
-  // Provide the signature as same as OnReadDefinition<OtherInputOption>
-  OnReadReturn<InputOption> on_read(const rclcpp::Time &time, const rclcpp::Duration &period) {
-    return on_read(time, period, InputOption());
-  }
 };
 
 // ====================================
@@ -318,8 +313,8 @@ protected:
                                                     const rclcpp::Duration &period,
                                                     std::tuple<InputOptions...>) override {
     // Call on_read() for each input option and collect the results
-    const std::tuple<OnReadReturn<InputOptions>...> results(
-        OnReadDefinition<InputOptions>::on_read(time, period)...);
+    const auto results =
+        std::make_tuple(BaseInput<InputOptions>::on_read(time, period, InputOptions())...);
 
     // Reshape the results into a list of success and a list of outputs
     const auto [success, outputs] = transpose(results);

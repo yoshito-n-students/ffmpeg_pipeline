@@ -26,25 +26,14 @@ protected:
   // Default version
   virtual controller_interface::return_type on_write(const rclcpp::Time &time,
                                                      const rclcpp::Duration &period,
-                                                     OutputFor<OutputOption> &&input) = 0;
+                                                     OutputFor<OutputOption> &&output) = 0;
 };
 template <typename... OutputOptions> class OnWriteDefinition<std::tuple<OutputOptions...>> {
 protected:
   // Tuple version
   virtual controller_interface::return_type on_write(const rclcpp::Time &time,
                                                      const rclcpp::Duration &period,
-                                                     OutputFor<OutputOptions> &&...inputs) = 0;
-
-  // Provide the signature as same as the default version
-  controller_interface::return_type on_write(const rclcpp::Time &time,
-                                             const rclcpp::Duration &period,
-                                             std::tuple<OutputFor<OutputOptions>...> &&inputs) {
-    return std::apply(
-        [&, this](auto &&...args) {
-          return on_write(time, period, std::forward<decltype(args)>(args)...);
-        },
-        std::forward<decltype(inputs)>(inputs));
-  }
+                                                     OutputFor<OutputOptions> &&...outputs) = 0;
 };
 
 // =====================================
@@ -273,11 +262,11 @@ protected:
 
   typename BaseCommon::ControllerReturn on_write(const rclcpp::Time &time,
                                                  const rclcpp::Duration &period,
-                                                 OutputFor<OutputOptions> &&...inputs) override {
+                                                 OutputFor<OutputOptions> &&...outputs) override {
     // Call on_read() for each input option and collect the results
     const std::array<typename BaseCommon::ControllerReturn, sizeof...(OutputOptions)> results = {
-        OnWriteDefinition<OutputOptions>::on_write(time, period,
-                                                   std::forward<decltype(inputs)>(inputs))...};
+        BaseOutput<OutputOptions>::on_write(time, period,
+                                            std::forward<decltype(outputs)>(outputs))...};
     return std::all_of(results.begin(), results.end(),
                        [](const auto result) { return result == BaseCommon::ControllerReturn::OK; })
                ? BaseCommon::ControllerReturn::OK

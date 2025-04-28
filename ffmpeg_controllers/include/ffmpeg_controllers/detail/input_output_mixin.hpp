@@ -46,14 +46,6 @@ protected:
   virtual OnGenerateReturn<OutputOption> on_generate(const rclcpp::Time &time,
                                                      const rclcpp::Duration &period,
                                                      const InputFor<InputOptions> &...inputs) = 0;
-
-  // Provide the signature as same as the default version
-  OnGenerateReturn<OutputOption>
-  on_generate(const rclcpp::Time &time, const rclcpp::Duration &period,
-              const std::tuple<std::reference_wrapper<const InputFor<InputOptions>>...> &inputs) {
-    return std::apply(
-        [&, this](auto &&...args) { return on_generate(time, period, args.get()...); }, inputs);
-  }
 };
 
 // =====================================================
@@ -80,24 +72,56 @@ protected:
 
   typename BaseCommon::ControllerReturn on_update(const rclcpp::Time &time,
                                                   const rclcpp::Duration &period) override {
-    const auto [read_ret, generate_args] = OnReadDefinition<InputOption>::on_read(time, period);
+    const auto [read_ret, generate_args] = this->on_read(time, period, InputOption());
     if (read_ret != BaseCommon::ControllerReturn::OK || !generate_args) {
       return read_ret;
     }
 
-    auto [generate_ret, write_args] =
-        OnGenerateDefinition<InputOption, OutputOption>::on_generate(time, period, *generate_args);
+    auto [generate_ret, write_args] = invoke_on_generate(time, period, *generate_args);
     if (generate_ret != BaseCommon::ControllerReturn::OK || !write_args) {
       return generate_ret;
     }
 
-    const auto write_ret =
-        OnWriteDefinition<OutputOption>::on_write(time, period, std::move(*write_args));
+    const auto write_ret = invoke_on_write(time, period, std::move(*write_args));
     if (write_ret != BaseCommon::ControllerReturn::OK) {
       return write_ret;
     }
 
     return BaseCommon::ControllerReturn::OK;
+  }
+
+  // Call on_generate(time, period, input) for the given single input
+  template <typename Input>
+  std::enable_if_t<ElementCount<Input> == 1, OnGenerateReturn<OutputOption>>
+  invoke_on_generate(const rclcpp::Time &time, const rclcpp::Duration &period, const Input &input) {
+    return this->on_generate(time, period, input);
+  }
+
+  // Call on_generate(time, period, input0, input1, ...) for the given tuple of inputs
+  template <typename Input>
+  std::enable_if_t<ElementCount<Input> >= 2, OnGenerateReturn<OutputOption>>
+  invoke_on_generate(const rclcpp::Time &time, const rclcpp::Duration &period, const Input &input) {
+    return std::apply(
+        [&, this](auto &&...args) { return this->on_generate(time, period, args.get()...); },
+        input);
+  }
+
+  // Call on_write(time, period, input) for the given single input
+  template <typename Input>
+  std::enable_if_t<ElementCount<Input> == 1, typename BaseCommon::ControllerReturn>
+  invoke_on_write(const rclcpp::Time &time, const rclcpp::Duration &period, Input &&input) {
+    return this->on_write(time, period, std::forward<decltype(input)>(input));
+  }
+
+  // Call on_write(time, period, input0, input1, ...) for the given tuple of inputs
+  template <typename Input>
+  std::enable_if_t<ElementCount<Input> >= 2, typename BaseCommon::ControllerReturn>
+  invoke_on_write(const rclcpp::Time &time, const rclcpp::Duration &period, Input &&input) {
+    return std::apply(
+        [&, this](auto &&...args) {
+          return this->on_write(time, period, std::forward<decltype(args)>(args)...);
+        },
+        std::forward<decltype(input)>(input));
   }
 };
 
