@@ -73,10 +73,10 @@ struct GetInterfaceFor<InputOption, output_options::Export<Object>> {
 template <typename InputOption, typename... OutputOptions>
 struct GetInterfaceFor<InputOption, std::tuple<OutputOptions...>> {
   using Result = std::conditional_t<
-      std::disjunction_v<std::is_same<typename GetInterfaceFor<InputOption, OutputOptions>::Result,
-                                      controller_interface::ChainableControllerInterface>...>,
-      controller_interface::ChainableControllerInterface,
-      controller_interface::ControllerInterface>;
+      std::conjunction_v<std::is_same<typename GetInterfaceFor<InputOption, OutputOptions>::Result,
+                                      controller_interface::ControllerInterface>...>,
+      controller_interface::ControllerInterface,
+      controller_interface::ChainableControllerInterface>;
 };
 template <typename InputOption, typename OutputOption>
 using InterfaceFor = typename GetInterfaceFor<InputOption, OutputOption>::Result;
