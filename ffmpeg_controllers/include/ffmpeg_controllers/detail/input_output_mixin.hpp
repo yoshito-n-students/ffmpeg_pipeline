@@ -5,8 +5,8 @@
 #include <tuple>
 
 #include <controller_interface/controller_interface_base.hpp> // for controller_interface::return_type
-#include <ffmpeg_controllers/detail/input_mixin.hpp>
 #include <ffmpeg_controllers/detail/controller_traits.hpp>
+#include <ffmpeg_controllers/detail/input_mixin.hpp>
 #include <ffmpeg_controllers/detail/interface_adapter.hpp>
 #include <ffmpeg_controllers/detail/output_mixin.hpp>
 #include <rclcpp/duration.hpp>
@@ -32,7 +32,7 @@ template <typename OutputOption>
 using OnGenerateReturn = typename GetOnGenerateReturn<OutputOption>::Result;
 
 // Definition of InputOutputMixin::on_generate()
-template <typename InputOption, typename OutputOption> class OnGenerateDefinition {
+template <typename InputOption, typename OutputOption> class OnGenerateContract {
 protected:
   // Default version
   virtual OnGenerateReturn<OutputOption> on_generate(const rclcpp::Time &time,
@@ -40,7 +40,7 @@ protected:
                                                      const InputFor<InputOption> &input) = 0;
 };
 template <typename... InputOptions, typename OutputOption>
-class OnGenerateDefinition<std::tuple<InputOptions...>, OutputOption> {
+class OnGenerateContract<std::tuple<InputOptions...>, OutputOption> {
 protected:
   // Tuple version
   virtual OnGenerateReturn<OutputOption> on_generate(const rclcpp::Time &time,
@@ -55,7 +55,7 @@ protected:
 template <typename InputOption, typename OutputOption>
 class InputOutputMixin : public InputMixin<InputOption, InterfaceFor<InputOption, OutputOption>>,
                          public OutputMixin<OutputOption, InterfaceFor<InputOption, OutputOption>>,
-                         public OnGenerateDefinition<InputOption, OutputOption> {
+                         public OnGenerateContract<InputOption, OutputOption> {
 private:
   using Interface = InterfaceFor<InputOption, OutputOption>;
   using BaseCommon = InterfaceAdapter<Interface>;

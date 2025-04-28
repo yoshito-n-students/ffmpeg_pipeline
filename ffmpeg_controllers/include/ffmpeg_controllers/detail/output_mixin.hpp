@@ -22,14 +22,14 @@ namespace ffmpeg_controllers {
 // which is used to write the input
 // ========================================================================
 
-template <typename OutputOption> class OnWriteDefinition {
+template <typename OutputOption> class OnWriteContract {
 protected:
   // Default version
   virtual controller_interface::return_type on_write(const rclcpp::Time &time,
                                                      const rclcpp::Duration &period,
                                                      OutputFor<OutputOption> &&output) = 0;
 };
-template <typename... OutputOptions> class OnWriteDefinition<std::tuple<OutputOptions...>> {
+template <typename... OutputOptions> class OnWriteContract<std::tuple<OutputOptions...>> {
 protected:
   // Tuple version
   virtual controller_interface::return_type on_write(const rclcpp::Time &time,
@@ -46,7 +46,7 @@ template <typename OutputOption, class Interface> class OutputMixin;
 template <class Interface>
 class OutputMixin<output_options::Export<ffmpeg_cpp::Frame>, Interface>
     : public virtual InterfaceAdapter<Interface>,
-      public OnWriteDefinition<output_options::Export<ffmpeg_cpp::Frame>> {
+      public OnWriteContract<output_options::Export<ffmpeg_cpp::Frame>> {
 private:
   using Base = InterfaceAdapter<Interface>;
 
@@ -80,7 +80,7 @@ private:
 template <class Interface>
 class OutputMixin<output_options::Export<ffmpeg_cpp::Packet>, Interface>
     : public virtual InterfaceAdapter<Interface>,
-      public OnWriteDefinition<output_options::Export<ffmpeg_cpp::Packet>> {
+      public OnWriteContract<output_options::Export<ffmpeg_cpp::Packet>> {
 private:
   using Base = InterfaceAdapter<Interface>;
 
@@ -114,7 +114,7 @@ private:
 template <class Interface>
 class OutputMixin<output_options::Export<ffmpeg_cpp::CodecParameters>, Interface>
     : public virtual InterfaceAdapter<Interface>,
-      public OnWriteDefinition<output_options::Export<ffmpeg_cpp::CodecParameters>> {
+      public OnWriteContract<output_options::Export<ffmpeg_cpp::CodecParameters>> {
 private:
   using Base = InterfaceAdapter<Interface>;
 
@@ -149,7 +149,7 @@ private:
 template <class Interface>
 class OutputMixin<output_options::Write<ffmpeg_cpp::Packet>, Interface>
     : public virtual InterfaceAdapter<Interface>,
-      public OnWriteDefinition<output_options::Write<ffmpeg_cpp::Packet>> {
+      public OnWriteContract<output_options::Write<ffmpeg_cpp::Packet>> {
 private:
   using Base = InterfaceAdapter<Interface>;
 
@@ -188,7 +188,7 @@ private:
 template <typename Message, class Interface>
 class OutputMixin<output_options::Publish<Message>, Interface>
     : public virtual InterfaceAdapter<Interface>,
-      public OnWriteDefinition<output_options::Publish<Message>> {
+      public OnWriteContract<output_options::Publish<Message>> {
 private:
   using Base = InterfaceAdapter<Interface>;
 
@@ -236,7 +236,7 @@ private:
 template <typename... OutputOptions, class Interface>
 class OutputMixin<std::tuple<OutputOptions...>, Interface>
     : public OutputMixin<OutputOptions, Interface>...,
-      public OnWriteDefinition<std::tuple<OutputOptions...>> {
+      public OnWriteContract<std::tuple<OutputOptions...>> {
 private:
   using BaseCommon = InterfaceAdapter<Interface>;
   template <typename OutputOption> using BaseOutput = OutputMixin<OutputOption, Interface>;

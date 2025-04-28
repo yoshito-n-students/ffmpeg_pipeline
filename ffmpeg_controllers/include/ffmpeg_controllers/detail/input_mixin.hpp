@@ -38,10 +38,10 @@ template <typename... InputOptions> struct GetOnReadReturn<std::tuple<InputOptio
 template <typename InputOption> using OnReadReturn = typename GetOnReadReturn<InputOption>::Result;
 
 // Definition of InputOutputMixin::on_read()
-template <typename InputOption> class OnReadDefinition {
+template <typename InputOption> class OnReadContract {
 protected:
   // The final argument is used to change the signature of the function for each InputOption type,
-  // and not supposed to be used. This allows multiple OnReadDefinition to be inherited.
+  // and not supposed to be used. This allows multiple OnReadContract to be inherited.
   virtual OnReadReturn<InputOption> on_read(const rclcpp::Time &time,
                                             const rclcpp::Duration &period, InputOption) = 0;
 };
@@ -55,7 +55,7 @@ template <typename InputOption, class Interface> class InputMixin;
 template <class Interface>
 class InputMixin<input_options::Read<ffmpeg_cpp::Frame>, Interface>
     : public virtual InterfaceAdapter<Interface>,
-      public OnReadDefinition<input_options::Read<ffmpeg_cpp::Frame>> {
+      public OnReadContract<input_options::Read<ffmpeg_cpp::Frame>> {
 private:
   using Base = InterfaceAdapter<Interface>;
 
@@ -109,7 +109,7 @@ private:
 template <class Interface>
 class InputMixin<input_options::Read<ffmpeg_cpp::Packet>, Interface>
     : public virtual InterfaceAdapter<Interface>,
-      public OnReadDefinition<input_options::Read<ffmpeg_cpp::Packet>> {
+      public OnReadContract<input_options::Read<ffmpeg_cpp::Packet>> {
 private:
   using Base = InterfaceAdapter<Interface>;
 
@@ -163,7 +163,7 @@ private:
 template <class Interface>
 class InputMixin<input_options::Read<ffmpeg_cpp::CodecParameters>, Interface>
     : public virtual InterfaceAdapter<Interface>,
-      public OnReadDefinition<input_options::Read<ffmpeg_cpp::CodecParameters>> {
+      public OnReadContract<input_options::Read<ffmpeg_cpp::CodecParameters>> {
 private:
   using Base = InterfaceAdapter<Interface>;
 
@@ -204,7 +204,7 @@ private:
 template <typename Message, class Interface>
 class InputMixin<input_options::Subscribe<Message>, Interface>
     : public virtual InterfaceAdapter<Interface>,
-      public OnReadDefinition<input_options::Subscribe<Message>> {
+      public OnReadContract<input_options::Subscribe<Message>> {
 private:
   using Base = InterfaceAdapter<Interface>;
   using StampedMessage = message_filters::MessageEvent<Message>;
@@ -264,7 +264,7 @@ private:
 template <typename... InputOptions, class Interface>
 class InputMixin<std::tuple<InputOptions...>, Interface>
     : public InputMixin<InputOptions, Interface>...,
-      public OnReadDefinition<std::tuple<InputOptions...>> {
+      public OnReadContract<std::tuple<InputOptions...>> {
 private:
   using BaseCommon = InterfaceAdapter<Interface>;
   template <typename InputOption> using BaseInput = InputMixin<InputOption, Interface>;
