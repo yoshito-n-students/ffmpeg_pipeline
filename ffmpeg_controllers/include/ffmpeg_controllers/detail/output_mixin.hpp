@@ -53,7 +53,7 @@ private:
 protected:
   typename Base::NodeReturn on_init() override {
     // Names of intraprocess read-only variables to be exported
-    Base::exported_state_interface_names_ = {"frame"};
+    Base::exported_state_interface_names_.emplace_back("frame");
     return Base::NodeReturn::SUCCESS;
   }
 
@@ -87,7 +87,7 @@ private:
 protected:
   typename Base::NodeReturn on_init() override {
     // Names of intraprocess read-only variables to be exported
-    Base::exported_state_interface_names_ = {"packet"};
+    Base::exported_state_interface_names_.emplace_back("packet");
     return Base::NodeReturn::SUCCESS;
   }
 
@@ -121,7 +121,7 @@ private:
 protected:
   typename Base::NodeReturn on_init() override {
     // Names of intraprocess read-only variables to be exported
-    Base::exported_state_interface_names_ = {"codec_parameters"};
+    Base::exported_state_interface_names_.emplace_back("codec_parameters");
     return Base::NodeReturn::SUCCESS;
   }
 
