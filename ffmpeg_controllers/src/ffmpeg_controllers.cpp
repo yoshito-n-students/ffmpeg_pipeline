@@ -5,6 +5,7 @@
 #include <ffmpeg_controllers/compressed_image_broadcaster.hpp>
 #include <ffmpeg_controllers/decoder_filter.hpp>
 #include <ffmpeg_controllers/encoder_filter.hpp>
+#include <ffmpeg_controllers/frame_writer.hpp>
 #include <ffmpeg_controllers/image_broadcaster.hpp>
 #include <ffmpeg_controllers/packet_broadcaster.hpp>
 #include <ffmpeg_controllers/packet_receiver.hpp>
@@ -22,6 +23,7 @@ PLUGINLIB_EXPORT_CLASS(ffmpeg_controllers::DecoderFilter,
                        controller_interface::ChainableControllerInterface);
 PLUGINLIB_EXPORT_CLASS(ffmpeg_controllers::EncoderFilter,
                        controller_interface::ChainableControllerInterface);
+PLUGINLIB_EXPORT_CLASS(ffmpeg_controllers::FrameWriter, controller_interface::ControllerInterface);
 PLUGINLIB_EXPORT_CLASS(ffmpeg_controllers::ImageBroadcaster,
                        controller_interface::ControllerInterface);
 PLUGINLIB_EXPORT_CLASS(ffmpeg_controllers::PacketBroadcaster,

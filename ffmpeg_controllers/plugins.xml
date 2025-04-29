@@ -45,6 +45,15 @@
         </description>
     </class>
 
+    <class name="ffmpeg_controllers/FrameWriter"
+           type="ffmpeg_controllers::FrameWriter"
+           base_class_type="controller_interface::ControllerInterface">
+        <description>
+            This controller reads ffmpeg_cpp::Frame from the state interface owned by other controller
+            and write it to the command interface owned by the hardware.
+        </description>
+    </class>
+
     <class name="ffmpeg_controllers/ImageBroadcaster"
            type="ffmpeg_controllers::ImageBroadcaster"
            base_class_type="controller_interface::ControllerInterface">
