@@ -147,6 +147,45 @@ private:
 };
 
 template <class Interface>
+class OutputMixin<output_options::Write<ffmpeg_cpp::Frame>, Interface>
+    : public virtual InterfaceAdapter<Interface>,
+      public OnWriteContract<output_options::Write<ffmpeg_cpp::Frame>> {
+private:
+  using Base = InterfaceAdapter<Interface>;
+
+protected:
+  typename Base::NodeReturn on_init() override {
+    try {
+      // The name of the hardware or controller to which the command interface is written
+      output_name_ = Base::template declare_or_get_parameter<std::string>("output_name");
+      return Base::NodeReturn::SUCCESS;
+    } catch (const std::runtime_error &error) {
+      RCLCPP_ERROR(Base::get_logger(), "Error while getting parameter value: %s", error.what());
+      return Base::NodeReturn::ERROR;
+    }
+  }
+
+  typename Base::ControllerReturn on_write(const rclcpp::Time & /*time*/,
+                                           const rclcpp::Duration & /*period*/,
+                                           ffmpeg_cpp::Frame &&input_frame) override {
+    if (const auto output_frame =
+            Base::template get_command_as_pointer<ffmpeg_cpp::Frame>(output_name_, "frame");
+        output_frame) {
+      // Update the command variable with the given packet
+      *output_frame = std::move(input_frame);
+      return Base::ControllerReturn::OK;
+    } else {
+      // It is still OK if the command variable is not available
+      RCLCPP_WARN(Base::get_logger(), "Failed to get output frame. Will skip this update.");
+      return Base::ControllerReturn::OK;
+    }
+  }
+
+private:
+  std::string output_name_;
+};
+
+template <class Interface>
 class OutputMixin<output_options::Write<ffmpeg_cpp::Packet>, Interface>
     : public virtual InterfaceAdapter<Interface>,
       public OnWriteContract<output_options::Write<ffmpeg_cpp::Packet>> {
