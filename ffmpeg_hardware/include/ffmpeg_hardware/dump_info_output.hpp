@@ -1,5 +1,5 @@
-#ifndef FFMPEG_HARDWARE_MOCK_OUTPUT_HPP
-#define FFMPEG_HARDWARE_MOCK_OUTPUT_HPP
+#ifndef FFMPEG_HARDWARE_DUMP_INFO_OUTPUT_HPP
+#define FFMPEG_HARDWARE_DUMP_INFO_OUTPUT_HPP
 
 #include <ffmpeg_cpp/ffmpeg_cpp.hpp>
 #include <ffmpeg_hardware/interface_adapter.hpp>
@@ -7,7 +7,7 @@
 
 namespace ffmpeg_hardware {
 
-class MockOutput : public InterfaceAdapter<hardware_interface::ActuatorInterface> {
+class DumpInfoOutput : public InterfaceAdapter<hardware_interface::ActuatorInterface> {
 protected:
   // ============================
   // Behavior as a lifecycle node
@@ -15,6 +15,8 @@ protected:
 
   CallbackReturn on_activate(const rclcpp_lifecycle::State & /*previous_state*/) override {
     try {
+      // TODO: Print available parameters for debugging purposes
+
       // Initialize the command variables and register them to the interface
       packet_ = ffmpeg_cpp::Packet();
       frame_ = ffmpeg_cpp::Frame();

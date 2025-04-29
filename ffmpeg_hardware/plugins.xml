@@ -1,5 +1,13 @@
 <library path="ffmpeg_hardware">
 
+    <class name="ffmpeg_hardware/DumpInfoOutput"
+           type="ffmpeg_hardware::DumpInfoOutput"
+           base_class_type="hardware_interface::ActuatorInterface">
+        <description>
+            This plugin does not write video/audio packets but print them for debugging purposes.
+        </description>
+    </class>
+    
     <class name="ffmpeg_hardware/FFmpegInput"
            type="ffmpeg_hardware::FFmpegInput"
            base_class_type="hardware_interface::SensorInterface">
@@ -13,14 +21,6 @@
            base_class_type="hardware_interface::ActuatorInterface">
         <description>
             This plugin write video/audio packets from various outputs using FFmpeg.
-        </description>
-    </class>
-
-    <class name="ffmpeg_hardware/MockOutput"
-           type="ffmpeg_hardware::MockOutput"
-           base_class_type="hardware_interface::ActuatorInterface">
-        <description>
-            This plugin does not write video/audio packets but print them for debugging purposes.
         </description>
     </class>
 
