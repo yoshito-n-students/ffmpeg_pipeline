@@ -16,4 +16,12 @@
         </description>
     </class>
 
+    <class name="ffmpeg_hardware/MockOutput"
+           type="ffmpeg_hardware::MockOutput"
+           base_class_type="hardware_interface::ActuatorInterface">
+        <description>
+            This plugin does not write video/audio packets but print them for debugging purposes.
+        </description>
+    </class>
+
 </library>
