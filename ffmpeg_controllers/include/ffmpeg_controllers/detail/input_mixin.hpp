@@ -235,7 +235,9 @@ protected:
   typename Base::NodeReturn
   on_activate(const rclcpp_lifecycle::State & /*previous_state*/) override {
     prev_stamp_ = Base::get_node()->now();
-    msg_buffer_.writeFromNonRT(StampedMessage(nullptr, prev_stamp_));
+    msg_buffer_.writeFromNonRT(StampedMessage(
+        // as of jazzy, passing nullptr leads a segmentation fault
+        std::make_shared<InputMessage>(), prev_stamp_));
     return Base::NodeReturn::SUCCESS;
   }
 
