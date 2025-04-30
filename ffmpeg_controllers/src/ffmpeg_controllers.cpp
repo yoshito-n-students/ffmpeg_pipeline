@@ -6,6 +6,7 @@
 #include <ffmpeg_controllers/encoder_filter.hpp>
 #include <ffmpeg_controllers/frame_writer.hpp>
 #include <ffmpeg_controllers/image_broadcaster.hpp>
+#include <ffmpeg_controllers/name_based_decoder_filter.hpp>
 #include <ffmpeg_controllers/packet_broadcaster.hpp>
 #include <ffmpeg_controllers/packet_receiver.hpp>
 #include <ffmpeg_controllers/packet_writer.hpp>
@@ -25,6 +26,8 @@ PLUGINLIB_EXPORT_CLASS(ffmpeg_controllers::EncoderFilter,
 PLUGINLIB_EXPORT_CLASS(ffmpeg_controllers::FrameWriter, controller_interface::ControllerInterface);
 PLUGINLIB_EXPORT_CLASS(ffmpeg_controllers::ImageBroadcaster,
                        controller_interface::ControllerInterface);
+PLUGINLIB_EXPORT_CLASS(ffmpeg_controllers::NameBasedDecoderFilter,
+                       controller_interface::ChainableControllerInterface);
 PLUGINLIB_EXPORT_CLASS(ffmpeg_controllers::PacketBroadcaster,
                        controller_interface::ControllerInterface);
 PLUGINLIB_EXPORT_CLASS(ffmpeg_controllers::PacketReceiver,
