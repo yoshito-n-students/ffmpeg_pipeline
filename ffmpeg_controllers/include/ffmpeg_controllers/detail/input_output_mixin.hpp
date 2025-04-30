@@ -3,6 +3,7 @@
 
 #include <optional>
 #include <tuple>
+#include <type_traits>
 
 #include <controller_interface/controller_interface_base.hpp> // for controller_interface::return_type
 #include <ffmpeg_controllers/detail/controller_traits.hpp>
@@ -77,12 +78,14 @@ protected:
       return read_ret;
     }
 
-    auto [generate_ret, write_args] = invoke_on_generate(time, period, *generate_args);
+    auto [generate_ret, write_args] =
+        invoke(&InputOutputMixin::on_generate, time, period, *generate_args);
     if (generate_ret != BaseCommon::ControllerReturn::OK || !write_args) {
       return generate_ret;
     }
 
-    const auto write_ret = invoke_on_write(time, period, std::move(*write_args));
+    const auto write_ret =
+        invoke(&InputOutputMixin::on_write, time, period, std::move(*write_args));
     if (write_ret != BaseCommon::ControllerReturn::OK) {
       return write_ret;
     }
@@ -90,39 +93,24 @@ protected:
     return BaseCommon::ControllerReturn::OK;
   }
 
-  // Call on_generate(time, period, input) for the given single input
-  template <typename Input>
-  std::enable_if_t<ElementCount<Input> == 1, OnGenerateReturn<OutputOption>>
-  invoke_on_generate(const rclcpp::Time &time, const rclcpp::Duration &period, const Input &input) {
-    return this->on_generate(time, period, input);
+  // Invoke the given method of this class with the given arguments.
+  // If the given arguments are not compatible with the method,
+  // it will be unpacked and passed to the method by std::apply().
+  template <class Method, typename Arg>
+  auto invoke(Method &&method, const rclcpp::Time &time, const rclcpp::Duration &period,
+              Arg &&arg) {
+    if constexpr (std::is_invocable_v<Method, decltype(this), decltype(time), decltype(period),
+                                      Arg>) {
+      return (this->*method)(time, period, std::forward<Arg>(arg));
+    } else {
+      return std::apply(
+          [&, this](auto &&...args) {
+            return (this->*method)(time, period, std::forward<decltype(args)>(args)...);
+          },
+          std::forward<Arg>(arg));
+    }
   }
 
-  // Call on_generate(time, period, input0, input1, ...) for the given tuple of inputs
-  template <typename Input>
-  std::enable_if_t<ElementCount<Input> >= 2, OnGenerateReturn<OutputOption>>
-  invoke_on_generate(const rclcpp::Time &time, const rclcpp::Duration &period, const Input &input) {
-    return std::apply(
-        [&, this](auto &&...args) { return this->on_generate(time, period, args.get()...); },
-        input);
-  }
-
-  // Call on_write(time, period, input) for the given single input
-  template <typename Input>
-  std::enable_if_t<ElementCount<Input> == 1, typename BaseCommon::ControllerReturn>
-  invoke_on_write(const rclcpp::Time &time, const rclcpp::Duration &period, Input &&input) {
-    return this->on_write(time, period, std::forward<decltype(input)>(input));
-  }
-
-  // Call on_write(time, period, input0, input1, ...) for the given tuple of inputs
-  template <typename Input>
-  std::enable_if_t<ElementCount<Input> >= 2, typename BaseCommon::ControllerReturn>
-  invoke_on_write(const rclcpp::Time &time, const rclcpp::Duration &period, Input &&input) {
-    return std::apply(
-        [&, this](auto &&...args) {
-          return this->on_write(time, period, std::forward<decltype(args)>(args)...);
-        },
-        std::forward<decltype(input)>(input));
-  }
 };
 
 } // namespace ffmpeg_controllers

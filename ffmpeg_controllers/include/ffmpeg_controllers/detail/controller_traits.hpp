@@ -56,16 +56,6 @@ struct GetInterfaceFor<InputOption, std::tuple<OutputOptions...>> {
 template <typename InputOption, typename OutputOption>
 using InterfaceFor = typename GetInterfaceFor<InputOption, OutputOption>::Result;
 
-// Number of elements in the given type;
-// 1 for a non-tuple type, or the number of elements for a tuple type
-template <typename T> struct GetElementCount {
-  static constexpr std::size_t Value = 1;
-};
-template <typename... Ts> struct GetElementCount<std::tuple<Ts...>> {
-  static constexpr std::size_t Value = sizeof...(Ts);
-};
-template <typename T> inline constexpr std::size_t ElementCount = GetElementCount<T>::Value;
-
 } // namespace ffmpeg_controllers
 
 #endif
