@@ -1,5 +1,5 @@
-#ifndef FFMPEG_CONTROLLERS_DECODER_FILTER_HPP
-#define FFMPEG_CONTROLLERS_DECODER_FLITER_HPP
+#ifndef FFMPEG_CONTROLLERS_PARAMETER_BASED_DECODER_FILTER_HPP
+#define FFMPEG_CONTROLLERS_PARAMETER_BASED_DECODER_FLITER_HPP
 
 #include <optional>
 #include <stdexcept>
@@ -12,7 +12,7 @@
 
 namespace ffmpeg_controllers {
 
-class DecoderFilter
+class ParameterBasedDecoderFilter
     : public ControllerBase<std::tuple<input_options::Read<ffmpeg_cpp::Packet>,
                                        input_options::Read<ffmpeg_cpp::CodecParameters>>,
                             output_options::Export<ffmpeg_cpp::Frame>> {

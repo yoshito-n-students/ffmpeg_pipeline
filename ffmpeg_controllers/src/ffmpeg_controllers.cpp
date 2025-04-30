@@ -3,13 +3,14 @@
 #include <ffmpeg_controllers/audio_converter_filter.hpp>
 #include <ffmpeg_controllers/audio_fifo_filter.hpp>
 #include <ffmpeg_controllers/compressed_image_broadcaster.hpp>
-#include <ffmpeg_controllers/decoder_filter.hpp>
 #include <ffmpeg_controllers/encoder_filter.hpp>
 #include <ffmpeg_controllers/frame_writer.hpp>
 #include <ffmpeg_controllers/image_broadcaster.hpp>
 #include <ffmpeg_controllers/packet_broadcaster.hpp>
 #include <ffmpeg_controllers/packet_receiver.hpp>
 #include <ffmpeg_controllers/packet_writer.hpp>
+#include <ffmpeg_controllers/parameter_based_decoder_filter.hpp>
+#include <ffmpeg_controllers/parser_based_decoder_filter.hpp>
 #include <ffmpeg_controllers/video_converter_filter.hpp>
 #include <pluginlib/class_list_macros.hpp>
 
@@ -19,8 +20,6 @@ PLUGINLIB_EXPORT_CLASS(ffmpeg_controllers::AudioFifoFilter,
                        controller_interface::ChainableControllerInterface);
 PLUGINLIB_EXPORT_CLASS(ffmpeg_controllers::CompressedImageBroadcaster,
                        controller_interface::ControllerInterface);
-PLUGINLIB_EXPORT_CLASS(ffmpeg_controllers::DecoderFilter,
-                       controller_interface::ChainableControllerInterface);
 PLUGINLIB_EXPORT_CLASS(ffmpeg_controllers::EncoderFilter,
                        controller_interface::ChainableControllerInterface);
 PLUGINLIB_EXPORT_CLASS(ffmpeg_controllers::FrameWriter, controller_interface::ControllerInterface);
@@ -31,5 +30,9 @@ PLUGINLIB_EXPORT_CLASS(ffmpeg_controllers::PacketBroadcaster,
 PLUGINLIB_EXPORT_CLASS(ffmpeg_controllers::PacketReceiver,
                        controller_interface::ChainableControllerInterface);
 PLUGINLIB_EXPORT_CLASS(ffmpeg_controllers::PacketWriter, controller_interface::ControllerInterface);
+PLUGINLIB_EXPORT_CLASS(ffmpeg_controllers::ParameterBasedDecoderFilter,
+                       controller_interface::ChainableControllerInterface);
+PLUGINLIB_EXPORT_CLASS(ffmpeg_controllers::ParserBasedDecoderFilter,
+                       controller_interface::ChainableControllerInterface);
 PLUGINLIB_EXPORT_CLASS(ffmpeg_controllers::VideoConverterFilter,
                        controller_interface::ChainableControllerInterface);
