@@ -165,6 +165,11 @@ protected:
     }
   }
 
+  controller_interface::InterfaceConfiguration command_interface_configuration() const override {
+    return {controller_interface::interface_configuration_type::INDIVIDUAL,
+            {output_name_ + "/frame"}};
+  }
+
   typename Base::ControllerReturn on_write(const rclcpp::Time & /*time*/,
                                            const rclcpp::Duration & /*period*/,
                                            ffmpeg_cpp::Frame &&input_frame) override {
@@ -202,6 +207,11 @@ protected:
       RCLCPP_ERROR(Base::get_logger(), "Error while getting parameter value: %s", error.what());
       return Base::NodeReturn::ERROR;
     }
+  }
+
+  controller_interface::InterfaceConfiguration command_interface_configuration() const override {
+    return {controller_interface::interface_configuration_type::INDIVIDUAL,
+            {output_name_ + "/packet"}};
   }
 
   typename Base::ControllerReturn on_write(const rclcpp::Time & /*time*/,
