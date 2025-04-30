@@ -46,22 +46,22 @@ protected:
 
   rclcpp::Logger get_logger() const { return Interface::get_node()->get_logger(); }
 
-  template <typename T> T declare_or_get_parameter(const std::string &name) {
+  template <typename T> T get_user_parameter(const std::string &name) {
     if (!Interface::get_node()->has_parameter(name)) {
-      return Interface::get_node()->template declare_parameter<T>(name);
-    } else {
-      return Interface::get_node()->get_parameter(name).template get_value<T>();
+      Interface::get_node()->template declare_parameter<T>(name);
     }
+    return Interface::get_node()->get_parameter(name).template get_value<T>();
   }
 
-  template <typename T>
-  T declare_or_get_parameter(const std::string &name, const T &default_value) {
-    if (!Interface::get_node()->has_parameter(name)) {
-      return Interface::get_node()->template declare_parameter<T>(name, default_value);
-    } else {
-      T value;
-      Interface::get_node()->get_parameter_or(name, value, default_value);
-      return value;
+  // Get the user parameter value with a default value.
+  // Unlike Interface::auto_declare(), this function does not set the parameter value
+  // via declare_parameter(name, default_val) or get_parameter_or(name, default_val).
+  // This ensures the parameter value is set by the user, not by other modules in the controller.
+  template <typename T> T get_user_parameter(const std::string &name, const T &default_value) {
+    try {
+      return get_user_parameter<T>(name);
+    } catch (const std::runtime_error &error) {
+      return default_value;
     }
   }
 

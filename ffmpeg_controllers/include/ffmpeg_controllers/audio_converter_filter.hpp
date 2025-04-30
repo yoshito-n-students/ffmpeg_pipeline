@@ -26,9 +26,9 @@ protected:
     }
 
     try {
-      out_ch_layout_str_ = declare_or_get_parameter<std::string>("out_channel_layout", "");
-      out_format_name_ = declare_or_get_parameter<std::string>("out_format", "");
-      out_sample_rate_ = declare_or_get_parameter<int>("out_sample_rate", 0);
+      out_ch_layout_str_ = get_user_parameter<std::string>("out_channel_layout", "");
+      out_format_name_ = get_user_parameter<std::string>("out_format", "");
+      out_sample_rate_ = get_user_parameter<int>("out_sample_rate", 0);
     } catch (const std::runtime_error &error) {
       RCLCPP_ERROR(get_logger(), "Error while getting parameter value: %s", error.what());
       return NodeReturn::ERROR;

@@ -63,7 +63,7 @@ protected:
   typename Base::NodeReturn on_init() override {
     try {
       // The name of the hardware or controller from which the state interface is loaned
-      input_name_ = Base::template declare_or_get_parameter<std::string>("input_name");
+      input_name_ = Base::template get_user_parameter<std::string>("input_name");
       return Base::NodeReturn::SUCCESS;
     } catch (const std::runtime_error &error) {
       RCLCPP_ERROR(Base::get_logger(), "Error while getting parameter value: %s", error.what());
@@ -96,7 +96,7 @@ protected:
       return {Base::ControllerReturn::OK, std::nullopt};
     } else {
       // It is still OK if the input frame is not available
-      RCLCPP_WARN(Base::get_logger(), "Failed to get input frame. Will skip this update.");
+      // RCLCPP_WARN(Base::get_logger(), "Failed to get input frame. Will skip this update.");
       return {Base::ControllerReturn::OK, std::nullopt};
     }
   }
@@ -117,7 +117,7 @@ protected:
   typename Base::NodeReturn on_init() override {
     try {
       // The name of the hardware or controller from which the state interface is loaned
-      input_name_ = Base::template declare_or_get_parameter<std::string>("input_name");
+      input_name_ = Base::template get_user_parameter<std::string>("input_name");
       return Base::NodeReturn::SUCCESS;
     } catch (const std::runtime_error &error) {
       RCLCPP_ERROR(Base::get_logger(), "Error while getting parameter value: %s", error.what());
@@ -150,7 +150,7 @@ protected:
       return {Base::ControllerReturn::OK, std::nullopt};
     } else {
       // It is still OK if the input packet is not available
-      RCLCPP_WARN(Base::get_logger(), "Failed to get input packet. Will skip this update.");
+      // RCLCPP_WARN(Base::get_logger(), "Failed to get input packet. Will skip this update.");
       return {Base::ControllerReturn::OK, std::nullopt};
     }
   }
@@ -171,7 +171,7 @@ protected:
   typename Base::NodeReturn on_init() override {
     try {
       // The name of the hardware or controller from which the state interface is loaned
-      input_name_ = Base::template declare_or_get_parameter<std::string>("input_name");
+      input_name_ = Base::template get_user_parameter<std::string>("input_name");
       return Base::NodeReturn::SUCCESS;
     } catch (const std::runtime_error &error) {
       RCLCPP_ERROR(Base::get_logger(), "Error while getting parameter value: %s", error.what());
@@ -192,7 +192,7 @@ protected:
         codec_params) {
       return {Base::ControllerReturn::OK, std::cref(*codec_params)};
     } else {
-      RCLCPP_WARN(Base::get_logger(), "Failed to get codec parameters. Will skip this update.");
+      // RCLCPP_WARN(Base::get_logger(), "Failed to get codec parameters. Will skip this update.");
       return {Base::ControllerReturn::OK, std::nullopt};
     }
   }

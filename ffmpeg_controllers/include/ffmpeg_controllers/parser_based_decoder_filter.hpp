@@ -26,9 +26,9 @@ protected:
     }
 
     try {
-      codec_name_ = declare_or_get_parameter<std::string>("codec_name", "");
+      codec_name_ = get_user_parameter<std::string>("codec_name", "");
       codec_options_ =
-          ffmpeg_cpp::Dictionary(declare_or_get_parameter<std::string>("codec_options", "{}"));
+          ffmpeg_cpp::Dictionary(get_user_parameter<std::string>("codec_options", "{}"));
     } catch (const std::runtime_error &error) {
       RCLCPP_ERROR(get_logger(), "Error while getting parameter value: %s", error.what());
       return NodeReturn::ERROR;

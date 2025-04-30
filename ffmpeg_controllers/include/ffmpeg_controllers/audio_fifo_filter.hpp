@@ -25,8 +25,8 @@ protected:
     }
 
     try {
-      ch_layout_str_ = declare_or_get_parameter<std::string>("channel_layout", "");
-      nb_samples_ = declare_or_get_parameter<int>("nb_samples");
+      ch_layout_str_ = get_user_parameter<std::string>("channel_layout", "");
+      nb_samples_ = get_user_parameter<int>("nb_samples");
     } catch (const std::runtime_error &error) {
       RCLCPP_ERROR(get_logger(), "Error while getting parameter value: %s", error.what());
       return NodeReturn::ERROR;
