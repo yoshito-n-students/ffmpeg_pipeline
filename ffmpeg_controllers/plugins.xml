@@ -54,6 +54,17 @@
         </description>
     </class>
 
+    <class name="ffmpeg_controllers/NameBasedDecoderFilter"
+           type="ffmpeg_controllers::NameBasedDecoderFilter"
+           base_class_type="controller_interface::ChainableControllerInterface">
+        <description>
+            This controller reads ffmpeg_cpp::Packet from the state interface owned by other controller
+            and export decoded frames as ffmpeg_cpp::Frame on the state interface owned by this controller.
+            This is a lightweight version of ParserBasedDecoderFilter without the parsing process.
+            It may not be able to decode depending on the codec.
+        </description>
+    </class>
+
     <class name="ffmpeg_controllers/PacketBroadcaster"
            type="ffmpeg_controllers::PacketBroadcaster"
            base_class_type="controller_interface::ControllerInterface">
@@ -85,8 +96,10 @@
            type="ffmpeg_controllers::ParameterBasedDecoderFilter"
            base_class_type="controller_interface::ChainableControllerInterface">
         <description>
-            This controller reads ffmpeg_cpp::Packet from the state interface owned by other controller
-            and export decoded frames as ffmpeg_cpp::Frame on the state interface owned by this controller.
+            This controller reads ffmpeg_cpp::Packet and ffmpeg_cpp::CodecParameters
+            from the state interface owned by other controller and export decoded frames 
+            as ffmpeg_cpp::Frame on the state interface owned by this controller.
+            Useful when the codec parameters is available.
         </description>
     </class>
 
@@ -94,8 +107,10 @@
            type="ffmpeg_controllers::ParserBasedDecoderFilter"
            base_class_type="controller_interface::ChainableControllerInterface">
         <description>
-            This controller reads ffmpeg_cpp::Packet from the state interface owned by other controller
-            and export decoded frames as ffmpeg_cpp::Frame on the state interface owned by this controller.
+            This controller reads ffmpeg_cpp::Packet from the state interface owned by other controller,
+            parse it to get codec parameters, and export decoded frames as ffmpeg_cpp::Frame 
+            on the state interface owned by this controller.
+            Useful when the codec parameters is not available.
         </description>
     </class>
 
