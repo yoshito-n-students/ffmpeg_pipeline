@@ -6,7 +6,7 @@
 
 namespace ffmpeg_cpp {
 
-Dictionary::Dictionary() : std::unique_ptr<AVDictionary, Deleter<AVDictionary>>(nullptr) {};
+Dictionary::Dictionary() {}
 
 Dictionary::Dictionary(const std::string &yaml) : Dictionary() {
   if (!YAML::convert<Dictionary>::decode(YAML::Load(yaml), *this)) {
