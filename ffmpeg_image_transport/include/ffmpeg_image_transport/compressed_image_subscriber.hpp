@@ -33,85 +33,96 @@ protected:
   void internalCallback(const sensor_msgs::msg::CompressedImage::ConstSharedPtr &fragment,
                         const Callback &image_cb) override {
     try {
-      // Configure the parser and decoder for this fragment if needed
+      // Configure the parser for this fragment if needed
       if (!parser_.valid()) {
         parser_ = ffmpeg_cpp::Parser(fragment->format);
-        RCLCPP_INFO(node_->get_logger(), "Configured parser (codec: %s)",
+        RCLCPP_INFO(node_->get_logger(), "Configured parser (%s)",
                     parser_.codec_names().front().c_str());
-      }
-      if (!decoder_.valid()) {
-        ffmpeg_cpp::Dictionary options; // TODO: get options from the node parameter
-        decoder_ = ffmpeg_cpp::Decoder(fragment->format, &options);
-        RCLCPP_INFO(node_->get_logger(), "Configured decoder (codec: %s, hw: %s)",
-                    decoder_.codec_name().c_str(), decoder_.hw_type_name().c_str());
       }
 
       // Copy the data fragment to the reference-counted buffer with padding
-      ffmpeg_cpp::BufferRef buffer(fragment->data.data(), fragment->data.size());
+      ffmpeg_cpp::Packet buffer(fragment->data.data(), fragment->data.size());
 
       // Parse the buffer and decode the compressed data
-      while (buffer.unpadded_size() > 0) {
-        // Parse the buffer from the current position and store the data in the packet
-        const ffmpeg_cpp::Packet packet = parser_.parse(&buffer, &decoder_);
+      while (buffer->size > 0) {
+        // Parse the buffer and get the packet.
+        // Additionally accumulate the codec parameters if the decoder is not configured yet.
+        ffmpeg_cpp::Packet packet;
+        ffmpeg_cpp::CodecParameters params;
+        if (!decoder_.valid()) {
+          std::tie(packet, params) = parser_.parse_initial_packet(&buffer);
+        } else {
+          packet = parser_.parse_next_packet(&buffer);
+        }
+        if (packet.empty()) {
+          continue;
+        }
 
-        if (!packet.empty()) {
-          // Send the packet to the decoder
-          decoder_.send_packet(packet);
+        // Configure the decoder for this fragment if needed
+        if (!decoder_.valid()) {
+          ffmpeg_cpp::Dictionary options; // TODO: get options from the node parameter
+          decoder_ = ffmpeg_cpp::Decoder(fragment->format, &options);
+          RCLCPP_INFO(node_->get_logger(), "Configured decoder (%s|%s)",
+                      decoder_.codec_name().c_str(), decoder_.hw_type_name().c_str());
+        }
 
-          // Receive and publish the decoded frames
-          while (true) {
-            ffmpeg_cpp::Frame frame = decoder_.receive_frame();
-            if (frame.empty()) {
-              break; // No more frames available
-            }
+        // Send the packet to the decoder
+        decoder_.send_packet(packet);
 
-            // If the frame data is in a hardware device,
-            // transfer the data to the CPU-accessible memory before conversion
-            if (frame.is_hw_frame()) {
-              frame = frame.transfer_data();
-            }
-
-            // Allocate a new image message and fill properties excluding pixel data
-            const auto image = std::make_shared<sensor_msgs::msg::Image>();
-            image->header.stamp = fragment->header.stamp;
-            image->height = frame->height;
-            image->width = frame->width;
-
-            // Fill the pixel data, maybe converting it to a ROS-compatible format
-            if (const auto ros_encoding = ffmpeg_cpp::to_ros_image_encoding(frame.format_name());
-                !ros_encoding.empty()) {
-              // If the frame format is supported in ROS, just copy the pixel data
-              image->encoding = ros_encoding;
-              image->step = frame->linesize[0];
-              const std::size_t data_size = frame->linesize[0] * frame->height;
-              image->data.resize(data_size);
-              std::memcpy(image->data.data(), frame->data[0], data_size);
-            } else {
-              // If the frame format is not supported in ROS, convert it to BGR
-              static const std::string dst_encoding = sensor_msgs::image_encodings::BGR8;
-              static const std::string dst_format_name =
-                  ffmpeg_cpp::to_ffmpeg_format_name(dst_encoding);
-
-              // Configure the image converter for this frame if needed
-              if (!converter_.valid()) {
-                converter_ = ffmpeg_cpp::VideoConverter(frame->width, frame->height,
-                                                        frame.format_name(), dst_format_name);
-                RCLCPP_INFO(
-                    node_->get_logger(), "Initialized converter (src: %s, dst: %s, size: %zdx%zd)",
-                    converter_.src_format_name().c_str(), converter_.dst_format_name().c_str(),
-                    converter_.src_width(), converter_.src_height());
-              }
-
-              // Make the destination image
-              // by copying the frame properties and converting the pixel data
-              image->encoding = dst_encoding;
-              image->data = converter_.convert_to_vector(frame);
-              image->step = image->data.size() / image->height;
-            }
-
-            // Invoke the callback with the converted image
-            image_cb(image);
+        // Receive and publish the decoded frames
+        while (true) {
+          ffmpeg_cpp::Frame frame = decoder_.receive_frame();
+          if (frame.empty()) {
+            break; // No more frames available
           }
+
+          // If the frame data is in a hardware device,
+          // transfer the data to the CPU-accessible memory before conversion
+          if (frame.is_hw_frame()) {
+            frame = frame.transfer_data();
+          }
+
+          // Allocate a new image message and fill properties excluding pixel data
+          const auto image = std::make_shared<sensor_msgs::msg::Image>();
+          image->header.stamp = fragment->header.stamp;
+          image->height = frame->height;
+          image->width = frame->width;
+
+          // Fill the pixel data, maybe converting it to a ROS-compatible format
+          if (const auto ros_encoding = ffmpeg_cpp::to_ros_image_encoding(frame.format_name());
+              !ros_encoding.empty()) {
+            // If the frame format is supported in ROS, just copy the pixel data
+            image->encoding = ros_encoding;
+            image->step = frame->linesize[0];
+            const std::size_t data_size = frame->linesize[0] * frame->height;
+            image->data.resize(data_size);
+            std::memcpy(image->data.data(), frame->data[0], data_size);
+          } else {
+            // If the frame format is not supported in ROS, convert it to BGR
+            static const std::string dst_encoding = sensor_msgs::image_encodings::BGR8;
+            static const std::string dst_format_name =
+                ffmpeg_cpp::to_ffmpeg_format_name(dst_encoding);
+
+            // Configure the image converter for this frame if needed
+            if (!converter_.valid()) {
+              converter_ = ffmpeg_cpp::VideoConverter(frame->width, frame->height,
+                                                      frame.format_name(), dst_format_name);
+              RCLCPP_INFO(node_->get_logger(),
+                          "Initialized converter ([%s] %zdx%zd -> [%s] %zdx%zd)",
+                          converter_.src_format_name().c_str(), converter_.src_width(),
+                          converter_.src_height(), converter_.dst_format_name().c_str(),
+                          converter_.dst_width(), converter_.dst_height());
+            }
+
+            // Make the destination image
+            // by copying the frame properties and converting the pixel data
+            image->encoding = dst_encoding;
+            image->data = converter_.convert_to_vector(frame);
+            image->step = image->data.size() / image->height;
+          }
+
+          // Invoke the callback with the converted image
+          image_cb(image);
         }
       }
     } catch (const std::runtime_error &error) {
