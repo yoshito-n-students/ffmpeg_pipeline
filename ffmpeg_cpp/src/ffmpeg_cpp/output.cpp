@@ -13,9 +13,11 @@ namespace ffmpeg_cpp {
 // Output - RAII wrapper for AVFormatContext
 // =========================================
 
+Output::Output() {}
+
 Output::Output(const std::string &format_name, const std::string &url,
                const CodecParameters &codec_params, Dictionary *const options)
-    : oformat_ctx_(nullptr, &close_output), ostream_(nullptr), increasing_dts_(0) {
+    : Output() {
   // Register all the input format types
   avdevice_register_all();
 
@@ -30,11 +32,11 @@ Output::Output(const std::string &format_name, const std::string &url,
                   ret);
     }
     oformat_ctx->flags |= AVFMT_FLAG_NONBLOCK;
-    oformat_ctx_.reset(oformat_ctx);
+    reset(oformat_ctx);
   }
 
   // Create a new stream in the output format context
-  ostream_ = avformat_new_stream(oformat_ctx_.get(), nullptr);
+  ostream_ = avformat_new_stream(get(), nullptr);
   if (!ostream_) {
     throw Error("Output::Output(): Failed to create new stream on AVFormatContext");
   }
@@ -47,8 +49,8 @@ Output::Output(const std::string &format_name, const std::string &url,
   }
 
   // Open the file for writing if the format requires it
-  if (!(oformat_ctx_->oformat->flags & AVFMT_NOFILE)) {
-    if (const int ret = avio_open(&oformat_ctx_->pb, url.c_str(), AVIO_FLAG_WRITE); ret < 0) {
+  if (!(get()->oformat->flags & AVFMT_NOFILE)) {
+    if (const int ret = avio_open(&get()->pb, url.c_str(), AVIO_FLAG_WRITE); ret < 0) {
       throw Error("Output::Output(): Failed to open output file " + url, ret);
     }
   }
@@ -58,7 +60,7 @@ Output::Output(const std::string &format_name, const std::string &url,
   // so we release the ownership of it from unique_ptr during calling the function.
   {
     AVDictionary *options_ptr = options->release();
-    const int ret = avformat_write_header(oformat_ctx_.get(), &options_ptr);
+    const int ret = avformat_write_header(get(), &options_ptr);
     options->reset(options_ptr);
     if (ret < 0) {
       throw Error("Output::Output(): Failed to write header", ret);
@@ -73,14 +75,10 @@ Output::Output(const std::string &format_name, const std::string &url,
 }
 
 std::string Output::format_name() const {
-  return (oformat_ctx_ && oformat_ctx_->oformat && oformat_ctx_->oformat->name)
-             ? oformat_ctx_->oformat->name
-             : "";
+  return (get() && get()->oformat && get()->oformat->name) ? get()->oformat->name : "";
 }
 
-std::string Output::url() const {
-  return (oformat_ctx_ && oformat_ctx_->url) ? oformat_ctx_->url : "";
-}
+std::string Output::url() const { return (get() && get()->url) ? get()->url : ""; }
 
 bool Output::write_frame(const Packet &packet) {
   // Create a copy (shallow copy if possible) of the packet
@@ -95,7 +93,7 @@ bool Output::write_frame(const Packet &packet) {
   output_packet->pts = output_packet->dts = increasing_dts_++;
 
   // Write the packet to the output stream
-  if (const int ret = av_write_frame(oformat_ctx_.get(), output_packet.get()); ret >= 0) {
+  if (const int ret = av_write_frame(get(), output_packet.get()); ret >= 0) {
     return true; // Successfully written
   } else if (ret == AVERROR(EAGAIN)) {
     return false; // The output device is not ready to accept more data
@@ -110,8 +108,7 @@ bool Output::write_uncoded_frame(const Frame &frame) {
   output_frame->pts = output_frame->pkt_dts = increasing_dts_++;
 
   // Write the uncoded frame to the output stream
-  if (const int ret =
-          av_write_uncoded_frame(oformat_ctx_.get(), ostream_->index, output_frame.get());
+  if (const int ret = av_write_uncoded_frame(get(), ostream_->index, output_frame.get());
       ret >= 0) {
     return true; // Successfully written
   } else if (ret == AVERROR(EAGAIN)) {
@@ -119,14 +116,6 @@ bool Output::write_uncoded_frame(const Frame &frame) {
   } else {
     throw Error("Output::write_uncoded_frame(): Failed to write uncoded frame", ret);
   }
-}
-
-void Output::close_output(AVFormatContext *oformat_ctx) {
-  av_write_trailer(oformat_ctx);
-  if (!(oformat_ctx->oformat->flags & AVFMT_NOFILE)) {
-    avio_closep(&oformat_ctx->pb);
-  }
-  avformat_free_context(oformat_ctx);
 }
 
 } // namespace ffmpeg_cpp

@@ -47,12 +47,21 @@ template <> void Deleter<AVDictionary>::operator()(AVDictionary *dict) const {
 template <> void Deleter<AVCodecParameters>::operator()(AVCodecParameters *params) const {
   avcodec_parameters_free(&params);
 }
-template<> void Deleter<AVFormatContext>::operator()(AVFormatContext *format_ctx) const {
-  if(format_ctx->iformat) {
+template <> void Deleter<AVFormatContext>::operator()(AVFormatContext *format_ctx) const {
+  if (format_ctx->iformat) {
+    // If the context is configured as an input device, close the input
     avformat_close_input(&format_ctx);
+  } else if (format_ctx->oformat) {
+    // If the context is configured as an output device, write the trailer and close the output
+    av_write_trailer(format_ctx);
+    if (!(format_ctx->oformat->flags & AVFMT_NOFILE)) {
+      avio_closep(&format_ctx->pb);
+    }
+    avformat_free_context(format_ctx);
   } else {
+    // If the context is not configured as an input or output device, just free it
     avformat_free_context(format_ctx);
   }
 }
-  
+
 } // namespace ffmpeg_cpp

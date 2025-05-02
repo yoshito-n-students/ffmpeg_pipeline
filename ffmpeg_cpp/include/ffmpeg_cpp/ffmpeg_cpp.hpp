@@ -424,10 +424,10 @@ private:
 // RAII wrapper for output device (a.k.a. AVFormatContext)
 // =======================================================
 
-class Output {
+class Output : public std::unique_ptr<AVFormatContext, Deleter<AVFormatContext>> {
 public:
   // Construct without underlying AVFormatContext
-  Output() : oformat_ctx_(nullptr, &close_output), ostream_(nullptr), increasing_dts_(0) {}
+  Output();
   // Open the output device with the given format name and url,
   // and set the codec parameters and options to the stream
   Output(const std::string &format_name, const std::string &url,
@@ -441,20 +441,9 @@ public:
   bool write_frame(const Packet &packet);
   bool write_uncoded_frame(const Frame &frame);
 
-  // Access to the underlying AVFormatContext
-  bool valid() const { return oformat_ctx_.get(); }
-  AVFormatContext *get() { return oformat_ctx_.get(); }
-  const AVFormatContext *get() const { return oformat_ctx_.get(); }
-  AVFormatContext *operator->() { return oformat_ctx_.operator->(); }
-  const AVFormatContext *operator->() const { return oformat_ctx_.operator->(); }
-
 private:
-  static void close_output(AVFormatContext *oformat_ctx);
-
-private:
-  std::unique_ptr<AVFormatContext, decltype(&close_output)> oformat_ctx_;
-  AVStream *ostream_;
-  std::uint64_t increasing_dts_;
+  AVStream *ostream_ = nullptr;
+  std::uint64_t increasing_dts_ = 0;
 };
 
 } // namespace ffmpeg_cpp
