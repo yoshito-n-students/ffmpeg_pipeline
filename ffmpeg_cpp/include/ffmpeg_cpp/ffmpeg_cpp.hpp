@@ -34,15 +34,6 @@ std::string to_ros_image_encoding(const std::string &ffmpeg_format_name);
 // Convert a ROS image encoding to a ffmpeg pixel format name, or an empty string if not found
 std::string to_ffmpeg_format_name(const std::string &ros_image_encoding);
 
-// Deleters for RAII wrappers
-void free_packet(AVPacket *packet);
-void free_frame(AVFrame *frame);
-void free_dictionary(AVDictionary *dict);
-void free_codec_parameters(AVCodecParameters *params);
-void close_format_context(AVFormatContext *format_ctx);
-void free_codec_context(AVCodecContext *codec_ctx);
-void free_swr_context(SwrContext *swr_ctx);
-
 // ==================================================
 // Error class with an optional ffmpeg's error number
 // ==================================================
@@ -54,11 +45,19 @@ public:
       : std::runtime_error(msg + ": " + err2str(errnum)) {}
 };
 
+// ===============================
+// Deleter for RAII wrappers below
+// ===============================
+
+template <typename T> struct Deleter {
+  void operator()(T *ptr) const;
+};
+
 // =========================
 // RAII wrapper for AVPacket
 // =========================
 
-class Packet : public std::unique_ptr<AVPacket, decltype(&free_packet)> {
+class Packet : public std::unique_ptr<AVPacket, Deleter<AVPacket>> {
 public:
   // Allocate the packet and default the fields
   Packet();
@@ -78,7 +77,7 @@ public:
   Packet(Packet &&other) = default;
   Packet &operator=(Packet &&other) = default;
   // Constructors from std::unique_ptr
-  using std::unique_ptr<AVPacket, decltype(&free_packet)>::unique_ptr;
+  using std::unique_ptr<AVPacket, Deleter<AVPacket>>::unique_ptr;
 
   // True if the packet data is empty or invalid
   bool empty() const { return !get() || !get()->data || get()->size == 0; }
@@ -92,7 +91,7 @@ public:
 // RAII wrapper for AVFrame
 // ========================
 
-class Frame : public std::unique_ptr<AVFrame, decltype(&free_frame)> {
+class Frame : public std::unique_ptr<AVFrame, Deleter<AVFrame>> {
 public:
   // Allocate the frame and default the fields
   Frame();
@@ -108,7 +107,7 @@ public:
   Frame(Frame &&other) = default;
   Frame &operator=(Frame &&other) = default;
   // Constructors from std::unique_ptr
-  using std::unique_ptr<AVFrame, decltype(&free_frame)>::unique_ptr;
+  using std::unique_ptr<AVFrame, Deleter<AVFrame>>::unique_ptr;
 
   // True if the packet data is empty or invalid
   bool empty() const { return !get() || !get()->data[0]; }
@@ -127,7 +126,7 @@ public:
 // RAII wrapper for AVDictionary
 // =============================
 
-class Dictionary : public std::unique_ptr<AVDictionary, decltype(&free_dictionary)> {
+class Dictionary : public std::unique_ptr<AVDictionary, Deleter<AVDictionary>> {
 public:
   // Construct without underlying AVDictionary
   Dictionary();
@@ -144,7 +143,7 @@ public:
   Dictionary(Dictionary &&other) = default;
   Dictionary &operator=(Dictionary &&other) = default;
   // Constructors from std::unique_ptr
-  using std::unique_ptr<AVDictionary, decltype(&free_dictionary)>::unique_ptr;
+  using std::unique_ptr<AVDictionary, Deleter<AVDictionary>>::unique_ptr;
 
   bool empty() const { return !get(); }
 
@@ -156,8 +155,7 @@ public:
 // RAII wrapper for AVCodecParameters
 // ==================================
 
-class CodecParameters
-    : public std::unique_ptr<AVCodecParameters, decltype(&free_codec_parameters)> {
+class CodecParameters : public std::unique_ptr<AVCodecParameters, Deleter<AVCodecParameters>> {
 public:
   // Allocate the codec parameters and default the fields
   CodecParameters();
@@ -174,7 +172,7 @@ public:
   CodecParameters(CodecParameters &&other) = default;
   CodecParameters &operator=(CodecParameters &&other) = default;
   // Constructors from std::unique_ptr
-  using std::unique_ptr<AVCodecParameters, decltype(&free_codec_parameters)>::unique_ptr;
+  using std::unique_ptr<AVCodecParameters, Deleter<AVCodecParameters>>::unique_ptr;
 
   std::string codec_type_name() const;
   std::string codec_name() const;

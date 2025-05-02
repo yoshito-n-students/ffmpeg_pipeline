@@ -22,8 +22,7 @@ namespace ffmpeg_cpp {
 // Packet - RAII wrapper for AVPacket
 // ==================================
 
-Packet::Packet()
-    : std::unique_ptr<AVPacket, decltype(&free_packet)>(av_packet_alloc(), free_packet) {
+Packet::Packet() : std::unique_ptr<AVPacket, Deleter<AVPacket>>(av_packet_alloc()) {
   if (!get()) {
     throw Error("Packet::Packet(): Failed to allocate AVPacket");
   }
@@ -73,11 +72,13 @@ ffmpeg_pipeline_msgs::msg::Packet Packet::to_msg(const rclcpp::Time &stamp,
   return msg;
 }
 
+template <> void Deleter<AVPacket>::operator()(AVPacket *packet) const { av_packet_free(&packet); }
+
 // ================================
 // Frame - RAII wrapper for AVFrame
 // ================================
 
-Frame::Frame() : std::unique_ptr<AVFrame, decltype(&free_frame)>(av_frame_alloc(), free_frame) {
+Frame::Frame() : std::unique_ptr<AVFrame, Deleter<AVFrame>>(av_frame_alloc()) {
   if (!get()) {
     throw Error("Frame::Frame(): Failed to allocate AVFrame");
   }
@@ -108,5 +109,7 @@ std::string Frame::format_name() const {
 }
 
 std::string Frame::ch_layout_str() const { return to_string(get()->ch_layout); }
+
+template <> void Deleter<AVFrame>::operator()(AVFrame *frame) const { av_frame_free(&frame); }
 
 } // namespace ffmpeg_cpp

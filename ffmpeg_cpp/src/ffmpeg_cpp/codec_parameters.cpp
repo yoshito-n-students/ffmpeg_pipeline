@@ -25,8 +25,7 @@ namespace ffmpeg_cpp {
 // ====================================================
 
 CodecParameters::CodecParameters()
-    : std::unique_ptr<AVCodecParameters, decltype(&free_codec_parameters)>(
-          avcodec_parameters_alloc(), free_codec_parameters) {
+    : std::unique_ptr<AVCodecParameters, Deleter<AVCodecParameters>>(avcodec_parameters_alloc()) {
   if (!get()) {
     throw Error("CodecParameters::CodecParameters(): Failed to allocate AVCodecParameters");
   }
@@ -60,6 +59,10 @@ std::string CodecParameters::format_name() const {
 }
 
 std::string CodecParameters::ch_layout_str() const { return to_string(get()->ch_layout); }
+
+template <> void Deleter<AVCodecParameters>::operator()(AVCodecParameters *params) const {
+  avcodec_parameters_free(&params);
+}
 
 } // namespace ffmpeg_cpp
 

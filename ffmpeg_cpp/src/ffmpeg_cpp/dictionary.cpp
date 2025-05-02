@@ -6,8 +6,7 @@
 
 namespace ffmpeg_cpp {
 
-Dictionary::Dictionary()
-    : std::unique_ptr<AVDictionary, decltype(&free_dictionary)>(nullptr, free_dictionary) {};
+Dictionary::Dictionary() : std::unique_ptr<AVDictionary, Deleter<AVDictionary>>(nullptr) {};
 
 Dictionary::Dictionary(const std::string &yaml) : Dictionary() {
   if (!YAML::convert<Dictionary>::decode(YAML::Load(yaml), *this)) {
@@ -35,6 +34,10 @@ std::string Dictionary::to_flow_style_yaml() const {
   YAML::Emitter emitter;
   emitter << YAML::Flow << YAML::convert<Dictionary>::encode(*this);
   return emitter.c_str();
+}
+
+template <> void Deleter<AVDictionary>::operator()(AVDictionary *dict) const {
+  av_dict_free(&dict);
 }
 
 } // namespace ffmpeg_cpp
