@@ -257,9 +257,6 @@ class Encoder : public std::unique_ptr<AVCodecContext, Deleter<AVCodecContext>> 
 public:
   // Construct without underlying AVCodecContext
   Encoder();
-  // Allocate the codec context for the given codec name and options.
-  // Parameters can be filled with Parser::parse().
-  Encoder(const std::string &codec_name, Dictionary *const codec_options);
   // Allocate the codec context for the given codec parameters and options
   Encoder(const CodecParameters &codec_params, Dictionary *const codec_options);
 
