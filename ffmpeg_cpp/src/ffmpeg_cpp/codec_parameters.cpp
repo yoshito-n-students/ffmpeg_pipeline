@@ -24,8 +24,10 @@ namespace ffmpeg_cpp {
 // CodecParameters - RAII wrapper for AVCodecParameters
 // ====================================================
 
-CodecParameters::CodecParameters() : params_(avcodec_parameters_alloc(), free_parameters) {
-  if (!params_) {
+CodecParameters::CodecParameters()
+    : std::unique_ptr<AVCodecParameters, decltype(&free_codec_parameters)>(
+          avcodec_parameters_alloc(), free_codec_parameters) {
+  if (!get()) {
     throw Error("CodecParameters::CodecParameters(): Failed to allocate AVCodecParameters");
   }
 }
@@ -37,31 +39,27 @@ CodecParameters::CodecParameters(const std::string &yaml) : CodecParameters() {
 }
 
 CodecParameters::CodecParameters(const CodecParameters &other) : CodecParameters() {
-  if (const int ret = avcodec_parameters_copy(params_.get(), other.get()); ret < 0) {
+  if (const int ret = avcodec_parameters_copy(get(), other.get()); ret < 0) {
     throw Error("CodecParameters::CodecParameters(): Failed to copy codec parameters", ret);
   }
 }
 
-std::string CodecParameters::codec_type_name() const { return to_string(params_->codec_type); }
+std::string CodecParameters::codec_type_name() const { return to_string(get()->codec_type); }
 
-std::string CodecParameters::codec_name() const { return avcodec_get_name(params_->codec_id); }
+std::string CodecParameters::codec_name() const { return avcodec_get_name(get()->codec_id); }
 
 std::string CodecParameters::format_name() const {
-  switch (params_->codec_type) {
+  switch (get()->codec_type) {
   case AVMEDIA_TYPE_VIDEO:
-    return to_string(static_cast<AVPixelFormat>(params_->format));
+    return to_string(static_cast<AVPixelFormat>(get()->format));
   case AVMEDIA_TYPE_AUDIO:
-    return to_string(static_cast<AVSampleFormat>(params_->format));
+    return to_string(static_cast<AVSampleFormat>(get()->format));
   default:
     return "";
   }
 }
 
-std::string CodecParameters::ch_layout_str() const { return to_string(params_->ch_layout); }
-
-void CodecParameters::free_parameters(AVCodecParameters *params) {
-  avcodec_parameters_free(&params);
-}
+std::string CodecParameters::ch_layout_str() const { return to_string(get()->ch_layout); }
 
 } // namespace ffmpeg_cpp
 

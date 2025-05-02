@@ -42,7 +42,7 @@ Input::Input(const std::string &url, const std::string &format_name, Dictionary 
     AVDictionary *options_ptr = options->release();
     const int ret = avformat_open_input(&iformat_ctx, url.c_str(), iformat, &options_ptr);
     iformat_ctx_.reset(iformat_ctx);
-    *options = Dictionary(options_ptr);
+    options->reset(options_ptr);
     if (ret < 0) {
       throw Error("Input::Input(): Failed to open input " + url, ret);
     }

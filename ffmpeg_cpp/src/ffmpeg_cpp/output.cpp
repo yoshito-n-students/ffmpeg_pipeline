@@ -59,7 +59,7 @@ Output::Output(const std::string &format_name, const std::string &url,
   {
     AVDictionary *options_ptr = options->release();
     const int ret = avformat_write_header(oformat_ctx_.get(), &options_ptr);
-    *options = Dictionary(options_ptr);
+    options->reset(options_ptr);
     if (ret < 0) {
       throw Error("Output::Output(): Failed to write header", ret);
     }

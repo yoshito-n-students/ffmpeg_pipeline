@@ -55,7 +55,7 @@ Encoder::Encoder(const std::string &codec_name, Dictionary *const codec_options)
     if (const int ret = avcodec_open2(encoder_ctx_.get(), codec, &codec_options_ptr); ret < 0) {
       throw Error("Encoder::Encoder(): Failed to open codec", ret);
     }
-    *codec_options = Dictionary(codec_options_ptr);
+    codec_options->reset(codec_options_ptr);
   }
 
   // Check if the encoder accepts all the options
@@ -91,7 +91,7 @@ Encoder::Encoder(const CodecParameters &codec_params, Dictionary *const codec_op
     if (const int ret = avcodec_open2(encoder_ctx_.get(), codec, &codec_options_ptr); ret < 0) {
       throw Error("Encoder::Encoder(): Failed to open codec", ret);
     }
-    *codec_options = Dictionary(codec_options_ptr);
+    codec_options->reset(codec_options_ptr);
   }
 
   // Check if the encoder accepts all the options

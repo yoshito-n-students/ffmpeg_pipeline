@@ -34,6 +34,15 @@ std::string to_ros_image_encoding(const std::string &ffmpeg_format_name);
 // Convert a ROS image encoding to a ffmpeg pixel format name, or an empty string if not found
 std::string to_ffmpeg_format_name(const std::string &ros_image_encoding);
 
+// Deleters for RAII wrappers
+void free_packet(AVPacket *packet);
+void free_frame(AVFrame *frame);
+void free_dictionary(AVDictionary *dict);
+void free_codec_parameters(AVCodecParameters *params);
+void close_format_context(AVFormatContext *format_ctx);
+void free_codec_context(AVCodecContext *codec_ctx);
+void free_swr_context(SwrContext *swr_ctx);
+
 // ==================================================
 // Error class with an optional ffmpeg's error number
 // ==================================================
@@ -49,7 +58,7 @@ public:
 // RAII wrapper for AVPacket
 // =========================
 
-class Packet {
+class Packet : public std::unique_ptr<AVPacket, decltype(&free_packet)> {
 public:
   // Allocate the packet and default the fields
   Packet();
@@ -60,84 +69,68 @@ public:
   // Create a packet by referencing the data of the given packet.
   // If the data is not reference-counted, copy the data to a new packet.
   Packet(const Packet &other);
-  Packet &operator=(const Packet &other);
+  Packet &operator=(const Packet &other) {
+    *this = Packet(other);
+    return *this;
+  }
   // We need to define the move constructor and operator explicitly
   // because they are not automatically defined if the copy constructor is manually defined.
   Packet(Packet &&other) = default;
   Packet &operator=(Packet &&other) = default;
+  // Constructors from std::unique_ptr
+  using std::unique_ptr<AVPacket, decltype(&free_packet)>::unique_ptr;
 
   // True if the packet data is empty or invalid
-  bool empty() const { return !packet_ || !packet_->data || packet_->size == 0; }
+  bool empty() const { return !get() || !get()->data || get()->size == 0; }
 
   // Convert the packet to a message
   ffmpeg_pipeline_msgs::msg::Packet to_msg(const rclcpp::Time &stamp,
                                            const std::string &codec_name) const;
-
-  // Access to the underlying AVPacket
-  AVPacket *get() { return packet_.get(); }
-  const AVPacket *get() const { return packet_.get(); }
-  AVPacket *operator->() { return packet_.operator->(); }
-  const AVPacket *operator->() const { return packet_.operator->(); }
-
-private:
-  static void free_packet(AVPacket *packet);
-
-private:
-  std::unique_ptr<AVPacket, decltype(&free_packet)> packet_;
 };
 
 // ========================
 // RAII wrapper for AVFrame
 // ========================
 
-class Frame {
+class Frame : public std::unique_ptr<AVFrame, decltype(&free_frame)> {
 public:
   // Allocate the frame and default the fields
   Frame();
   // Create a frame by referencing the data of the given frame.
   // If the data is not reference-counted, copy the data to a new frame.
   Frame(const Frame &other);
-  Frame &operator=(const Frame &other);
+  Frame &operator=(const Frame &other) {
+    *this = Frame(other);
+    return *this;
+  }
   // We need to define the move constructor and operator explicitly
   // because they are not automatically defined if the copy constructor is manually defined.
   Frame(Frame &&other) = default;
   Frame &operator=(Frame &&other) = default;
+  // Constructors from std::unique_ptr
+  using std::unique_ptr<AVFrame, decltype(&free_frame)>::unique_ptr;
 
   // True if the packet data is empty or invalid
-  bool empty() const { return !frame_ || !frame_->data[0]; }
+  bool empty() const { return !get() || !get()->data[0]; }
 
   std::string format_name() const;
   std::string ch_layout_str() const;
 
   // True if the frame is on a hardware memory, which is not accessible by the CPU
-  bool is_hw_frame() const { return frame_ && frame_->hw_frames_ctx; }
+  bool is_hw_frame() const { return get() && get()->hw_frames_ctx; }
 
   // Copy the frame to the CPU-accessible memory
   Frame transfer_data() const;
-
-  // Access to the underlying AVFrame
-  AVFrame *get() { return frame_.get(); }
-  const AVFrame *get() const { return frame_.get(); }
-  AVFrame *operator->() { return frame_.operator->(); }
-  const AVFrame *operator->() const { return frame_.operator->(); }
-
-private:
-  static void free_frame(AVFrame *frame);
-
-private:
-  std::unique_ptr<AVFrame, decltype(&free_frame)> frame_;
 };
 
 // =============================
 // RAII wrapper for AVDictionary
 // =============================
 
-class Dictionary {
+class Dictionary : public std::unique_ptr<AVDictionary, decltype(&free_dictionary)> {
 public:
   // Construct without underlying AVDictionary
-  Dictionary() : dict_(nullptr, &free_dict) {};
-  // Take ownership of the given AVDictionary
-  Dictionary(AVDictionary *const dict) : dict_(dict, &free_dict) {}
+  Dictionary();
   // Create a dictionary by parsing the given yaml string
   Dictionary(const std::string &yaml);
   // Create a dictionary by copying the given dictionary
@@ -150,29 +143,21 @@ public:
   // because they are not automatically defined if the copy constructor is manually defined.
   Dictionary(Dictionary &&other) = default;
   Dictionary &operator=(Dictionary &&other) = default;
+  // Constructors from std::unique_ptr
+  using std::unique_ptr<AVDictionary, decltype(&free_dictionary)>::unique_ptr;
 
-  bool empty() const { return !dict_; }
+  bool empty() const { return !get(); }
 
   std::string to_yaml() const;
   std::string to_flow_style_yaml() const;
-
-  // Access to the underlying AVDictionary
-  AVDictionary *get() { return dict_.get(); }
-  const AVDictionary *get() const { return dict_.get(); }
-  AVDictionary *release() { return dict_.release(); }
-
-private:
-  static void free_dict(AVDictionary *dict);
-
-private:
-  std::unique_ptr<AVDictionary, decltype(&free_dict)> dict_;
 };
 
 // ==================================
 // RAII wrapper for AVCodecParameters
 // ==================================
 
-class CodecParameters {
+class CodecParameters
+    : public std::unique_ptr<AVCodecParameters, decltype(&free_codec_parameters)> {
 public:
   // Allocate the codec parameters and default the fields
   CodecParameters();
@@ -188,23 +173,13 @@ public:
   // because they are not automatically defined if the copy constructor is manually defined.
   CodecParameters(CodecParameters &&other) = default;
   CodecParameters &operator=(CodecParameters &&other) = default;
+  // Constructors from std::unique_ptr
+  using std::unique_ptr<AVCodecParameters, decltype(&free_codec_parameters)>::unique_ptr;
 
   std::string codec_type_name() const;
   std::string codec_name() const;
   std::string format_name() const;
   std::string ch_layout_str() const;
-
-  // Access to the underlying AVPacket
-  AVCodecParameters *get() { return params_.get(); }
-  const AVCodecParameters *get() const { return params_.get(); }
-  AVCodecParameters *operator->() { return params_.operator->(); }
-  const AVCodecParameters *operator->() const { return params_.operator->(); }
-
-private:
-  static void free_parameters(AVCodecParameters *params);
-
-private:
-  std::unique_ptr<AVCodecParameters, decltype(&free_parameters)> params_;
 };
 
 // ======================================================

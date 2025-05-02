@@ -6,20 +6,23 @@
 
 namespace ffmpeg_cpp {
 
-Dictionary::Dictionary(const std::string &yaml) : dict_(nullptr, &free_dict) {
+Dictionary::Dictionary()
+    : std::unique_ptr<AVDictionary, decltype(&free_dictionary)>(nullptr, free_dictionary) {};
+
+Dictionary::Dictionary(const std::string &yaml) : Dictionary() {
   if (!YAML::convert<Dictionary>::decode(YAML::Load(yaml), *this)) {
     throw Error("Dictionary::Dictionary(): Failed to parse dictionary from yaml");
   }
 }
 
-Dictionary::Dictionary(const Dictionary &other) : dict_(nullptr, &free_dict) {
+Dictionary::Dictionary(const Dictionary &other) : Dictionary() {
   AVDictionary *dict = nullptr;
   const int ret = av_dict_copy(&dict, other.get(), 0);
   if (ret < 0) {
     av_dict_free(&dict);
     throw Error("Dictionary::Dictionary(): Failed to copy dictionary", ret);
   }
-  dict_.reset(dict);
+  reset(dict);
 }
 
 std::string Dictionary::to_yaml() const {
@@ -33,8 +36,6 @@ std::string Dictionary::to_flow_style_yaml() const {
   emitter << YAML::Flow << YAML::convert<Dictionary>::encode(*this);
   return emitter.c_str();
 }
-
-void Dictionary::free_dict(AVDictionary *dict) { av_dict_free(&dict); }
 
 } // namespace ffmpeg_cpp
 
@@ -50,7 +51,7 @@ bool convert<ffmpeg_cpp::Dictionary>::decode(const Node &yaml, ffmpeg_cpp::Dicti
         throw std::runtime_error("Failed to set dictionary entry [" + key + ", " + value + "]");
       }
     }
-    dict = ffmpeg_cpp::Dictionary(dict_ptr);
+    dict.reset(dict_ptr);
     return true;
   } catch (const std::runtime_error &error) {
     std::cerr << error.what() << std::endl;

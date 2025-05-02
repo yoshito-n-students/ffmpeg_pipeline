@@ -75,7 +75,7 @@ Decoder::Decoder(const std::string &codec_name, Dictionary *const codec_options)
     if (const int ret = avcodec_open2(decoder_ctx_.get(), codec, &codec_options_ptr); ret < 0) {
       throw Error("Decoder::Decoder(): Failed to open codec", ret);
     }
-    *codec_options = Dictionary(codec_options_ptr);
+    codec_options->reset(codec_options_ptr);
   }
 
   // Check if the decoder accepts all the options
@@ -110,7 +110,7 @@ Decoder::Decoder(const CodecParameters &codec_params, Dictionary *const codec_op
     if (const int ret = avcodec_open2(decoder_ctx_.get(), codec, &codec_options_ptr); ret < 0) {
       throw Error("Decoder::Decoder(): Failed to open codec", ret);
     }
-    *codec_options = Dictionary(codec_options_ptr);
+    codec_options->reset(codec_options_ptr);
   }
 
   // Check if the decoder accepts all the options

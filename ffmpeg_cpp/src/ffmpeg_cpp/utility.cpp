@@ -38,4 +38,9 @@ std::string to_ffmpeg_format_name(const std::string &ros_image_encoding) {
   return found_it != std::end(format_encoding_pairs) ? av_get_pix_fmt_name(found_it->first) : "";
 }
 
+void free_packet(AVPacket *packet) { av_packet_free(&packet); }
+void free_frame(AVFrame *frame) { av_frame_free(&frame); }
+void free_dictionary(AVDictionary *dict) { av_dict_free(&dict); }
+void free_codec_parameters(AVCodecParameters *params) { avcodec_parameters_free(&params); }
+
 } // namespace ffmpeg_cpp

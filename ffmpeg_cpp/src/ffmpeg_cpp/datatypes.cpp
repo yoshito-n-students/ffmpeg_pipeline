@@ -22,8 +22,9 @@ namespace ffmpeg_cpp {
 // Packet - RAII wrapper for AVPacket
 // ==================================
 
-Packet::Packet() : packet_(av_packet_alloc(), free_packet) {
-  if (!packet_) {
+Packet::Packet()
+    : std::unique_ptr<AVPacket, decltype(&free_packet)>(av_packet_alloc(), free_packet) {
+  if (!get()) {
     throw Error("Packet::Packet(): Failed to allocate AVPacket");
   }
 }
@@ -37,7 +38,7 @@ Packet::Packet(const std::uint8_t *const data, const std::size_t size) : Packet(
   std::memcpy(data_copy, data, size);
 
   // Create the packet from the copied data
-  if (const int ret = av_packet_from_data(packet_.get(), data_copy, size); ret < 0) {
+  if (const int ret = av_packet_from_data(get(), data_copy, size); ret < 0) {
     av_free(data_copy);
     throw Error("Packet::Packet(): Failed to create a packet from data", ret);
   }
@@ -45,24 +46,17 @@ Packet::Packet(const std::uint8_t *const data, const std::size_t size) : Packet(
 
 Packet::Packet(const ffmpeg_pipeline_msgs::msg::Packet &msg)
     : Packet(msg.data.data(), msg.data.size()) {
-  packet_->pts = msg.pts;
-  packet_->dts = msg.dts;
-  packet_->duration = msg.duration;
-  packet_->time_base.num = msg.time_base.num;
-  packet_->time_base.den = msg.time_base.den;
+  get()->pts = msg.pts;
+  get()->dts = msg.dts;
+  get()->duration = msg.duration;
+  get()->time_base.num = msg.time_base.num;
+  get()->time_base.den = msg.time_base.den;
 }
 
 Packet::Packet(const Packet &other) : Packet() {
-  if (const int ret = av_packet_ref(packet_.get(), other.get()); ret < 0) {
+  if (const int ret = av_packet_ref(get(), other.get()); ret < 0) {
     throw Error("Packet::Packet(): Failed to create a reference to packet", ret);
   }
-}
-
-Packet &Packet::operator=(const Packet &other) {
-  if (const int ret = av_packet_ref(packet_.get(), other.get()); ret < 0) {
-    throw Error("Packet::operator=(): Failed to create a reference to packet", ret);
-  }
-  return *this;
 }
 
 ffmpeg_pipeline_msgs::msg::Packet Packet::to_msg(const rclcpp::Time &stamp,
@@ -70,43 +64,34 @@ ffmpeg_pipeline_msgs::msg::Packet Packet::to_msg(const rclcpp::Time &stamp,
   ffmpeg_pipeline_msgs::msg::Packet msg;
   msg.header.stamp = stamp;
   msg.codec = codec_name;
-  msg.pts = packet_->pts;
-  msg.dts = packet_->dts;
-  msg.data.assign(packet_->data, packet_->data + packet_->size);
-  msg.duration = packet_->duration;
-  msg.time_base.num = packet_->time_base.num;
-  msg.time_base.den = packet_->time_base.den;
+  msg.pts = get()->pts;
+  msg.dts = get()->dts;
+  msg.data.assign(get()->data, get()->data + get()->size);
+  msg.duration = get()->duration;
+  msg.time_base.num = get()->time_base.num;
+  msg.time_base.den = get()->time_base.den;
   return msg;
 }
-
-void Packet::free_packet(AVPacket *packet) { av_packet_free(&packet); }
 
 // ================================
 // Frame - RAII wrapper for AVFrame
 // ================================
 
-Frame::Frame() : frame_(av_frame_alloc(), free_frame) {
-  if (!frame_) {
+Frame::Frame() : std::unique_ptr<AVFrame, decltype(&free_frame)>(av_frame_alloc(), free_frame) {
+  if (!get()) {
     throw Error("Frame::Frame(): Failed to allocate AVFrame");
   }
 }
 
 Frame::Frame(const Frame &other) : Frame() {
-  if (const int ret = av_frame_ref(frame_.get(), other.get()); ret < 0) {
+  if (const int ret = av_frame_ref(get(), other.get()); ret < 0) {
     throw Error("Frame::Frame(): Failed to create a reference to frame", ret);
   }
 }
 
-Frame &Frame::operator=(const Frame &other) {
-  if (const int ret = av_frame_ref(frame_.get(), other.get()); ret < 0) {
-    throw Error("Frame::operator=(): Failed to create a reference to frame", ret);
-  }
-  return *this;
-}
-
 Frame Frame::transfer_data() const {
   Frame dst;
-  if (const int ret = av_hwframe_transfer_data(dst.get(), frame_.get(), 0); ret < 0) {
+  if (const int ret = av_hwframe_transfer_data(dst.get(), get(), 0); ret < 0) {
     throw Error("Frame::transfer_data(): Error transferring data", ret);
   }
   return dst;
@@ -114,16 +99,14 @@ Frame Frame::transfer_data() const {
 
 std::string Frame::format_name() const {
   // There is no field in AVFrame to indicate the data type, so we use heuristics to determine it
-  if (frame_->width > 0 && frame_->height > 0) {
-    return av_get_pix_fmt_name(static_cast<AVPixelFormat>(frame_->format));
-  } else if (frame_->nb_samples > 0) {
-    return av_get_sample_fmt_name(static_cast<AVSampleFormat>(frame_->format));
+  if (get()->width > 0 && get()->height > 0) {
+    return av_get_pix_fmt_name(static_cast<AVPixelFormat>(get()->format));
+  } else if (get()->nb_samples > 0) {
+    return av_get_sample_fmt_name(static_cast<AVSampleFormat>(get()->format));
   }
   return "";
 }
 
-std::string Frame::ch_layout_str() const { return to_string(frame_->ch_layout); }
-
-void Frame::free_frame(AVFrame *frame) { av_frame_free(&frame); }
+std::string Frame::ch_layout_str() const { return to_string(get()->ch_layout); }
 
 } // namespace ffmpeg_cpp
