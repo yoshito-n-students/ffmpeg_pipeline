@@ -88,6 +88,8 @@ public:
   Packet();
   // Create a packet by referencing the given buffer
   Packet(const BufferRef &buf);
+  // Create a packet by copying the given data
+  Packet(const std::uint8_t *const data, const std::size_t size);
   // Create a packet by copying the given message
   Packet(const ffmpeg_pipeline_msgs::msg::Packet &msg);
   // Create a packet by referencing the data of the given packet.
@@ -321,7 +323,7 @@ private:
 class Parser {
 public:
   // Construct without underlying AVCodecParserContext
-  Parser() : parser_ctx_(nullptr, &av_parser_close) {}
+  Parser() : parser_ctx_(nullptr, &av_parser_close), codec_ctx_(nullptr, &free_context) {}
   // Allocate the parser context for the given codec name
   Parser(const std::string &codec_name);
 
@@ -332,6 +334,16 @@ public:
   // The decoder may be tuned based on the parsing result.
   Packet parse(BufferRef *const buffer, Decoder *const decoder);
 
+  // Parse the given buffer and return the found packet and parameters.
+  // The parameters contain enough information to decode the packet.
+  // If no packet is found or the found packet is not a keyframe,
+  // return an empty packet and default parameters.
+  std::pair<Packet, CodecParameters> parse_initial_packet(Packet *const buffer);
+
+  // Parse the given buffer and return the found packet.
+  // If no packet is found, return an empty packet.
+  Packet parse_next_packet(Packet *const buffer);
+
   // Access to the underlying AVCodecParserContext
   bool valid() const { return parser_ctx_.get(); }
   AVCodecParserContext *get() { return parser_ctx_.get(); }
@@ -340,7 +352,11 @@ public:
   const AVCodecParserContext *operator->() const { return parser_ctx_.operator->(); }
 
 private:
+  static void free_context(AVCodecContext *decoder_ctx);
+
+private:
   std::unique_ptr<AVCodecParserContext, decltype(&av_parser_close)> parser_ctx_;
+  std::unique_ptr<AVCodecContext, decltype(&free_context)> codec_ctx_;
 };
 
 // ===============================================

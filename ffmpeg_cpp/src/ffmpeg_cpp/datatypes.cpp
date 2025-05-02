@@ -67,8 +67,23 @@ Packet::Packet(const BufferRef &buf) : Packet() {
   packet_->size = buf.unpadded_size();
 }
 
+Packet::Packet(const std::uint8_t *const data, const std::size_t size) : Packet() {
+  // Take the copy of the given data
+  std::uint8_t *const data_copy = static_cast<std::uint8_t *>(av_malloc(size));
+  if (!data_copy) {
+    throw Error("Packet::Packet(): Failed to allocate memory for packet data");
+  }
+  std::memcpy(data_copy, data, size);
+
+  // Create the packet from the copied data
+  if (const int ret = av_packet_from_data(packet_.get(), data_copy, size); ret < 0) {
+    av_free(data_copy);
+    throw Error("Packet::Packet(): Failed to create a packet from data", ret);
+  }
+}
+
 Packet::Packet(const ffmpeg_pipeline_msgs::msg::Packet &msg)
-    : Packet(BufferRef(msg.data.data(), msg.data.size())) {
+    : Packet(msg.data.data(), msg.data.size()) {
   packet_->pts = msg.pts;
   packet_->dts = msg.dts;
   packet_->duration = msg.duration;
