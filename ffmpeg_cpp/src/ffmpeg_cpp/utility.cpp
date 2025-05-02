@@ -69,5 +69,9 @@ template <> void Deleter<AVCodecParserContext>::operator()(AVCodecParserContext 
 template <> void Deleter<AVCodecContext>::operator()(AVCodecContext *codec_ctx) const {
   avcodec_free_context(&codec_ctx);
 }
+template <> void Deleter<SwsContext>::operator()(SwsContext *sws_ctx) const {
+  sws_freeContext(sws_ctx);
+}
+template <> void Deleter<SwrContext>::operator()(SwrContext *swr_ctx) const { swr_free(&swr_ctx); }
 
 } // namespace ffmpeg_cpp

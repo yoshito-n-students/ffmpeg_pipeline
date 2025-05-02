@@ -342,10 +342,10 @@ private:
 // RAII wrapper for SwsContext
 // ===========================
 
-class VideoConverter {
+class VideoConverter : public std::unique_ptr<SwsContext, Deleter<SwsContext>> {
 public:
   // Construct without underlying SwsContext
-  VideoConverter() : sws_ctx_(nullptr, &sws_freeContext) {};
+  VideoConverter();
   // Initialize the converter for changing only the pixel format
   VideoConverter(const std::size_t width, const std::size_t height,
                  const std::string &src_format_name, const std::string &dst_format_name)
@@ -365,14 +365,6 @@ public:
   // Convert the source frame to the destination format
   Frame convert(const Frame &src_frame);
   std::vector<std::uint8_t> convert_to_vector(const Frame &src_frame);
-
-  // Access to the underlying SwsContext
-  bool valid() const { return sws_ctx_.get(); }
-  SwsContext *get() { return sws_ctx_.get(); }
-  const SwsContext *get() const { return sws_ctx_.get(); }
-
-private:
-  std::unique_ptr<SwsContext, decltype(&sws_freeContext)> sws_ctx_;
 };
 
 // ===========================

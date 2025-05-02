@@ -104,7 +104,7 @@ protected:
                 ffmpeg_cpp::to_ffmpeg_format_name(dst_encoding);
 
             // Configure the image converter for this frame if needed
-            if (!converter_.valid()) {
+            if (!converter_) {
               converter_ = ffmpeg_cpp::VideoConverter(frame->width, frame->height,
                                                       frame.format_name(), dst_format_name);
               RCLCPP_INFO(node_->get_logger(),

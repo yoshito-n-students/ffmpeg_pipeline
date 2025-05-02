@@ -42,7 +42,7 @@ protected:
               const ffmpeg_cpp::Frame &input_frame) override {
     try {
       // Ensure the converter is configured
-      if (!converter_.valid()) {
+      if (!converter_) {
         converter_ = ffmpeg_cpp::VideoConverter(
             input_frame->width, input_frame->height, input_frame.format_name(),
             // Keep the original size and pixel format if dst_{width_, height_, format_} are not set

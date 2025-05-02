@@ -117,7 +117,7 @@ int main(int argc, char **argv) {
           }
 
           // Initialize the image converter if not already done
-          if (!converter.valid()) {
+          if (!converter) {
             converter =
                 av::VideoConverter(frame->width, frame->height, frame.format_name(), "bgr24");
             RCLCPP_INFO(node->get_logger(), "Configured converter ([%s] %zdx%zd -> [%s] %zdx%zd)",
