@@ -47,7 +47,7 @@ protected:
               const ffmpeg_cpp::Frame &input_frame) override {
     try {
       // Ensure the encoder is configured for the codec
-      if (!encoder_.valid()) {
+      if (!encoder_) {
         // Fill unspecified codec parameters with those from the source frame
         if (codec_params_->width <= 0) {
           codec_params_->width = input_frame->width;

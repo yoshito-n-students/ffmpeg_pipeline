@@ -14,6 +14,8 @@ namespace ffmpeg_cpp {
 // Decoder - RAII wrapper for AVCodecContext
 // =========================================
 
+Encoder::Encoder() {}
+
 static void set_context_options(AVCodecContext *const encoder_ctx) {
   // Create a hardware acceleration context supported by the encoder.
   // If multiple hardware devices are supported, the first one is used.
@@ -33,8 +35,7 @@ static void set_context_options(AVCodecContext *const encoder_ctx) {
   }
 }
 
-Encoder::Encoder(const std::string &codec_name, Dictionary *const codec_options)
-    : encoder_ctx_(nullptr, &free_context) {
+Encoder::Encoder(const std::string &codec_name, Dictionary *const codec_options) : Encoder() {
   // Find the encoder by name
   const AVCodec *const codec = avcodec_find_encoder_by_name(codec_name.c_str());
   if (!codec) {
@@ -42,17 +43,17 @@ Encoder::Encoder(const std::string &codec_name, Dictionary *const codec_options)
   }
 
   // Allocate the encoder context and set some options
-  encoder_ctx_.reset(avcodec_alloc_context3(codec));
-  if (!encoder_ctx_) {
+  reset(avcodec_alloc_context3(codec));
+  if (!get()) {
     throw Error("Encoder::Encoder(): Failed to allocate codec context");
   }
-  set_context_options(encoder_ctx_.get());
+  set_context_options(get());
 
   // Open the encoder. avcodec_open2() may free the options,
   // so we release the ownership of it from unique_ptr during calling the function.
   {
     AVDictionary *codec_options_ptr = codec_options->release();
-    if (const int ret = avcodec_open2(encoder_ctx_.get(), codec, &codec_options_ptr); ret < 0) {
+    if (const int ret = avcodec_open2(get(), codec, &codec_options_ptr); ret < 0) {
       throw Error("Encoder::Encoder(): Failed to open codec", ret);
     }
     codec_options->reset(codec_options_ptr);
@@ -65,8 +66,7 @@ Encoder::Encoder(const std::string &codec_name, Dictionary *const codec_options)
   }
 }
 
-Encoder::Encoder(const CodecParameters &codec_params, Dictionary *const codec_options)
-    : encoder_ctx_(nullptr, &free_context) {
+Encoder::Encoder(const CodecParameters &codec_params, Dictionary *const codec_options) : Encoder() {
   // Find the encoder by the given id
   const AVCodec *const codec = avcodec_find_encoder(codec_params->codec_id);
   if (!codec) {
@@ -74,21 +74,21 @@ Encoder::Encoder(const CodecParameters &codec_params, Dictionary *const codec_op
   }
 
   // Allocate the encoder context and set some options
-  encoder_ctx_.reset(avcodec_alloc_context3(codec));
-  if (!encoder_ctx_) {
+  reset(avcodec_alloc_context3(codec));
+  if (!get()) {
     throw Error("Encoder::Encoder(): Failed to allocate codec context");
   }
-  set_context_options(encoder_ctx_.get());
+  set_context_options(get());
 
   // Import the codec parameters to the encoder context
-  avcodec_parameters_to_context(encoder_ctx_.get(), codec_params.get());
-  encoder_ctx_->time_base = av_inv_q(codec_params->framerate);
+  avcodec_parameters_to_context(get(), codec_params.get());
+  get()->time_base = av_inv_q(codec_params->framerate);
 
   // Open the encoder. avcodec_open2() may free the options,
   // so we release the ownership of it from unique_ptr during calling the function.
   {
     AVDictionary *codec_options_ptr = codec_options->release();
-    if (const int ret = avcodec_open2(encoder_ctx_.get(), codec, &codec_options_ptr); ret < 0) {
+    if (const int ret = avcodec_open2(get(), codec, &codec_options_ptr); ret < 0) {
       throw Error("Encoder::Encoder(): Failed to open codec", ret);
     }
     codec_options->reset(codec_options_ptr);
@@ -102,7 +102,7 @@ Encoder::Encoder(const CodecParameters &codec_params, Dictionary *const codec_op
 }
 
 void Encoder::send_frame(const Frame &frame) {
-  if (const int ret = avcodec_send_frame(encoder_ctx_.get(), frame.get()); ret < 0) {
+  if (const int ret = avcodec_send_frame(get(), frame.get()); ret < 0) {
     throw Error("Encoder::send_frame(): Error sending packet for encoding", ret);
   }
 }
@@ -114,25 +114,23 @@ Packet Encoder::receive_packet() {
   // - AVERROR_EOF: No packet available because the encoder has finished successfully
   // TODO: Notify the reason for the empty packet to the caller
   Packet packet;
-  if (const int ret = avcodec_receive_packet(encoder_ctx_.get(), packet.get());
+  if (const int ret = avcodec_receive_packet(get(), packet.get());
       ret < 0 && ret != AVERROR(EAGAIN) && ret != AVERROR_EOF) {
     throw Error("Encoder::receive_packet(): Error during encoding", ret);
   }
   return packet;
 }
 
-std::string Encoder::codec_name() const { return avcodec_get_name(encoder_ctx_->codec_id); }
+std::string Encoder::codec_name() const { return avcodec_get_name(get()->codec_id); }
 
 std::string Encoder::hw_type_name() const {
   // av_hwdevice_get_type_name(AV_HWDEVICE_TYPE_NONE) returns nullptr,
   // so std::string CANNOT be constructed and std::logic_error is thrown.
   // To avoid this, return "none" in the case of no hardware.
-  return encoder_ctx_->hw_device_ctx
+  return get()->hw_device_ctx
              ? av_hwdevice_get_type_name(
-                   reinterpret_cast<AVHWDeviceContext *>(encoder_ctx_->hw_device_ctx->data)->type)
+                   reinterpret_cast<AVHWDeviceContext *>(get()->hw_device_ctx->data)->type)
              : "none";
 }
-
-void Encoder::free_context(AVCodecContext *encoder_ctx) { avcodec_free_context(&encoder_ctx); }
 
 } // namespace ffmpeg_cpp
