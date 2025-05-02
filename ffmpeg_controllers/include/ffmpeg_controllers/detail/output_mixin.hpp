@@ -234,6 +234,52 @@ private:
   std::string output_name_;
 };
 
+template <class Interface>
+class OutputMixin<output_options::Write<ffmpeg_cpp::CodecParameters>, Interface>
+    : public virtual InterfaceAdapter<Interface>,
+      public OnWriteContract<output_options::Write<ffmpeg_cpp::CodecParameters>> {
+private:
+  using Base = InterfaceAdapter<Interface>;
+
+protected:
+  typename Base::NodeReturn on_init() override {
+    try {
+      // The name of the hardware or controller to which the command interface is written
+      output_name_ = Base::template get_user_parameter<std::string>("output_name");
+      return Base::NodeReturn::SUCCESS;
+    } catch (const std::runtime_error &error) {
+      RCLCPP_ERROR(Base::get_logger(), "Error while getting parameter value: %s", error.what());
+      return Base::NodeReturn::ERROR;
+    }
+  }
+
+  controller_interface::InterfaceConfiguration command_interface_configuration() const override {
+    return {controller_interface::interface_configuration_type::INDIVIDUAL,
+            {output_name_ + "/codec_parameters"}};
+  }
+
+  typename Base::ControllerReturn on_write(const rclcpp::Time & /*time*/,
+                                           const rclcpp::Duration & /*period*/,
+                                           ffmpeg_cpp::CodecParameters &&input_params) override {
+    if (const auto output_params =
+            Base::template get_command_as_pointer<ffmpeg_cpp::CodecParameters>(output_name_,
+                                                                               "codec_parameters");
+        output_params) {
+      // Update the command variable with the given ones
+      *output_params = std::move(input_params);
+      return Base::ControllerReturn::OK;
+    } else {
+      // It is still OK if the command variable is not available
+      RCLCPP_WARN(Base::get_logger(),
+                  "Failed to get output codec parameters. Will skip this update.");
+      return Base::ControllerReturn::OK;
+    }
+  }
+
+private:
+  std::string output_name_;
+};
+
 template <typename Message, class Interface>
 class OutputMixin<output_options::Publish<Message>, Interface>
     : public virtual InterfaceAdapter<Interface>,
@@ -308,6 +354,27 @@ protected:
                        [](const auto result) { return result == BaseCommon::NodeReturn::SUCCESS; })
                ? BaseCommon::NodeReturn::SUCCESS
                : BaseCommon::NodeReturn::ERROR;
+  }
+
+  controller_interface::InterfaceConfiguration command_interface_configuration() const override {
+    using ConfigType = controller_interface::interface_configuration_type;
+    const std::array<controller_interface::InterfaceConfiguration, sizeof...(OutputOptions)>
+        results = {BaseOutput<OutputOptions>::command_interface_configuration()...};
+    if (std::any_of(results.begin(), results.end(),
+                    [](const auto &config) { return config.type == ConfigType::ALL; })) {
+      return {ConfigType::ALL, {}};
+    } else if (std::all_of(results.begin(), results.end(),
+                           [](const auto &config) { return config.type == ConfigType::NONE; })) {
+      return {ConfigType::NONE, {}};
+    } else {
+      std::set<std::string> names;
+      for (const auto &result : results) {
+        if (result.type == ConfigType::INDIVIDUAL) {
+          names.insert(result.names.begin(), result.names.end());
+        }
+      }
+      return {ConfigType::INDIVIDUAL, std::vector<std::string>(names.begin(), names.end())};
+    }
   }
 
   typename BaseCommon::ControllerReturn on_write(const rclcpp::Time &time,
