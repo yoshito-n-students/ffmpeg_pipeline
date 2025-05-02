@@ -72,18 +72,19 @@ int main(int argc, char **argv) {
       }
 
       // Copy the compressed data to the reference-counted buffer with padding
-      av::Packet buffer(comp_img->data.data(), comp_img->data.size());
+      const av::Packet buffer(comp_img->data.data(), comp_img->data.size());
 
       // Parse the buffer and decode the compressed data
-      while (buffer->size > 0) {
+      std::int64_t pos = 0;
+      while (pos < buffer->size) {
         // Parse the buffer to extract the compressed packet.
         // Additionally, probe the codec parameters for the decoder if it has not been initialized.
         av::Packet packet;
         av::CodecParameters codec_params;
         if (!decoder) {
-          std::tie(packet, codec_params) = parser.parse_initial_packet(&buffer);
+          std::tie(packet, codec_params) = parser.parse_initial_packet(buffer, &pos);
         } else {
-          packet = parser.parse_next_packet(&buffer);
+          packet = parser.parse_next_packet(buffer, &pos);
         }
         if (packet.empty()) {
           continue;

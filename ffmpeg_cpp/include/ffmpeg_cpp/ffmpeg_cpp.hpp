@@ -214,11 +214,12 @@ public:
   // The parameters contain enough information to decode the packet.
   // If no packet is found or the found packet is not a keyframe,
   // return an empty packet and default parameters.
-  std::pair<Packet, CodecParameters> parse_initial_packet(Packet *const buffer);
+  std::pair<Packet, CodecParameters> parse_initial_packet(const Packet &buffer,
+                                                          std::int64_t *const pos);
 
   // Parse the given buffer and return the found packet.
   // If no packet is found, return an empty packet.
-  Packet parse_next_packet(Packet *const buffer);
+  Packet parse_next_packet(const Packet &buffer, std::int64_t *const pos);
 
 private:
   std::unique_ptr<AVCodecContext, Deleter<AVCodecContext>> codec_ctx_ = nullptr;

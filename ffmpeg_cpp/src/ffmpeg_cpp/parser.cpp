@@ -33,15 +33,13 @@ Parser::Parser(const std::string &codec_name) : Parser() {
   }
 }
 
-std::pair<Packet, CodecParameters> Parser::parse_initial_packet(Packet *const buffer) {
+std::pair<Packet, CodecParameters> Parser::parse_initial_packet(const Packet &buffer,
+                                                                std::int64_t *const pos) {
   // Parse and advance the input buffer
   std::uint8_t *packet_data;
   int packet_size;
-  const int len =
-      av_parser_parse2(get(), codec_ctx_.get(), &packet_data, &packet_size, (*buffer)->data,
-                       (*buffer)->size, (*buffer)->pts, (*buffer)->dts, 0);
-  (*buffer)->data += len;
-  (*buffer)->size -= len;
+  *pos += av_parser_parse2(get(), codec_ctx_.get(), &packet_data, &packet_size, //
+                           buffer->data, buffer->size, buffer->pts, buffer->dts, *pos);
 
   // Return an empty packet and the default parameters
   // if no key-frame-equivalent packet is found
@@ -56,10 +54,10 @@ std::pair<Packet, CodecParameters> Parser::parse_initial_packet(Packet *const bu
   }
 
   // Set the packet content based on the parser's output
-  if ((*buffer)->buf->data <= packet_data &&
-      packet_data + packet_size <= (*buffer)->buf->data + (*buffer)->buf->size) {
+  if (buffer->buf->data <= packet_data &&
+      packet_data + packet_size <= buffer->buf->data + buffer->buf->size) {
     // If the packet data is within the input buffer, refer to the buffer from the packet
-    Packet packet(*buffer);
+    Packet packet(buffer);
     packet->data = packet_data;
     packet->size = packet_size;
     return {packet, params};
@@ -70,15 +68,12 @@ std::pair<Packet, CodecParameters> Parser::parse_initial_packet(Packet *const bu
   }
 }
 
-Packet Parser::parse_next_packet(Packet *const buffer) {
+Packet Parser::parse_next_packet(const Packet &buffer, std::int64_t *const pos) {
   // Parse and advance the input buffer
   std::uint8_t *packet_data;
   int packet_size;
-  const int len =
-      av_parser_parse2(get(), codec_ctx_.get(), &packet_data, &packet_size, (*buffer)->data,
-                       (*buffer)->size, (*buffer)->pts, (*buffer)->dts, 0);
-  (*buffer)->data += len;
-  (*buffer)->size -= len;
+  *pos += av_parser_parse2(get(), codec_ctx_.get(), &packet_data, &packet_size, //
+                           buffer->data, buffer->size, buffer->pts, buffer->dts, *pos);
 
   // Return an empty packet if no packet data is found
   if (!packet_data) {
@@ -86,10 +81,10 @@ Packet Parser::parse_next_packet(Packet *const buffer) {
   }
 
   // Set the packet content based on the parser's output
-  if ((*buffer)->buf->data <= packet_data &&
-      packet_data + packet_size <= (*buffer)->buf->data + (*buffer)->buf->size) {
+  if (buffer->buf->data <= packet_data &&
+      packet_data + packet_size <= buffer->buf->data + buffer->buf->size) {
     // If the packet data is within the input buffer, refer to the buffer from the packet
-    Packet packet(*buffer);
+    Packet packet(buffer);
     packet->data = packet_data;
     packet->size = packet_size;
     return packet;

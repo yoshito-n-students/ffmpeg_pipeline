@@ -44,15 +44,15 @@ protected:
   on_generate(const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/,
               const ffmpeg_cpp::Packet &input_packet) override {
     try {
-      // Copy the input packet to the reference-counted buffer with padding
-      ffmpeg_cpp::Packet buffer(input_packet);
       // Try to find the packet and codec parameters until the buffer is fully parsed
-      while (buffer->size > 0) {
+      std::int64_t pos = 0;
+      while (pos < input_packet->size) {
         ffmpeg_cpp::Packet output_packet;
         if (output_params_.codec_name() == "none") {
-          std::tie(output_packet, output_params_) = parser_.parse_initial_packet(&buffer);
+          std::tie(output_packet, output_params_) =
+              parser_.parse_initial_packet(input_packet, &pos);
         } else {
-          output_packet = parser_.parse_next_packet(&buffer);
+          output_packet = parser_.parse_next_packet(input_packet, &pos);
         }
         if (!output_packet.empty()) {
           return {ControllerReturn::OK, std::make_tuple(std::move(output_packet), output_params_)};
