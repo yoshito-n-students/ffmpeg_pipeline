@@ -7,9 +7,11 @@ namespace ffmpeg_cpp {
 // AudioFifo - RAII wrapper for AVAudioFifo
 // ========================================
 
+AudioFifo::AudioFifo() {}
+
 AudioFifo::AudioFifo(const std::string &ch_layout_str, const std::string &format_name,
                      const int sample_rate)
-    : fifo_(nullptr, &av_audio_fifo_free), template_frame_() {
+    : AudioFifo() {
   // Convert the given strings to data types
   const AVChannelLayout ch_layout = to_channel_layout(ch_layout_str);
   const AVSampleFormat format = av_get_sample_fmt(format_name.c_str());
@@ -20,8 +22,8 @@ AudioFifo::AudioFifo(const std::string &ch_layout_str, const std::string &format
   template_frame_->sample_rate = sample_rate;
 
   // Allocate the AVAudioFifo
-  fifo_.reset(av_audio_fifo_alloc(format, ch_layout.nb_channels, 1));
-  if (!fifo_) {
+  reset(av_audio_fifo_alloc(format, ch_layout.nb_channels, 1));
+  if (!get()) {
     throw Error("AudioFifo::AudioFifo(): Failed to allocate AVAudioFifo");
   }
 }
@@ -35,7 +37,7 @@ std::string AudioFifo::format_name() const {
 int AudioFifo::sample_rate() const { return template_frame_->sample_rate; }
 
 void AudioFifo::write(const Frame &frame) {
-  if (const int ret = av_audio_fifo_write(fifo_.get(), reinterpret_cast<void *const *>(frame->data),
+  if (const int ret = av_audio_fifo_write(get(), reinterpret_cast<void *const *>(frame->data),
                                           frame->nb_samples);
       ret < 0) {
     throw Error("AudioFifo::write(): Failed to write to FIFO", ret);
@@ -52,7 +54,7 @@ Frame AudioFifo::read(const int nb_samples) {
   frame->sample_rate = template_frame_->sample_rate;
 
   // Return the empty frame if the number of samples in the FIFO is less than required
-  if (av_audio_fifo_size(fifo_.get()) < nb_samples) {
+  if (av_audio_fifo_size(get()) < nb_samples) {
     return frame;
   }
 
@@ -63,8 +65,7 @@ Frame AudioFifo::read(const int nb_samples) {
   }
 
   // Take the data from the FIFO and fill the frame
-  if (const int ret =
-          av_audio_fifo_read(fifo_.get(), reinterpret_cast<void **>(frame->data), nb_samples);
+  if (const int ret = av_audio_fifo_read(get(), reinterpret_cast<void **>(frame->data), nb_samples);
       ret < 0) {
     throw Error("AudioFifo::read(): Failed to read from FIFO", ret);
   }

@@ -40,7 +40,7 @@ protected:
               const ffmpeg_cpp::Frame &input_frame) override {
     try {
       // Ensure the FIFO is configured
-      if (!fifo_.valid()) {
+      if (!fifo_) {
         fifo_ = ffmpeg_cpp::AudioFifo(
             // Keep the original channel layout if ch_layout_str_ is not set
             !ch_layout_str_.empty() ? ch_layout_str_ : input_frame.ch_layout_str(),

@@ -69,6 +69,9 @@ template <> void Deleter<AVCodecParserContext>::operator()(AVCodecParserContext 
 template <> void Deleter<AVCodecContext>::operator()(AVCodecContext *codec_ctx) const {
   avcodec_free_context(&codec_ctx);
 }
+template <> void Deleter<AVAudioFifo>::operator()(AVAudioFifo *fifo) const {
+  av_audio_fifo_free(fifo);
+}
 template <> void Deleter<SwsContext>::operator()(SwsContext *sws_ctx) const {
   sws_freeContext(sws_ctx);
 }
