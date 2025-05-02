@@ -60,10 +60,6 @@ std::string CodecParameters::format_name() const {
 
 std::string CodecParameters::ch_layout_str() const { return to_string(get()->ch_layout); }
 
-template <> void Deleter<AVCodecParameters>::operator()(AVCodecParameters *params) const {
-  avcodec_parameters_free(&params);
-}
-
 } // namespace ffmpeg_cpp
 
 namespace YAML {

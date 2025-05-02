@@ -36,10 +36,6 @@ std::string Dictionary::to_flow_style_yaml() const {
   return emitter.c_str();
 }
 
-template <> void Deleter<AVDictionary>::operator()(AVDictionary *dict) const {
-  av_dict_free(&dict);
-}
-
 } // namespace ffmpeg_cpp
 
 namespace YAML {

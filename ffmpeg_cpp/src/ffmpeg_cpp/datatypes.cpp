@@ -72,8 +72,6 @@ ffmpeg_pipeline_msgs::msg::Packet Packet::to_msg(const rclcpp::Time &stamp,
   return msg;
 }
 
-template <> void Deleter<AVPacket>::operator()(AVPacket *packet) const { av_packet_free(&packet); }
-
 // ================================
 // Frame - RAII wrapper for AVFrame
 // ================================
@@ -109,7 +107,5 @@ std::string Frame::format_name() const {
 }
 
 std::string Frame::ch_layout_str() const { return to_string(get()->ch_layout); }
-
-template <> void Deleter<AVFrame>::operator()(AVFrame *frame) const { av_frame_free(&frame); }
 
 } // namespace ffmpeg_cpp

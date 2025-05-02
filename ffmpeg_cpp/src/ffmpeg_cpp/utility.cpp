@@ -38,4 +38,14 @@ std::string to_ffmpeg_format_name(const std::string &ros_image_encoding) {
   return found_it != std::end(format_encoding_pairs) ? av_get_pix_fmt_name(found_it->first) : "";
 }
 
+// Deleters
+template <> void Deleter<AVPacket>::operator()(AVPacket *packet) const { av_packet_free(&packet); }
+template <> void Deleter<AVFrame>::operator()(AVFrame *frame) const { av_frame_free(&frame); }
+template <> void Deleter<AVDictionary>::operator()(AVDictionary *dict) const {
+  av_dict_free(&dict);
+}
+template <> void Deleter<AVCodecParameters>::operator()(AVCodecParameters *params) const {
+  avcodec_parameters_free(&params);
+}
+  
 } // namespace ffmpeg_cpp
