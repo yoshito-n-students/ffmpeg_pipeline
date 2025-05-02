@@ -114,6 +114,13 @@
         </description>
     </class>
 
+    <class name="ffmpeg_controllers/ParserFilter"
+           type="ffmpeg_controllers::ParserFilter"
+           base_class_type="controller_interface::ChainableControllerInterface">
+        <description>
+        </description>
+    </class>
+
     <class name="ffmpeg_controllers/VideoConverterFilter"
            type="ffmpeg_controllers::VideoConverterFilter"
            base_class_type="controller_interface::ChainableControllerInterface">

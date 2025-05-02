@@ -12,6 +12,7 @@
 #include <ffmpeg_controllers/packet_writer.hpp>
 #include <ffmpeg_controllers/parameter_based_decoder_filter.hpp>
 #include <ffmpeg_controllers/parser_based_decoder_filter.hpp>
+#include <ffmpeg_controllers/parser_filter.hpp>
 #include <ffmpeg_controllers/video_converter_filter.hpp>
 #include <pluginlib/class_list_macros.hpp>
 
@@ -36,6 +37,8 @@ PLUGINLIB_EXPORT_CLASS(ffmpeg_controllers::PacketWriter, controller_interface::C
 PLUGINLIB_EXPORT_CLASS(ffmpeg_controllers::ParameterBasedDecoderFilter,
                        controller_interface::ChainableControllerInterface);
 PLUGINLIB_EXPORT_CLASS(ffmpeg_controllers::ParserBasedDecoderFilter,
+                       controller_interface::ChainableControllerInterface);
+PLUGINLIB_EXPORT_CLASS(ffmpeg_controllers::ParserFilter,
                        controller_interface::ChainableControllerInterface);
 PLUGINLIB_EXPORT_CLASS(ffmpeg_controllers::VideoConverterFilter,
                        controller_interface::ChainableControllerInterface);
