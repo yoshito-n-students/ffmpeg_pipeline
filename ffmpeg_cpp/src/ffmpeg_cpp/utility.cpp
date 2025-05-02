@@ -47,5 +47,12 @@ template <> void Deleter<AVDictionary>::operator()(AVDictionary *dict) const {
 template <> void Deleter<AVCodecParameters>::operator()(AVCodecParameters *params) const {
   avcodec_parameters_free(&params);
 }
+template<> void Deleter<AVFormatContext>::operator()(AVFormatContext *format_ctx) const {
+  if(format_ctx->iformat) {
+    avformat_close_input(&format_ctx);
+  } else {
+    avformat_free_context(format_ctx);
+  }
+}
   
 } // namespace ffmpeg_cpp

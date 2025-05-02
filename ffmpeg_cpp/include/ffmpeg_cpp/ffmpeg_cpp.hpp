@@ -184,10 +184,10 @@ public:
 // RAII wrapper for input device (a.k.a. AVFormatContext)
 // ======================================================
 
-class Input {
+class Input : public std::unique_ptr<AVFormatContext, Deleter<AVFormatContext>> {
 public:
   // Construct without underlying AVFormatContext
-  Input() : iformat_ctx_(nullptr, &close_input), istream_id_(-1) {}
+  Input();
   // Open the input device by avformat_open_input() with the given URL, format name, and options,
   // and find the best stream of the given media type
   Input(const std::string &url, const std::string &format_name, Dictionary *const options,
@@ -201,19 +201,8 @@ public:
   // If the next frame is not available for some temporary reason, return an empty frame.
   Packet read_frame();
 
-  // Access to the underlying AVFormatContext
-  bool valid() const { return iformat_ctx_.get(); }
-  AVFormatContext *get() { return iformat_ctx_.get(); }
-  const AVFormatContext *get() const { return iformat_ctx_.get(); }
-  AVFormatContext *operator->() { return iformat_ctx_.operator->(); }
-  const AVFormatContext *operator->() const { return iformat_ctx_.operator->(); }
-
 private:
-  static void close_input(AVFormatContext *iformat_ctx);
-
-private:
-  std::unique_ptr<AVFormatContext, decltype(&close_input)> iformat_ctx_;
-  int istream_id_;
+  int istream_id_ = -1;
 };
 
 // ===============================================
