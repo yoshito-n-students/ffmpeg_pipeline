@@ -80,7 +80,7 @@ int main(int argc, char **argv) {
         // Additionally, probe the codec parameters for the decoder if it has not been initialized.
         av::Packet packet;
         av::CodecParameters codec_params;
-        if (!decoder.valid()) {
+        if (!decoder) {
           std::tie(packet, codec_params) = parser.parse_initial_packet(&buffer);
         } else {
           packet = parser.parse_next_packet(&buffer);
@@ -90,7 +90,7 @@ int main(int argc, char **argv) {
         }
 
         // Initialize the decoder with the parameters if not already done
-        if (!decoder.valid()) {
+        if (!decoder) {
           av::Dictionary options;
           decoder = av::Decoder(codec_params, &options);
           RCLCPP_INFO(node->get_logger(), "Configured decoder (%s|%s)",

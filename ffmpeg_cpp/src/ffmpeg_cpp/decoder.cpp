@@ -16,6 +16,8 @@ namespace ffmpeg_cpp {
 // Decoder - RAII wrapper for AVCodecContext
 // =========================================
 
+Decoder::Decoder() {}
+
 static void set_context_options(AVCodecContext *const decoder_ctx) {
   // Set the options to enable error concealment and format preference.
   // Some options are for video decoders, but they suppose no problem for other decoders.
@@ -53,8 +55,7 @@ static void set_context_options(AVCodecContext *const decoder_ctx) {
   }
 }
 
-Decoder::Decoder(const std::string &codec_name, Dictionary *const codec_options)
-    : decoder_ctx_(nullptr, &free_context) {
+Decoder::Decoder(const std::string &codec_name, Dictionary *const codec_options) : Decoder() {
   // Find the decoder by name
   const AVCodec *const codec = avcodec_find_decoder_by_name(codec_name.c_str());
   if (!codec) {
@@ -62,17 +63,17 @@ Decoder::Decoder(const std::string &codec_name, Dictionary *const codec_options)
   }
 
   // Allocate the decoder context and set some options
-  decoder_ctx_.reset(avcodec_alloc_context3(codec));
-  if (!decoder_ctx_) {
+  reset(avcodec_alloc_context3(codec));
+  if (!get()) {
     throw Error("Decoder::Decoder(): Failed to allocate codec context");
   }
-  set_context_options(decoder_ctx_.get());
+  set_context_options(get());
 
   // Open the decoder. avcodec_open2() may free the options,
   // so we release the ownership of it from unique_ptr during calling the function.
   {
     AVDictionary *codec_options_ptr = codec_options->release();
-    if (const int ret = avcodec_open2(decoder_ctx_.get(), codec, &codec_options_ptr); ret < 0) {
+    if (const int ret = avcodec_open2(get(), codec, &codec_options_ptr); ret < 0) {
       throw Error("Decoder::Decoder(): Failed to open codec", ret);
     }
     codec_options->reset(codec_options_ptr);
@@ -85,8 +86,7 @@ Decoder::Decoder(const std::string &codec_name, Dictionary *const codec_options)
   }
 }
 
-Decoder::Decoder(const CodecParameters &codec_params, Dictionary *const codec_options)
-    : decoder_ctx_(nullptr, &free_context) {
+Decoder::Decoder(const CodecParameters &codec_params, Dictionary *const codec_options) : Decoder() {
   // Find the decoder by the given id
   const AVCodec *const codec = avcodec_find_decoder(codec_params->codec_id);
   if (!codec) {
@@ -94,20 +94,20 @@ Decoder::Decoder(const CodecParameters &codec_params, Dictionary *const codec_op
   }
 
   // Allocate the decoder context and set some options
-  decoder_ctx_.reset(avcodec_alloc_context3(codec));
-  if (!decoder_ctx_) {
+  reset(avcodec_alloc_context3(codec));
+  if (!get()) {
     throw Error("Decoder::Decoder(): Failed to allocate codec context");
   }
-  set_context_options(decoder_ctx_.get());
+  set_context_options(get());
 
   // Import the codec parameters to the decoder context
-  avcodec_parameters_to_context(decoder_ctx_.get(), codec_params.get());
+  avcodec_parameters_to_context(get(), codec_params.get());
 
   // Open the decoder. avcodec_open2() may free the options,
   // so we release the ownership of it from unique_ptr during calling the function.
   {
     AVDictionary *codec_options_ptr = codec_options->release();
-    if (const int ret = avcodec_open2(decoder_ctx_.get(), codec, &codec_options_ptr); ret < 0) {
+    if (const int ret = avcodec_open2(get(), codec, &codec_options_ptr); ret < 0) {
       throw Error("Decoder::Decoder(): Failed to open codec", ret);
     }
     codec_options->reset(codec_options_ptr);
@@ -121,7 +121,7 @@ Decoder::Decoder(const CodecParameters &codec_params, Dictionary *const codec_op
 }
 
 void Decoder::send_packet(const Packet &packet) {
-  if (const int ret = avcodec_send_packet(decoder_ctx_.get(), packet.get()); ret < 0) {
+  if (const int ret = avcodec_send_packet(get(), packet.get()); ret < 0) {
     throw Error("Decoder::send_packet(): Error sending packet for decoding", ret);
   }
 }
@@ -133,25 +133,23 @@ Frame Decoder::receive_frame() {
   // - AVERROR_EOF: No frame available because the decoder has finished successfully
   // TODO: Notify the reason for the empty frame to the caller
   Frame frame;
-  if (const int ret = avcodec_receive_frame(decoder_ctx_.get(), frame.get());
+  if (const int ret = avcodec_receive_frame(get(), frame.get());
       ret < 0 && ret != AVERROR(EAGAIN) && ret != AVERROR_EOF) {
     throw Error("Decoder::receive_frame(): Error during decoding", ret);
   }
   return frame;
 }
 
-std::string Decoder::codec_name() const { return avcodec_get_name(decoder_ctx_->codec_id); }
+std::string Decoder::codec_name() const { return avcodec_get_name(get()->codec_id); }
 
 std::string Decoder::hw_type_name() const {
   // av_hwdevice_get_type_name(AV_HWDEVICE_TYPE_NONE) returns nullptr,
   // so std::string CANNOT be constructed and std::logic_error is thrown.
   // To avoid this, return "none" in the case of no hardware.
-  return decoder_ctx_->hw_device_ctx
+  return get()->hw_device_ctx
              ? av_hwdevice_get_type_name(
-                   reinterpret_cast<AVHWDeviceContext *>(decoder_ctx_->hw_device_ctx->data)->type)
+                   reinterpret_cast<AVHWDeviceContext *>(get()->hw_device_ctx->data)->type)
              : "none";
 }
-
-void Decoder::free_context(AVCodecContext *decoder_ctx) { avcodec_free_context(&decoder_ctx); }
 
 } // namespace ffmpeg_cpp

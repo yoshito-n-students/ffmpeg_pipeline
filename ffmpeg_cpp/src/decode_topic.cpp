@@ -38,7 +38,7 @@ int main(int argc, char *argv[]) {
             packet->size = packet_data->data.size();
 
             // Initialize the decoder if not already done
-            if (!decoder.valid()) {
+            if (!decoder) {
               av::Dictionary options;
               decoder = av::Decoder(packet_data->format,&options);
               RCLCPP_INFO(node->get_logger(), "Configured decoder (codec: %s, hw: %s)",

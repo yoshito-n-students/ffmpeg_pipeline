@@ -49,7 +49,7 @@ protected:
         // Additionally accumulate the codec parameters if the decoder is not configured yet.
         ffmpeg_cpp::Packet packet;
         ffmpeg_cpp::CodecParameters params;
-        if (!decoder_.valid()) {
+        if (!decoder_) {
           std::tie(packet, params) = parser_.parse_initial_packet(&buffer);
         } else {
           packet = parser_.parse_next_packet(&buffer);
@@ -59,7 +59,7 @@ protected:
         }
 
         // Configure the decoder for this fragment if needed
-        if (!decoder_.valid()) {
+        if (!decoder_) {
           ffmpeg_cpp::Dictionary options; // TODO: get options from the node parameter
           decoder_ = ffmpeg_cpp::Decoder(fragment->format, &options);
           RCLCPP_INFO(node_->get_logger(), "Configured decoder (%s|%s)",

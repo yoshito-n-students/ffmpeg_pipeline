@@ -45,7 +45,7 @@ protected:
               const ffmpeg_cpp::CodecParameters &codec_params) override {
     try {
       // Ensure the decoder is configured for the codec
-      if (!decoder_.valid()) {
+      if (!decoder_) {
         ffmpeg_cpp::Dictionary options(codec_options_); // Copy codec_options_ to avoid modifying it
         decoder_ = ffmpeg_cpp::Decoder(codec_params, &options);
         if (const std::string hw_type_name = decoder_.hw_type_name(); hw_type_name == "none") {

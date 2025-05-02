@@ -228,10 +228,10 @@ private:
 // RAII wrapper for decoder (a.k.a AVCodecContext)
 // ===============================================
 
-class Decoder {
+class Decoder : public std::unique_ptr<AVCodecContext, Deleter<AVCodecContext>> {
 public:
   // Construct without underlying AVCodecContext
-  Decoder() : decoder_ctx_(nullptr, &free_context) {}
+  Decoder();
   // Allocate the codec context for the given codec name and options.
   // Parameters can be filled with Parser::parse().
   Decoder(const std::string &codec_name, Dictionary *const codec_options);
@@ -247,19 +247,6 @@ public:
   // Receive a decoded frame from the decoder.
   // The frame may be empty if no frame is available.
   Frame receive_frame();
-
-  // Access to the underlying AVCodecContext
-  bool valid() const { return decoder_ctx_.get(); }
-  AVCodecContext *get() { return decoder_ctx_.get(); }
-  const AVCodecContext *get() const { return decoder_ctx_.get(); }
-  AVCodecContext *operator->() { return decoder_ctx_.operator->(); }
-  const AVCodecContext *operator->() const { return decoder_ctx_.operator->(); }
-
-private:
-  static void free_context(AVCodecContext *decoder_ctx);
-
-private:
-  std::unique_ptr<AVCodecContext, decltype(&free_context)> decoder_ctx_;
 };
 
 // ===============================================
