@@ -76,8 +76,6 @@ public:
   // because they are not automatically defined if the copy constructor is manually defined.
   Packet(Packet &&other) = default;
   Packet &operator=(Packet &&other) = default;
-  // Constructors from std::unique_ptr
-  using std::unique_ptr<AVPacket, Deleter<AVPacket>>::unique_ptr;
 
   // True if the packet data is empty or invalid
   bool empty() const { return !get() || !get()->data || get()->size == 0; }
@@ -106,8 +104,6 @@ public:
   // because they are not automatically defined if the copy constructor is manually defined.
   Frame(Frame &&other) = default;
   Frame &operator=(Frame &&other) = default;
-  // Constructors from std::unique_ptr
-  using std::unique_ptr<AVFrame, Deleter<AVFrame>>::unique_ptr;
 
   // True if the packet data is empty or invalid
   bool empty() const { return !get() || !get()->data[0]; }
@@ -142,8 +138,6 @@ public:
   // because they are not automatically defined if the copy constructor is manually defined.
   Dictionary(Dictionary &&other) = default;
   Dictionary &operator=(Dictionary &&other) = default;
-  // Constructors from std::unique_ptr
-  using std::unique_ptr<AVDictionary, Deleter<AVDictionary>>::unique_ptr;
 
   bool empty() const { return !get(); }
 
@@ -171,8 +165,6 @@ public:
   // because they are not automatically defined if the copy constructor is manually defined.
   CodecParameters(CodecParameters &&other) = default;
   CodecParameters &operator=(CodecParameters &&other) = default;
-  // Constructors from std::unique_ptr
-  using std::unique_ptr<AVCodecParameters, Deleter<AVCodecParameters>>::unique_ptr;
 
   std::string codec_type_name() const;
   std::string codec_name() const;
