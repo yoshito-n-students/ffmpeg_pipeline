@@ -65,7 +65,7 @@ int main(int argc, char **argv) {
 
     try {
       // Initialize the parser with the image format if not already done
-      if (!parser.valid()) {
+      if (!parser) {
         parser = av::Parser(comp_img->format);
         RCLCPP_INFO(node->get_logger(), "Configured parser (codec: %s)",
                     parser.codec_names().front().c_str());

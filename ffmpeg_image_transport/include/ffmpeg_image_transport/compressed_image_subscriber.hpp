@@ -34,7 +34,7 @@ protected:
                         const Callback &image_cb) override {
     try {
       // Configure the parser for this fragment if needed
-      if (!parser_.valid()) {
+      if (!parser_) {
         parser_ = ffmpeg_cpp::Parser(fragment->format);
         RCLCPP_INFO(node_->get_logger(), "Configured parser (%s)",
                     parser_.codec_names().front().c_str());

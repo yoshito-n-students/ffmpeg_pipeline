@@ -205,6 +205,33 @@ private:
   int istream_id_ = -1;
 };
 
+// ================================
+// RAII wrapper for AVParserContext
+// ================================
+
+class Parser : public std::unique_ptr<AVCodecParserContext, Deleter<AVCodecParserContext>> {
+public:
+  // Construct without underlying AVCodecParserContext
+  Parser();
+  // Allocate the parser context for the given codec name
+  Parser(const std::string &codec_name);
+
+  std::vector<std::string> codec_names() const;
+
+  // Parse the given buffer and return the found packet and parameters.
+  // The parameters contain enough information to decode the packet.
+  // If no packet is found or the found packet is not a keyframe,
+  // return an empty packet and default parameters.
+  std::pair<Packet, CodecParameters> parse_initial_packet(Packet *const buffer);
+
+  // Parse the given buffer and return the found packet.
+  // If no packet is found, return an empty packet.
+  Packet parse_next_packet(Packet *const buffer);
+
+private:
+  std::unique_ptr<AVCodecContext, Deleter<AVCodecContext>> codec_ctx_ = nullptr;
+};
+
 // ===============================================
 // RAII wrapper for decoder (a.k.a AVCodecContext)
 // ===============================================
@@ -241,44 +268,6 @@ private:
 
 private:
   std::unique_ptr<AVCodecContext, decltype(&free_context)> decoder_ctx_;
-};
-
-// ================================
-// RAII wrapper for AVParserContext
-// ================================
-
-class Parser {
-public:
-  // Construct without underlying AVCodecParserContext
-  Parser() : parser_ctx_(nullptr, &av_parser_close), codec_ctx_(nullptr, &free_context) {}
-  // Allocate the parser context for the given codec name
-  Parser(const std::string &codec_name);
-
-  std::vector<std::string> codec_names() const;
-
-  // Parse the given buffer and return the found packet and parameters.
-  // The parameters contain enough information to decode the packet.
-  // If no packet is found or the found packet is not a keyframe,
-  // return an empty packet and default parameters.
-  std::pair<Packet, CodecParameters> parse_initial_packet(Packet *const buffer);
-
-  // Parse the given buffer and return the found packet.
-  // If no packet is found, return an empty packet.
-  Packet parse_next_packet(Packet *const buffer);
-
-  // Access to the underlying AVCodecParserContext
-  bool valid() const { return parser_ctx_.get(); }
-  AVCodecParserContext *get() { return parser_ctx_.get(); }
-  const AVCodecParserContext *get() const { return parser_ctx_.get(); }
-  AVCodecParserContext *operator->() { return parser_ctx_.operator->(); }
-  const AVCodecParserContext *operator->() const { return parser_ctx_.operator->(); }
-
-private:
-  static void free_context(AVCodecContext *decoder_ctx);
-
-private:
-  std::unique_ptr<AVCodecParserContext, decltype(&av_parser_close)> parser_ctx_;
-  std::unique_ptr<AVCodecContext, decltype(&free_context)> codec_ctx_;
 };
 
 // ===============================================

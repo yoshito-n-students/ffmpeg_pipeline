@@ -10,8 +10,9 @@ namespace ffmpeg_cpp {
 // Parser - RAII wrapper for AVCodecParserContext
 // ==============================================
 
-Parser::Parser(const std::string &codec_name)
-    : parser_ctx_(nullptr, &av_parser_close), codec_ctx_(nullptr, &free_context) {
+Parser::Parser() {}
+
+Parser::Parser(const std::string &codec_name) : Parser() {
   // Find the codec by name
   const AVCodec *const codec = avcodec_find_decoder_by_name(codec_name.c_str());
   if (!codec) {
@@ -19,8 +20,8 @@ Parser::Parser(const std::string &codec_name)
   }
 
   // Initialize the parser with the codec
-  parser_ctx_.reset(av_parser_init(codec->id));
-  if (!parser_ctx_) {
+  reset(av_parser_init(codec->id));
+  if (!get()) {
     throw Error("Parser::Parser(): Failed to initialize parser for codec (" + codec_name + ")");
   }
 
@@ -37,14 +38,14 @@ std::pair<Packet, CodecParameters> Parser::parse_initial_packet(Packet *const bu
   std::uint8_t *packet_data;
   int packet_size;
   const int len =
-      av_parser_parse2(parser_ctx_.get(), codec_ctx_.get(), &packet_data, &packet_size,
-                       (*buffer)->data, (*buffer)->size, (*buffer)->pts, (*buffer)->dts, 0);
+      av_parser_parse2(get(), codec_ctx_.get(), &packet_data, &packet_size, (*buffer)->data,
+                       (*buffer)->size, (*buffer)->pts, (*buffer)->dts, 0);
   (*buffer)->data += len;
   (*buffer)->size -= len;
 
   // Return an empty packet and the default parameters
   // if no key-frame-equivalent packet is found
-  if (!packet_data || parser_ctx_->key_frame == 0) {
+  if (!packet_data || get()->key_frame == 0) {
     return {Packet(), CodecParameters()};
   }
 
@@ -74,8 +75,8 @@ Packet Parser::parse_next_packet(Packet *const buffer) {
   std::uint8_t *packet_data;
   int packet_size;
   const int len =
-      av_parser_parse2(parser_ctx_.get(), codec_ctx_.get(), &packet_data, &packet_size,
-                       (*buffer)->data, (*buffer)->size, (*buffer)->pts, (*buffer)->dts, 0);
+      av_parser_parse2(get(), codec_ctx_.get(), &packet_data, &packet_size, (*buffer)->data,
+                       (*buffer)->size, (*buffer)->pts, (*buffer)->dts, 0);
   (*buffer)->data += len;
   (*buffer)->size -= len;
 
@@ -101,14 +102,12 @@ Packet Parser::parse_next_packet(Packet *const buffer) {
 
 std::vector<std::string> Parser::codec_names() const {
   std::vector<std::string> names;
-  for (const auto id : parser_ctx_->parser->codec_ids) {
+  for (const auto id : get()->parser->codec_ids) {
     if (id != AV_CODEC_ID_NONE) {
       names.push_back(avcodec_get_name(static_cast<AVCodecID>(id)));
     }
   }
   return names;
 }
-
-void Parser::free_context(AVCodecContext *codec_ctx) { avcodec_free_context(&codec_ctx); }
 
 } // namespace ffmpeg_cpp

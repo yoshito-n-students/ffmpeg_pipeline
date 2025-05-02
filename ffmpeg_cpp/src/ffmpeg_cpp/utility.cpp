@@ -63,5 +63,11 @@ template <> void Deleter<AVFormatContext>::operator()(AVFormatContext *format_ct
     avformat_free_context(format_ctx);
   }
 }
+template <> void Deleter<AVCodecParserContext>::operator()(AVCodecParserContext *parser_ctx) const {
+  av_parser_close(parser_ctx);
+}
+template <> void Deleter<AVCodecContext>::operator()(AVCodecContext *codec_ctx) const {
+  avcodec_free_context(&codec_ctx);
+}
 
 } // namespace ffmpeg_cpp
