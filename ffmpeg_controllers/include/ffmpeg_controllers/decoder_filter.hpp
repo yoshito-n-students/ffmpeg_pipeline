@@ -1,5 +1,5 @@
-#ifndef FFMPEG_CONTROLLERS_NAME_BASED_DECODER_FILTER_HPP
-#define FFMPEG_CONTROLLERS_NAME_BASED_DECODER_FLITER_HPP
+#ifndef FFMPEG_CONTROLLERS_DECODER_FILTER_HPP
+#define FFMPEG_CONTROLLERS_DECODER_FLITER_HPP
 
 #include <optional>
 #include <stdexcept>
@@ -12,10 +12,13 @@
 
 namespace ffmpeg_controllers {
 
-class NameBasedDecoderFilter : public ControllerBase<input_options::Read<ffmpeg_cpp::Packet>,
-                                                     output_options::Export<ffmpeg_cpp::Frame>> {
+class DecoderFilter
+    : public ControllerBase<std::tuple<input_options::Read<ffmpeg_cpp::Packet>,
+                                       input_options::Read<ffmpeg_cpp::CodecParameters>>,
+                            output_options::Export<ffmpeg_cpp::Frame>> {
 private:
-  using Base = ControllerBase<input_options::Read<ffmpeg_cpp::Packet>,
+  using Base = ControllerBase<std::tuple<input_options::Read<ffmpeg_cpp::Packet>,
+                                         input_options::Read<ffmpeg_cpp::CodecParameters>>,
                               output_options::Export<ffmpeg_cpp::Frame>>;
 
 protected:
@@ -26,7 +29,6 @@ protected:
     }
 
     try {
-      codec_name_ = get_user_parameter<std::string>("codec_name", "");
       codec_options_ =
           ffmpeg_cpp::Dictionary(get_user_parameter<std::string>("codec_options", "{}"));
     } catch (const std::runtime_error &error) {
@@ -39,12 +41,13 @@ protected:
 
   OnGenerateReturn<output_options::Export<ffmpeg_cpp::Frame>>
   on_generate(const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/,
-              const ffmpeg_cpp::Packet &input_packet) override {
+              const ffmpeg_cpp::Packet &input_packet,
+              const ffmpeg_cpp::CodecParameters &codec_params) override {
     try {
       // Ensure the decoder is configured for the codec
       if (!decoder_.valid()) {
         ffmpeg_cpp::Dictionary options(codec_options_); // Copy codec_options_ to avoid modifying it
-        decoder_ = ffmpeg_cpp::Decoder(codec_name_, &options);
+        decoder_ = ffmpeg_cpp::Decoder(codec_params, &options);
         if (const std::string hw_type_name = decoder_.hw_type_name(); hw_type_name == "none") {
           RCLCPP_INFO(get_logger(), "Configured decoder (%s)", decoder_.codec_name().c_str());
         } else {
@@ -53,31 +56,33 @@ protected:
         }
       }
 
-      // Send the input packet to the decoder
+      // Put the compressed data into the decoder
       decoder_.send_packet(input_packet);
 
-      // Get the decompressed frame from the decoder
-      ffmpeg_cpp::Frame output_frame;
+      // Extract as many frames as possible from the decoder and keep only the latest frame.
+      // According to the ffmpeg's reference, there should be only one frame per video packet
+      // so no frames should be dropped.
+      ffmpeg_cpp::Frame frame;
       while (true) {
-        ffmpeg_cpp::Frame received_frame = decoder_.receive_frame();
-        if (received_frame.empty()) {
+        if (ffmpeg_cpp::Frame tmp_frame = decoder_.receive_frame(); !tmp_frame.empty()) {
+          frame = std::move(tmp_frame); // Keep the latest frame
+        } else {
           break; // No more frames available
         }
-        output_frame = std::move(received_frame); // Keep the latest frame
       }
-      if (output_frame.empty()) {
+      if (frame.empty()) {
         RCLCPP_WARN(get_logger(), "No frames available although packet was processed");
         return {ControllerReturn::OK, std::nullopt};
       }
 
       // If the frame data is in a hardware device,
       // transfer the data to the CPU-accessible memory before conversion
-      if (output_frame.is_hw_frame()) {
-        output_frame = output_frame.transfer_data();
+      if (frame.is_hw_frame()) {
+        frame = frame.transfer_data();
       }
 
       // Move the decoded frame to the exported state interface
-      return {ControllerReturn::OK, std::move(output_frame)};
+      return {ControllerReturn::OK, std::move(frame)};
     } catch (const std::runtime_error &error) {
       RCLCPP_ERROR(get_logger(), "Error while decoding packet: %s", error.what());
       return {ControllerReturn::ERROR, std::nullopt};
@@ -86,7 +91,6 @@ protected:
 
 protected:
   ffmpeg_cpp::Decoder decoder_;
-  std::string codec_name_;
   ffmpeg_cpp::Dictionary codec_options_;
 };
 
