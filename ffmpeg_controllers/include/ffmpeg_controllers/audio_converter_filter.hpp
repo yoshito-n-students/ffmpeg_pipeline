@@ -42,7 +42,7 @@ protected:
               const ffmpeg_cpp::Frame &input_frame) override {
     try {
       // Ensure the converter is configured for the input frame
-      if (!converter_.valid()) {
+      if (!converter_) {
         converter_ = ffmpeg_cpp::AudioConverter(
             input_frame.ch_layout_str(), input_frame.format_name(), input_frame->sample_rate,
             // Keep the original channel layout, format and sample rate if out_xxx_ are not set

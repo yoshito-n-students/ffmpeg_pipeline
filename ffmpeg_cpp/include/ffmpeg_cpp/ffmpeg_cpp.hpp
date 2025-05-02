@@ -371,9 +371,9 @@ public:
 // RAII wrapper for SwrContext
 // ===========================
 
-class AudioConverter {
+class AudioConverter : public std::unique_ptr<SwrContext, Deleter<SwrContext>> {
 public:
-  AudioConverter() : swr_ctx_(nullptr, &free_context) {}
+  AudioConverter();
   AudioConverter(const std::string &in_ch_layout_str, const std::string &in_format_name,
                  const int in_sample_rate, //
                  const std::string &out_ch_layout_str, const std::string &out_format_name,
@@ -388,17 +388,6 @@ public:
 
   // Convert the source frame to the destination format
   Frame convert(const Frame &src_frame);
-
-  // Access to the underlying SwrContext
-  bool valid() const { return swr_ctx_.get(); }
-  SwrContext *get() { return swr_ctx_.get(); }
-  const SwrContext *get() const { return swr_ctx_.get(); }
-
-private:
-  static void free_context(SwrContext *swr_ctx);
-
-private:
-  std::unique_ptr<SwrContext, decltype(&free_context)> swr_ctx_;
 };
 
 // =======================================================

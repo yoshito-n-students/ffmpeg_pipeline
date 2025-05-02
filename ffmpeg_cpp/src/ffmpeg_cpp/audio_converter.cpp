@@ -13,11 +13,13 @@ namespace ffmpeg_cpp {
 // AudioConverter - RAII wrapper for SwrContext
 // ============================================
 
+AudioConverter::AudioConverter() {}
+
 AudioConverter::AudioConverter(const std::string &in_ch_layout_str,
                                const std::string &in_format_name, const int in_sample_rate,
                                const std::string &out_ch_layout_str,
                                const std::string &out_format_name, const int out_sample_rate)
-    : swr_ctx_(nullptr, &free_context) {
+    : AudioConverter() {
   SwrContext *swr_ctx = nullptr;
   const AVChannelLayout in_ch_layout = to_channel_layout(in_ch_layout_str),
                         out_ch_layout = to_channel_layout(out_ch_layout_str);
@@ -29,9 +31,9 @@ AudioConverter::AudioConverter(const std::string &in_ch_layout_str,
       ret < 0) {
     throw Error("AudioConverter::AudioConverter(): Failed to create SwrContext", ret);
   }
-  swr_ctx_.reset(swr_ctx);
+  reset(swr_ctx);
 
-  if (const int ret = swr_init(swr_ctx_.get()); ret < 0) {
+  if (const int ret = swr_init(get()); ret < 0) {
     throw Error("AudioConverter::AudioConverter(): Failed to initialize SwrContext", ret);
   }
 }
@@ -48,27 +50,27 @@ static AVChannelLayout to_swr_channel_layout(const AVChannelLayout &ch_layout) {
 }
 
 std::string AudioConverter::in_ch_layout_str() const {
-  return to_string(to_swr_channel_layout(get_channel_layout(swr_ctx_.get(), "in_chlayout")));
+  return to_string(to_swr_channel_layout(get_channel_layout(get(), "in_chlayout")));
 }
 
 std::string AudioConverter::in_format_name() const {
-  return to_string(get_sample_format(swr_ctx_.get(), "in_sample_fmt"));
+  return to_string(get_sample_format(get(), "in_sample_fmt"));
 }
 
 std::int64_t AudioConverter::in_sample_rate() const {
-  return get_int64(swr_ctx_.get(), "in_sample_rate", 0);
+  return get_int64(get(), "in_sample_rate", 0);
 }
 
 std::string AudioConverter::out_ch_layout_str() const {
-  return to_string(to_swr_channel_layout(get_channel_layout(swr_ctx_.get(), "out_chlayout")));
+  return to_string(to_swr_channel_layout(get_channel_layout(get(), "out_chlayout")));
 }
 
 std::string AudioConverter::out_format_name() const {
-  return to_string(get_sample_format(swr_ctx_.get(), "out_sample_fmt"));
+  return to_string(get_sample_format(get(), "out_sample_fmt"));
 }
 
 std::int64_t AudioConverter::out_sample_rate() const {
-  return get_int64(swr_ctx_.get(), "out_sample_rate", 0);
+  return get_int64(get(), "out_sample_rate", 0);
 }
 
 Frame AudioConverter::convert(const Frame &_in_frame) {
@@ -82,15 +84,15 @@ Frame AudioConverter::convert(const Frame &_in_frame) {
   // Prepare the output frame with the required fields
   Frame out_frame;
   const AVChannelLayout swr_out_ch_layout =
-      to_swr_channel_layout(get_channel_layout(swr_ctx_.get(), "out_chlayout"));
+      to_swr_channel_layout(get_channel_layout(get(), "out_chlayout"));
   if (const int ret = av_channel_layout_copy(&out_frame->ch_layout, &swr_out_ch_layout); ret < 0) {
     throw Error("AudioConverter::convert(): Failed to set output channel layout", ret);
   }
-  out_frame->format = get_sample_format(swr_ctx_.get(), "out_sample_fmt");
-  out_frame->sample_rate = get_int64(swr_ctx_.get(), "out_sample_rate", 0);
+  out_frame->format = get_sample_format(get(), "out_sample_fmt");
+  out_frame->sample_rate = get_int64(get(), "out_sample_rate", 0);
 
   // Convert the input frame to the output format
-  if (const int ret = swr_convert_frame(swr_ctx_.get(), out_frame.get(), in_frame.get()); ret < 0) {
+  if (const int ret = swr_convert_frame(get(), out_frame.get(), in_frame.get()); ret < 0) {
     throw Error("AudioConverter::convert(): Failed to convert frame", ret);
   }
 
@@ -100,7 +102,5 @@ Frame AudioConverter::convert(const Frame &_in_frame) {
 
   return out_frame;
 }
-
-void AudioConverter::free_context(SwrContext *swr_ctx) { swr_free(&swr_ctx); }
 
 } // namespace ffmpeg_cpp
