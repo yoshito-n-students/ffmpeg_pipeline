@@ -45,39 +45,6 @@ public:
       : std::runtime_error(msg + ": " + err2str(errnum)) {}
 };
 
-// ============================
-// RAII wrapper for AVBufferRef
-// ============================
-
-class BufferRef {
-public:
-  // Construct a BufferRef by copying the given data and adding padding
-  BufferRef(const std::uint8_t *const data, const std::size_t unpadded_size);
-  // Construct a BufferRef by referencing an existing buffer
-  BufferRef(const BufferRef &other);
-  BufferRef &operator=(const BufferRef &other);
-  // We need to define the move constructor and operator explicitly
-  // because they are not automatically defined if the copy constructor is manually defined.
-  BufferRef(BufferRef &&other) = default;
-  BufferRef &operator=(BufferRef &&other) = default;
-
-  // Get the size of the buffer, with or without padding
-  std::size_t padded_size() const { return buf_->size; }
-  std::size_t unpadded_size() const { return buf_->size - AV_INPUT_BUFFER_PADDING_SIZE; }
-
-  // Access to the underlying AVBufferRef
-  AVBufferRef *get() { return buf_.get(); }
-  const AVBufferRef *get() const { return buf_.get(); }
-  AVBufferRef *operator->() { return buf_.operator->(); }
-  const AVBufferRef *operator->() const { return buf_.operator->(); }
-
-private:
-  static void unref_buffer(AVBufferRef *buf);
-
-private:
-  std::unique_ptr<AVBufferRef, decltype(&unref_buffer)> buf_;
-};
-
 // =========================
 // RAII wrapper for AVPacket
 // =========================
@@ -86,8 +53,6 @@ class Packet {
 public:
   // Allocate the packet and default the fields
   Packet();
-  // Create a packet by referencing the given buffer
-  Packet(const BufferRef &buf);
   // Create a packet by copying the given data
   Packet(const std::uint8_t *const data, const std::size_t size);
   // Create a packet by copying the given message
@@ -328,11 +293,6 @@ public:
   Parser(const std::string &codec_name);
 
   std::vector<std::string> codec_names() const;
-
-  // Parse the given buffer and advance the data pointer by the number of bytes parsed.
-  // If a packet is found, return it; otherwise, return an empty packet.
-  // The decoder may be tuned based on the parsing result.
-  Packet parse(BufferRef *const buffer, Decoder *const decoder);
 
   // Parse the given buffer and return the found packet and parameters.
   // The parameters contain enough information to decode the packet.

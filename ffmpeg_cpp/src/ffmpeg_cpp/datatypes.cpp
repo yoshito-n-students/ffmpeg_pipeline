@@ -18,36 +18,6 @@ extern "C" {
 
 namespace ffmpeg_cpp {
 
-// ========================================
-// BufferRef - RAII wrapper for AVBufferRef
-// ========================================
-
-BufferRef::BufferRef(const std::uint8_t *const data, const std::size_t unpadded_size)
-    : buf_(av_buffer_alloc(unpadded_size + AV_INPUT_BUFFER_PADDING_SIZE), &unref_buffer) {
-  if (!buf_) {
-    throw Error("BufferRef::BufferRef(): Failed to allocate AVBufferRef");
-  }
-  // Copy the given data to the buffer and zero the padding
-  std::copy(data, data + unpadded_size, buf_->data);
-  std::memset(buf_->data + unpadded_size, 0, AV_INPUT_BUFFER_PADDING_SIZE);
-}
-
-BufferRef::BufferRef(const BufferRef &other) : buf_(av_buffer_ref(other.get()), &unref_buffer) {
-  if (!buf_) {
-    throw Error("BufferRef::BufferRef(): Failed to create a reference to buffer");
-  }
-}
-
-BufferRef &BufferRef::operator=(const BufferRef &other) {
-  buf_.reset(av_buffer_ref(other.get()));
-  if (!buf_) {
-    throw Error("BufferRef::operator=(): Failed to create a reference to buffer");
-  }
-  return *this;
-}
-
-void BufferRef::unref_buffer(AVBufferRef *buf) { av_buffer_unref(&buf); }
-
 // ==================================
 // Packet - RAII wrapper for AVPacket
 // ==================================
@@ -56,15 +26,6 @@ Packet::Packet() : packet_(av_packet_alloc(), free_packet) {
   if (!packet_) {
     throw Error("Packet::Packet(): Failed to allocate AVPacket");
   }
-}
-
-Packet::Packet(const BufferRef &buf) : Packet() {
-  packet_->buf = av_buffer_ref(buf.get());
-  if (!packet_->buf) {
-    throw Error("Packet::Packet(): Failed to create a reference to buffer");
-  }
-  packet_->data = buf->data;
-  packet_->size = buf.unpadded_size();
 }
 
 Packet::Packet(const std::uint8_t *const data, const std::size_t size) : Packet() {

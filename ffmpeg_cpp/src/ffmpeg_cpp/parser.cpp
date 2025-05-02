@@ -32,38 +32,6 @@ Parser::Parser(const std::string &codec_name)
   }
 }
 
-Packet Parser::parse(BufferRef *const buffer, Decoder *const decoder) {
-  // Parse and advance the buffer
-  std::uint8_t *packet_data;
-  int packet_size;
-  const std::uint8_t *const buffer_data = (*buffer)->data;
-  const int buffer_size = buffer->unpadded_size();
-  const int len = av_parser_parse2(parser_ctx_.get(), decoder->get(), &packet_data, &packet_size,
-                                   buffer_data, buffer_size, AV_NOPTS_VALUE, AV_NOPTS_VALUE, 0);
-  (*buffer)->data += len;
-  (*buffer)->size -= len;
-
-  // Set the packet content based on the parser's output
-  if (packet_data) {
-    if (buffer_data <= packet_data && packet_data + packet_size <= buffer_data + buffer_size) {
-      // If a packet is available and the data is within the input buffer,
-      // refer to the entire buffer from the packet, and set the data to the packet
-      Packet packet(*buffer);
-      packet->data = packet_data;
-      packet->size = packet_size;
-      return packet;
-    } else {
-      // If a packet is available but the data is within the parser's internal buffer,
-      // copy the data from the parser's internal buffer to a new buffer
-      // to guarantee the lifetime of the data, and refer to it from the packet
-      return Packet(BufferRef(packet_data, packet_size));
-    }
-  } else {
-    // If no packet is available, create an empty packet
-    return Packet();
-  }
-}
-
 std::pair<Packet, CodecParameters> Parser::parse_initial_packet(Packet *const buffer) {
   // Parse and advance the input buffer
   std::uint8_t *packet_data;
