@@ -69,21 +69,6 @@ std::pair<Packet, CodecParameters> Parser::parse_initial_packet(const Packet &bu
   // Construct the initial packet based on the parsed data
   const Packet packet = make_packet(buffer, packet_data, packet_size);
 
-  // Decode the initial packet to get more information about the codec parameters
-  if (const int ret = avcodec_send_packet(codec_ctx_.get(), packet.get()); ret < 0) {
-    throw Error("Parser::parse_initial_packet(): Error sending packet for decoding", ret);
-  }
-  while (true) {
-    Frame frame;
-    if (const int ret = avcodec_receive_frame(codec_ctx_.get(), frame.get()); ret >= 0) {
-      continue; // A frame was received, continue to receive more frames
-    } else if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
-      break; // No more frames to receive, break the loop
-    } else {
-      throw Error("Parser::parse_initial_packet(): Error during decoding", ret);
-    }
-  }
-
   // Copy the codec parameters from the codec context
   CodecParameters params;
   if (const int ret = avcodec_parameters_from_context(params.get(), codec_ctx_.get()); ret < 0) {
