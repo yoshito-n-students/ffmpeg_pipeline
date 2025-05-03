@@ -108,11 +108,10 @@ protected:
             if (!converter_) {
               converter_ = ffmpeg_cpp::VideoConverter(frame->width, frame->height,
                                                       frame.format_name(), dst_format_name);
-              RCLCPP_INFO(node_->get_logger(),
-                          "Initialized converter ([%s] %zdx%zd -> [%s] %zdx%zd)",
-                          converter_.src_format_name().c_str(), converter_.src_width(),
-                          converter_.src_height(), converter_.dst_format_name().c_str(),
-                          converter_.dst_width(), converter_.dst_height());
+              RCLCPP_INFO(node_->get_logger(), "Initialized converter ([%s -> %s] %dx%d)",
+                          converter_.src_format_name().c_str(),
+                          converter_.dst_format_name().c_str(), //
+                          converter_.src_width(), converter_.src_height());
             }
 
             // Make the destination image

@@ -121,10 +121,9 @@ int main(int argc, char **argv) {
           if (!converter) {
             converter =
                 av::VideoConverter(frame->width, frame->height, frame.format_name(), "bgr24");
-            RCLCPP_INFO(node->get_logger(), "Configured converter ([%s] %zdx%zd -> [%s] %zdx%zd)",
-                        converter.src_format_name().c_str(), converter.src_width(),
-                        converter.src_height(), converter.dst_format_name().c_str(),
-                        converter.dst_width(), converter.dst_height());
+            RCLCPP_INFO(node->get_logger(), "Configured converter ([%s -> %s] %dx%d)",
+                        converter.src_format_name().c_str(), converter.dst_format_name().c_str(),
+                        converter.src_width(), converter.src_height());
           }
 
           // Copy the frame properties to the destination image

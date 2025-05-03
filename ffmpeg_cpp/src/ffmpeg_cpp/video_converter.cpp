@@ -21,9 +21,9 @@ namespace ffmpeg_cpp {
 
 VideoConverter::VideoConverter() {}
 
-VideoConverter::VideoConverter(const std::size_t src_width, const std::size_t src_height,
+VideoConverter::VideoConverter(const int src_width, const int src_height,
                                const std::string &src_format_name, //
-                               const std::size_t dst_width, const std::size_t dst_height,
+                               const int dst_width, const int dst_height,
                                const std::string &dst_format_name)
     : VideoConverter() {
   reset(sws_getContext(src_width, src_height, av_get_pix_fmt(src_format_name.c_str()), //
@@ -82,17 +82,17 @@ std::vector<std::uint8_t> VideoConverter::convert_to_vector(const Frame &src_fra
   return dst_data;
 }
 
-std::size_t VideoConverter::src_width() const { return get_int64(get(), "srcw", 0); }
+int VideoConverter::src_width() const { return get_int64(get(), "srcw", 0); }
 
-std::size_t VideoConverter::src_height() const { return get_int64(get(), "srch", 0); }
+int VideoConverter::src_height() const { return get_int64(get(), "srch", 0); }
 
 std::string VideoConverter::src_format_name() const {
   return to_string(get_pixel_format(get(), "src_format"));
 }
 
-std::size_t VideoConverter::dst_width() const { return get_int64(get(), "dstw", 0); }
+int VideoConverter::dst_width() const { return get_int64(get(), "dstw", 0); }
 
-std::size_t VideoConverter::dst_height() const { return get_int64(get(), "dsth", 0); }
+int VideoConverter::dst_height() const { return get_int64(get(), "dsth", 0); }
 
 std::string VideoConverter::dst_format_name() const {
   return to_string(get_pixel_format(get(), "dst_format"));

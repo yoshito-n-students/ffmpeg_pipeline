@@ -49,7 +49,7 @@ protected:
             dst_width_ > 0 ? dst_width_ : input_frame->width,
             dst_height_ > 0 ? dst_height_ : input_frame->height,
             !dst_format_.empty() ? dst_format_ : input_frame.format_name());
-        RCLCPP_INFO(get_logger(), "Configured converter ([%s] %zdx%zd -> [%s] %zdx%zd)",
+        RCLCPP_INFO(get_logger(), "Configured converter ([%s] %dx%d -> [%s] %dx%d)",
                     converter_.src_format_name().c_str(), converter_.src_width(),
                     converter_.src_height(), //
                     converter_.dst_format_name().c_str(), converter_.dst_width(),

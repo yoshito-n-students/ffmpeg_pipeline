@@ -40,7 +40,7 @@ int main(int argc, char *argv[]) {
             // Initialize the decoder if not already done
             if (!decoder) {
               av::Dictionary options;
-              decoder = av::Decoder(packet_data->format,&options);
+              decoder = av::Decoder(packet_data->format, &options);
               RCLCPP_INFO(node->get_logger(), "Configured decoder (codec: %s, hw: %s)",
                           decoder.codec_name().c_str(), decoder.hw_type_name().c_str());
             }
@@ -66,10 +66,10 @@ int main(int argc, char *argv[]) {
               if (!converter) {
                 converter =
                     av::VideoConverter(frame->width, frame->height, frame.format_name(), "bgr24");
-                RCLCPP_INFO(
-                    node->get_logger(), "Configured converter (size: %zdx%zd, src: %s, dst: %s)",
-                    converter.src_width(), converter.src_height(),
-                    converter.src_format_name().c_str(), converter.dst_format_name().c_str());
+                RCLCPP_INFO(node->get_logger(), "Configured converter ([%s -> %s] %dx%d)",
+                            converter.src_format_name().c_str(),
+                            converter.dst_format_name().c_str(), //
+                            converter.src_width(), converter.src_height());
               }
 
               // Copy the frame properties to the destination image
