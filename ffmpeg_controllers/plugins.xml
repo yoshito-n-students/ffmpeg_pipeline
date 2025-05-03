@@ -27,6 +27,17 @@
         </description>
     </class>
 
+    <class name="ffmpeg_controllers/DecoderFilter"
+           type="ffmpeg_controllers::DecoderFilter"
+           base_class_type="controller_interface::ChainableControllerInterface">
+        <description>
+            This controller reads ffmpeg_cpp::Packet and ffmpeg_cpp::CodecParameters
+            from the state interface owned by other controller and export decoded frames 
+            as ffmpeg_cpp::Frame on the state interface owned by this controller.
+            Useful when the codec parameters is available.
+        </description>
+    </class>
+
     <class name="ffmpeg_controllers/EncoderFilter"
            type="ffmpeg_controllers::EncoderFilter"
            base_class_type="controller_interface::ChainableControllerInterface">
@@ -54,17 +65,6 @@
         </description>
     </class>
 
-    <class name="ffmpeg_controllers/NameBasedDecoderFilter"
-           type="ffmpeg_controllers::NameBasedDecoderFilter"
-           base_class_type="controller_interface::ChainableControllerInterface">
-        <description>
-            This controller reads ffmpeg_cpp::Packet from the state interface owned by other controller
-            and export decoded frames as ffmpeg_cpp::Frame on the state interface owned by this controller.
-            This is a lightweight version of ParserBasedDecoderFilter without the parsing process.
-            It may not be able to decode depending on the codec.
-        </description>
-    </class>
-
     <class name="ffmpeg_controllers/PacketBroadcaster"
            type="ffmpeg_controllers::PacketBroadcaster"
            base_class_type="controller_interface::ControllerInterface">
@@ -89,28 +89,6 @@
         <description>
             This controller reads ffmpeg_cpp::Packet from the state interface owned by other controller
             and write it to the command interface owned by the hardware.
-        </description>
-    </class>
-
-    <class name="ffmpeg_controllers/ParameterBasedDecoderFilter"
-           type="ffmpeg_controllers::ParameterBasedDecoderFilter"
-           base_class_type="controller_interface::ChainableControllerInterface">
-        <description>
-            This controller reads ffmpeg_cpp::Packet and ffmpeg_cpp::CodecParameters
-            from the state interface owned by other controller and export decoded frames 
-            as ffmpeg_cpp::Frame on the state interface owned by this controller.
-            Useful when the codec parameters is available.
-        </description>
-    </class>
-
-    <class name="ffmpeg_controllers/ParserBasedDecoderFilter"
-           type="ffmpeg_controllers::ParserBasedDecoderFilter"
-           base_class_type="controller_interface::ChainableControllerInterface">
-        <description>
-            This controller reads ffmpeg_cpp::Packet from the state interface owned by other controller,
-            parse it to get codec parameters, and export decoded frames as ffmpeg_cpp::Frame 
-            on the state interface owned by this controller.
-            Useful when the codec parameters is not available.
         </description>
     </class>
 
