@@ -97,6 +97,51 @@ protected:
     }
     return nullptr;
   }
+
+  // Return SUCCESS if all results in the given range are SUCCESS, otherwise return ERROR
+  template <class Range>
+  static std::enable_if_t<std::is_same_v<typename Range::value_type, NodeReturn>, NodeReturn>
+  merge(const Range &range) {
+    return std::all_of(range.begin(), range.end(),
+                       [](const auto result) { return result == NodeReturn::SUCCESS; })
+               ? NodeReturn::SUCCESS
+               : NodeReturn::ERROR;
+  }
+
+  // Return OK if all results in the given range are OK, otherwise return ERROR
+  template <class Range>
+  static std::enable_if_t<std::is_same_v<typename Range::value_type, ControllerReturn>,
+                          ControllerReturn>
+  merge(const Range &range) {
+    return std::all_of(range.begin(), range.end(),
+                       [](const auto result) { return result == ControllerReturn::OK; })
+               ? ControllerReturn::OK
+               : ControllerReturn::ERROR;
+  }
+
+  // Return interface configuration that covers all configurations in the given range
+  template <class Range>
+  static std::enable_if_t<
+      std::is_same_v<typename Range::value_type, controller_interface::InterfaceConfiguration>,
+      controller_interface::InterfaceConfiguration>
+  merge(const Range &range) {
+    using ConfigType = controller_interface::interface_configuration_type;
+    if (std::any_of(range.begin(), range.end(),
+                    [](const auto &config) { return config.type == ConfigType::ALL; })) {
+      return {ConfigType::ALL, {}};
+    } else if (std::all_of(range.begin(), range.end(),
+                           [](const auto &config) { return config.type == ConfigType::NONE; })) {
+      return {ConfigType::NONE, {}};
+    } else {
+      std::set<std::string> names;
+      for (const auto &config : range) {
+        if (config.type == ConfigType::INDIVIDUAL) {
+          names.insert(config.names.begin(), config.names.end());
+        }
+      }
+      return {ConfigType::INDIVIDUAL, std::vector<std::string>(names.begin(), names.end())};
+    }
+  }
 };
 
 template <>

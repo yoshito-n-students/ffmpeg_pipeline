@@ -275,41 +275,20 @@ protected:
   typename BaseCommon::NodeReturn on_init() override {
     const std::array<typename BaseCommon::NodeReturn, sizeof...(InputOptions)> results = {
         BaseInput<InputOptions>::on_init()...};
-    return std::all_of(results.begin(), results.end(),
-                       [](const auto result) { return result == BaseCommon::NodeReturn::SUCCESS; })
-               ? BaseCommon::NodeReturn::SUCCESS
-               : BaseCommon::NodeReturn::ERROR;
+    return BaseCommon::merge(results);
   }
 
   typename BaseCommon::NodeReturn
   on_activate(const rclcpp_lifecycle::State &previous_state) override {
     const std::array<typename BaseCommon::NodeReturn, sizeof...(InputOptions)> results = {
         BaseInput<InputOptions>::on_activate(previous_state)...};
-    return std::all_of(results.begin(), results.end(),
-                       [](const auto result) { return result == BaseCommon::NodeReturn::SUCCESS; })
-               ? BaseCommon::NodeReturn::SUCCESS
-               : BaseCommon::NodeReturn::ERROR;
+    return BaseCommon::merge(results);
   }
 
   controller_interface::InterfaceConfiguration state_interface_configuration() const override {
-    using ConfigType = controller_interface::interface_configuration_type;
     const std::array<controller_interface::InterfaceConfiguration, sizeof...(InputOptions)>
         results = {BaseInput<InputOptions>::state_interface_configuration()...};
-    if (std::any_of(results.begin(), results.end(),
-                    [](const auto &config) { return config.type == ConfigType::ALL; })) {
-      return {ConfigType::ALL, {}};
-    } else if (std::all_of(results.begin(), results.end(),
-                           [](const auto &config) { return config.type == ConfigType::NONE; })) {
-      return {ConfigType::NONE, {}};
-    } else {
-      std::set<std::string> names;
-      for (const auto &result : results) {
-        if (result.type == ConfigType::INDIVIDUAL) {
-          names.insert(result.names.begin(), result.names.end());
-        }
-      }
-      return {ConfigType::INDIVIDUAL, std::vector<std::string>(names.begin(), names.end())};
-    }
+    return BaseCommon::merge(results);
   }
 
   OnReadReturn<std::tuple<InputOptions...>> on_read(const rclcpp::Time &time,
@@ -324,10 +303,7 @@ protected:
 
     // Return overall result
     return {// Overall success - OK if all of on_read() returned OK
-            std::all_of(success.begin(), success.end(),
-                        [](const auto s) { return s == BaseCommon::ControllerReturn::OK; })
-                ? BaseCommon::ControllerReturn::OK
-                : BaseCommon::ControllerReturn::ERROR,
+            BaseCommon::merge(success),
             // Overall outputs - not a nullopt if any of on_read() did not return nullopt
             flip(outputs)};
   }

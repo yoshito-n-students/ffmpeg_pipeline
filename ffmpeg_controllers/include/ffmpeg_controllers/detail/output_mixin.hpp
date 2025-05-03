@@ -340,41 +340,20 @@ protected:
   typename BaseCommon::NodeReturn on_init() override {
     const std::array<typename BaseCommon::NodeReturn, sizeof...(OutputOptions)> results = {
         BaseOutput<OutputOptions>::on_init()...};
-    return std::all_of(results.begin(), results.end(),
-                       [](const auto result) { return result == BaseCommon::NodeReturn::SUCCESS; })
-               ? BaseCommon::NodeReturn::SUCCESS
-               : BaseCommon::NodeReturn::ERROR;
+    return BaseCommon::merge(results);
   }
 
   typename BaseCommon::NodeReturn
   on_deactivate(const rclcpp_lifecycle::State &previous_state) override {
     const std::array<typename BaseCommon::NodeReturn, sizeof...(OutputOptions)> results = {
         BaseOutput<OutputOptions>::on_deactivate(previous_state)...};
-    return std::all_of(results.begin(), results.end(),
-                       [](const auto result) { return result == BaseCommon::NodeReturn::SUCCESS; })
-               ? BaseCommon::NodeReturn::SUCCESS
-               : BaseCommon::NodeReturn::ERROR;
+    return BaseCommon::merge(results);
   }
 
   controller_interface::InterfaceConfiguration command_interface_configuration() const override {
-    using ConfigType = controller_interface::interface_configuration_type;
     const std::array<controller_interface::InterfaceConfiguration, sizeof...(OutputOptions)>
         results = {BaseOutput<OutputOptions>::command_interface_configuration()...};
-    if (std::any_of(results.begin(), results.end(),
-                    [](const auto &config) { return config.type == ConfigType::ALL; })) {
-      return {ConfigType::ALL, {}};
-    } else if (std::all_of(results.begin(), results.end(),
-                           [](const auto &config) { return config.type == ConfigType::NONE; })) {
-      return {ConfigType::NONE, {}};
-    } else {
-      std::set<std::string> names;
-      for (const auto &result : results) {
-        if (result.type == ConfigType::INDIVIDUAL) {
-          names.insert(result.names.begin(), result.names.end());
-        }
-      }
-      return {ConfigType::INDIVIDUAL, std::vector<std::string>(names.begin(), names.end())};
-    }
+    return BaseCommon::merge(results);
   }
 
   typename BaseCommon::ControllerReturn on_write(const rclcpp::Time &time,
@@ -384,10 +363,7 @@ protected:
     const std::array<typename BaseCommon::ControllerReturn, sizeof...(OutputOptions)> results = {
         BaseOutput<OutputOptions>::on_write(time, period,
                                             std::forward<decltype(outputs)>(outputs))...};
-    return std::all_of(results.begin(), results.end(),
-                       [](const auto result) { return result == BaseCommon::ControllerReturn::OK; })
-               ? BaseCommon::ControllerReturn::OK
-               : BaseCommon::ControllerReturn::ERROR;
+    return BaseCommon::merge(results);
   }
 };
 
