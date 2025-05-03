@@ -17,13 +17,13 @@ protected:
     try {
       // Try to get the parameters for the output from the hardware_info, or use default values
       const auto format = get_parameter_as<std::string>("format", "pulse"),
-                 filename = get_parameter_as<std::string>("filename", "default");
+                 url = get_parameter_as<std::string>("url", "default");
       const auto codec_params = get_parameter_as<ffmpeg_cpp::CodecParameters>(
           "codec_parameters", ffmpeg_cpp::CodecParameters());
       auto options = get_parameter_as<ffmpeg_cpp::Dictionary>("options", ffmpeg_cpp::Dictionary());
 
       // Open the input with the parameters
-      output_ = ffmpeg_cpp::Output(format, filename, codec_params, &options);
+      output_ = ffmpeg_cpp::Output(format, url, codec_params, &options);
       RCLCPP_INFO(get_logger(), "Configured the output ([%s] %s)", output_.format_name().c_str(),
                   output_.url().c_str());
 
