@@ -4,8 +4,9 @@
            type="ffmpeg_controllers::AudioConverterFilter"
            base_class_type="controller_interface::ChainableControllerInterface">
         <description>
-            This controller reads ffmpeg_cpp::Frame from the state interface owned by other controller
-            and export the converted audio frame on the state interface owned by this controller.
+            This controller reads ffmpeg_cpp::Frame from the state interface owned by other controller,
+            converts it to the specified sample format, sample rate, and channel layout,
+            and exports it on the state interface owned by this controller.
         </description>
     </class>
 
@@ -13,8 +14,8 @@
            type="ffmpeg_controllers::AudioFifoFilter"
            base_class_type="controller_interface::ChainableControllerInterface">
         <description>
-            This controller reads ffmpeg_cpp::Frame from the state interface owned by other controller
-            and export the converted audio frame on the state interface owned by this controller.
+            This controller reads ffmpeg_cpp::Frame from the state interface owned by other controller,
+            resamples it to the specified sample size, and exports it on the state interface owned by this controller.
         </description>
     </class>
 
@@ -32,9 +33,9 @@
            base_class_type="controller_interface::ChainableControllerInterface">
         <description>
             This controller reads ffmpeg_cpp::Packet and ffmpeg_cpp::CodecParameters
-            from the state interface owned by other controller and export decoded frames 
+            from the state interface owned by other controller and exports decoded frames 
             as ffmpeg_cpp::Frame on the state interface owned by this controller.
-            Useful when the codec parameters is available.
+            If the codec parameters are not available, the ParserFilter can be used to accumulate them.
         </description>
     </class>
 
@@ -96,6 +97,10 @@
            type="ffmpeg_controllers::ParserFilter"
            base_class_type="controller_interface::ChainableControllerInterface">
         <description>
+            This controller reads ffmpeg_cpp::Packet from the state interface owned by other controller,
+            parses frame-equivalent packets, and exports them on the state interface owned by this controller.
+            It also accumulates and exports ffmpeg_cpp::CodecParameters.
+            It is useful for providing codec parameters to the DecoderFilter.
         </description>
     </class>
 
@@ -103,8 +108,9 @@
            type="ffmpeg_controllers::VideoConverterFilter"
            base_class_type="controller_interface::ChainableControllerInterface">
         <description>
-            This controller reads ffmpeg_cpp::Frame from the state interface owned by other controller
-            and export the converted video frame on the state interface owned by this controller.
+            This controller reads ffmpeg_cpp::Frame from the state interface owned by other controller,
+            converts it to the specified pixel format, width, and height,
+            and exports it on the state interface owned by this controller.
         </description>
     </class>
 
