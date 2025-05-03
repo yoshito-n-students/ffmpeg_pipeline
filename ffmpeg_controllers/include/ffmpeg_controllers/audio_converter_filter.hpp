@@ -49,7 +49,7 @@ protected:
             !out_ch_layout_str_.empty() ? out_ch_layout_str_ : input_frame.ch_layout_str(),
             !out_format_name_.empty() ? out_format_name_ : input_frame.format_name(),
             out_sample_rate_ > 0 ? out_sample_rate_ : input_frame->sample_rate);
-        RCLCPP_INFO(get_logger(), "Configured converter ([%s] %s @ %ldHz -> [%s] %s @ %ldHz)",
+        RCLCPP_INFO(get_logger(), "Configured converter ([%s] %s @ %dHz -> [%s] %s @ %dHz)",
                     converter_.in_ch_layout_str().c_str(), converter_.in_format_name().c_str(),
                     converter_.in_sample_rate(), //
                     converter_.out_ch_layout_str().c_str(), converter_.out_format_name().c_str(),
