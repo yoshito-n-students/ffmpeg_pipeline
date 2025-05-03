@@ -18,9 +18,20 @@ protected:
       // Try to get the parameters for the output from the hardware_info, or use default values
       const auto format = get_parameter_as<std::string>("format", "pulse"),
                  url = get_parameter_as<std::string>("url", "default");
-      const auto codec_params = get_parameter_as<ffmpeg_cpp::CodecParameters>(
+      auto codec_params = get_parameter_as<ffmpeg_cpp::CodecParameters>(
           "codec_parameters", ffmpeg_cpp::CodecParameters());
       auto options = get_parameter_as<ffmpeg_cpp::Dictionary>("options", ffmpeg_cpp::Dictionary());
+
+      // [EXPERIMENTAL] Try to complete the codec parameters (extradata, etc)
+      try {
+        ffmpeg_cpp::Dictionary options;
+        ffmpeg_cpp::Encoder encoder(codec_params, &options);
+        if (const int ret = avcodec_parameters_from_context(codec_params.get(), encoder.get())) {
+          throw ffmpeg_cpp::Error("Failed to copy codec parameters from the encoder", ret);
+        }
+      } catch (const std::runtime_error &error) {
+        RCLCPP_WARN(get_logger(), "Skipped to complete the codec parameters: %s", error.what());
+      }
 
       // Open the input with the parameters
       output_ = ffmpeg_cpp::Output(format, url, codec_params, &options);
