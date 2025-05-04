@@ -139,8 +139,6 @@ public:
   Dictionary(Dictionary &&other) = default;
   Dictionary &operator=(Dictionary &&other) = default;
 
-  bool empty() const { return !get(); }
-
   std::string to_yaml() const;
   std::string to_flow_style_yaml() const;
 };
@@ -233,11 +231,11 @@ class Decoder : public std::unique_ptr<AVCodecContext, Deleter<AVCodecContext>> 
 public:
   // Construct without underlying AVCodecContext
   Decoder();
-  // Allocate the codec context for the given codec name and options.
-  // Parameters can be filled with Parser::parse().
-  Decoder(const std::string &codec_name, Dictionary *const codec_options);
-  // Allocate the codec context for the given codec parameters and options
+  // Allocate the codec context for the given decoder name, codec parameters and options.
+  Decoder(const std::string &decoder_name, Dictionary *const codec_options);
   Decoder(const CodecParameters &codec_params, Dictionary *const codec_options);
+  Decoder(const std::string &decoder_name, const CodecParameters &codec_params,
+          Dictionary *const codec_options);
 
   std::string codec_name() const;
   std::string hw_type_name() const;

@@ -68,7 +68,7 @@ Output::Output(const std::string &format_name, const std::string &url,
   }
 
   // Check if the output accepts all the options
-  if (!options->empty()) {
+  if (*options) {
     throw Error("Output::Output(): Output " + url + " does not accept options [" +
                 options->to_flow_style_yaml() + "]");
   }

@@ -80,7 +80,7 @@ Decoder::Decoder(const std::string &codec_name, Dictionary *const codec_options)
   }
 
   // Check if the decoder accepts all the options
-  if (!codec_options->empty()) {
+  if (*codec_options) {
     throw Error("Decoder::Decoder(): Decoder does not accept option [" +
                 codec_options->to_flow_style_yaml() + "]");
   }
@@ -114,7 +114,7 @@ Decoder::Decoder(const CodecParameters &codec_params, Dictionary *const codec_op
   }
 
   // Check if the decoder accepts all the options
-  if (!codec_options->empty()) {
+  if (*codec_options) {
     throw Error("Decoder::Decoder(): Decoder does not accept option " +
                 codec_options->to_flow_style_yaml());
   }

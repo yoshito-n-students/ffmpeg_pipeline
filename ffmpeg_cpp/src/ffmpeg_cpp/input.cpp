@@ -51,7 +51,7 @@ Input::Input(const std::string &url, const std::string &format_name, Dictionary 
   }
 
   // Check if the input accepts all the options
-  if (!options->empty()) {
+  if (*options) {
     throw Error("Input::Input(): Input " + url + " does not accept option [" +
                 options->to_flow_style_yaml() + "]");
   }
