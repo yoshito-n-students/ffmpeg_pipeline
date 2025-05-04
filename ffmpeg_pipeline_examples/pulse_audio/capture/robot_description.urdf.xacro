@@ -9,9 +9,16 @@
             <plugin>ffmpeg_hardware/FFmpegInput</plugin>
             <param name="url">default</param>
             <param name="input_format">pulse</param>
+            <!--
+                Because the sample format of pulse audio is PCM_S16, 
+                single sample will be 4 bytes (= 16 bits * 2 channels).
+                Each fragment (packet) will contain 1920 samples (= 7680 / 4).
+                We will get packets at 25 Hz (= 48000 samples-per-sec / 1920).
+            -->
             <param name="options">
                 sample_rate: 48000
                 channels: 2
+                fragment_size: 7680
             </param>
             <param name="media_type">audio</param>
         </hardware>

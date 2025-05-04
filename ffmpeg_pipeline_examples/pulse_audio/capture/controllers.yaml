@@ -1,8 +1,8 @@
 controller_manager:
   ros__parameters:
-    # We get 20 frames per second from the input device.
-    # The update rate of the controller manager must be greater than this value not to miss any frames.
-    update_rate: 25 # must be integer
+    # As noted in robot_description.urdf.xacro, we expect 25 packets per sec from the input device.
+    # The update rate of the controller must be greater than this value not to miss any packets.
+    update_rate: 30 # must be integer
 
 # Decompress the packets from the input device
 decoder_filter:
@@ -10,30 +10,20 @@ decoder_filter:
     type: ffmpeg_controllers/DecoderFilter
     input_name: pulse_audio
 
-# Buffer the resampled frame to a size that the encoder can process
-frame_size_converter:
-  ros__parameters:
-    type: ffmpeg_controllers/AudioFifoFilter
-    input_name: decoder_filter
-    # We sample audio at 48000 Hz (see robot_description.urdf.xacro),
-    # so each frame contains 48000 / 20 = 2400 samples.
-    # nb_samples should be greader than 2400 not to discard any samples.
-    nb_samples: 2880
-
 # Compress the frames to a format that can be sent over the network
 encoder_filter:
   ros__parameters:
     type: ffmpeg_controllers/EncoderFilter
-    input_name: frame_size_converter
+    input_name: decoder_filter
     codec_parameters: |
       codec: opus
       bit_rate: 64000
       format: s16
       ch_layout: stereo
-      framerate: [1000, 60]
+      framerate: [25, 1]
     codec_options: |
       application: lowdelay
-      frame_duration: 60
+      frame_duration: 40
 
 # Send the packets to the network
 packet_broadcaster:

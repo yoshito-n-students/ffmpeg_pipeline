@@ -57,7 +57,6 @@ def generate_launch_description():
             robot_controllers,
             '--activate-as-group', 
             'decoder_filter',
-            'frame_size_converter',
             'encoder_filter',
             'packet_broadcaster',   
         ],
