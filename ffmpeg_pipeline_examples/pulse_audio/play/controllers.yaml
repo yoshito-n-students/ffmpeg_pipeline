@@ -1,10 +1,9 @@
 controller_manager:
   ros__parameters:
-    # In this example, we assume that the audio is sampled at 48000 Hz,
-    # and the number of samples per compressed packet is 1920 (see capture/controllers.yaml).
-    # So we can expect to receive 48000 / 2880 = 16.66 packets per second.
-    # The update rate of the controller manager must be greater than this value not to miss any packets.
-    update_rate: 25  # Hz
+    # If this example is used with the capture example,
+    # we receive 25 packets per second from the input topic.
+    # The update rate of the controllers must be greater than this value not to miss any packets.
+    update_rate: 30  # must be integer
 
 # Write the decompressed frames to the output device
 frame_writer:
