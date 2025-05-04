@@ -56,6 +56,7 @@ def generate_launch_description():
             '--param-file', 
             robot_controllers,
             '--activate-as-group', 
+            'raw_packet_broadcaster',
             'decoder_filter',
             'encoder_filter',
             'packet_broadcaster',   

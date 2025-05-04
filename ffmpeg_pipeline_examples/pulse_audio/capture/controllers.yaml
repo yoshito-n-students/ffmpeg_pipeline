@@ -4,6 +4,12 @@ controller_manager:
     # The update rate of the controller must be greater than this value not to miss any packets.
     update_rate: 30 # must be integer
 
+# Send raw packets from the input device to network
+raw_packet_broadcaster:
+  ros__parameters:
+    type: ffmpeg_controllers/PacketBroadcaster
+    input_name: pulse_audio
+
 # Decompress the packets from the input device
 decoder_filter:
   ros__parameters:
