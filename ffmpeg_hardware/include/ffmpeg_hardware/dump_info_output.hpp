@@ -103,10 +103,10 @@ protected:
 
   void print_frame() const {
     if (frame_->width > 0 && frame_->height > 0) {
-      RCLCPP_INFO(get_logger(), "Got frame (%ld | %s | %dx%d", frame_->pkt_dts,
+      RCLCPP_INFO(get_logger(), "Got frame (%ld | %s | %dx%d)", frame_->pkt_dts,
                   frame_.format_name().c_str(), frame_->width, frame_->height);
     } else if (frame_->sample_rate > 0) {
-      RCLCPP_INFO(get_logger(), "Got frame (%ld | %s | %s | %d Hz | %d samples", frame_->pkt_dts,
+      RCLCPP_INFO(get_logger(), "Got frame (%ld | %s | %s | %d Hz | %d samples)", frame_->pkt_dts,
                   frame_.ch_layout_str().c_str(), frame_.format_name().c_str(), frame_->sample_rate,
                   frame_->nb_samples);
     }
