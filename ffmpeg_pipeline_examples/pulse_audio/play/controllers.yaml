@@ -1,8 +1,32 @@
 controller_manager:
   ros__parameters:
+    # In this example, we assume that the audio is sampled at 48000 Hz,
+    # and the number of samples per compressed packet is 1920 (see capture/controllers.yaml).
+    # So we can expect to receive 48000 / 1920 = 25 packets per second.
+    # The update rate of the controller manager must be greater than this value not to miss any packets.
     update_rate: 30  # Hz
 
-packet_controller:
+# Write the decompressed frames to the output device
+frame_writer:
   ros__parameters:
-    type: ffmpeg_controllers/PacketController
+    type: ffmpeg_controllers/FrameWriter
+    input_name: decoder_filter
     output_name: pulse_audio
+
+# Decompress the packets with the codec parameters
+decoder_filter:
+  ros__parameters:
+    type: ffmpeg_controllers/DecoderFilter
+    input_name: parser_filter
+
+# Parse the packets and provide the codec parameters to the decoder
+parser_filter:
+  ros__parameters:
+    type: ffmpeg_controllers/ParserFilter
+    input_name: packet_receiver
+    codec_name: opus
+
+# Receive the packets from the network
+packet_receiver:
+  ros__parameters:
+    type: ffmpeg_controllers/PacketReceiver

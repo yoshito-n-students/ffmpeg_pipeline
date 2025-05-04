@@ -52,7 +52,15 @@ def generate_launch_description():
     packet_controller_spawner = Node(
         package='controller_manager',
         executable='spawner',
-        arguments=['packet_controller', '--param-file', robot_controllers],
+        arguments=[
+            '--param-file', 
+            robot_controllers,
+            '--activate-as-group', 
+            'frame_writer',
+            'decoder_filter',
+            'parser_filter',
+            'packet_receiver', 
+        ],
     )
 
     nodes = [

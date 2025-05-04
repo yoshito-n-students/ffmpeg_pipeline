@@ -12,6 +12,7 @@
             <param name="options">
                 sample_rate: 48000
                 channels: 2
+                frame_size: 1024
             </param>
             <param name="media_type">audio</param>
         </hardware>
