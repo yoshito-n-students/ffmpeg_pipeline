@@ -84,20 +84,24 @@ ffmpeg_pipeline_msgs::msg::Packet Packet::to_msg(const rclcpp::Time &stamp,
 // Frame - RAII wrapper for AVFrame
 // ================================
 
-Frame::Frame() : std::unique_ptr<AVFrame, Deleter<AVFrame>>(av_frame_alloc()) {
-  if (!get()) {
-    throw Error("Frame::Frame(): Failed to allocate AVFrame");
+Frame Frame::null() { return Frame(nullptr); }
+
+Frame Frame::create() {
+  Frame frame(av_frame_alloc());
+  if (!frame) {
+    throw Error("Frame::create(): Failed to allocate AVFrame");
   }
+  return frame;
 }
 
-Frame::Frame(const Frame &other) : Frame() {
+Frame::Frame(const Frame &other) : std::unique_ptr<AVFrame, Deleter<AVFrame>>() {
   if (const int ret = av_frame_ref(get(), other.get()); ret < 0) {
     throw Error("Frame::Frame(): Failed to create a reference to frame", ret);
   }
 }
 
 Frame Frame::transfer_data() const {
-  Frame dst;
+  Frame dst = Frame::create();
   if (const int ret = av_hwframe_transfer_data(dst.get(), get(), 0); ret < 0) {
     throw Error("Frame::transfer_data(): Error transferring data", ret);
   }

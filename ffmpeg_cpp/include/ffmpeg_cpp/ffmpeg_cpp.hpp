@@ -96,9 +96,15 @@ public:
 // ========================
 
 class Frame : public std::unique_ptr<AVFrame, Deleter<AVFrame>> {
+private:
+  using std::unique_ptr<AVFrame, Deleter<AVFrame>>::unique_ptr;
+  Frame() = delete;
+
 public:
+  // Construct without underlying AVFrame
+  static Frame null();
   // Allocate the frame and default the fields
-  Frame();
+  static Frame create();
   // Create a frame by referencing the data of the given frame.
   // If the data is not reference-counted, copy the data to a new frame.
   Frame(const Frame &other);
@@ -301,7 +307,7 @@ public:
   Frame read(const int nb_samples);
 
 private:
-  Frame template_frame_ = Frame();
+  Frame template_frame_ = Frame::null();
 };
 
 // ===========================

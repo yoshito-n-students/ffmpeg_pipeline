@@ -78,7 +78,7 @@ Frame AudioConverter::convert(const Frame &_in_frame) {
   }
 
   // Prepare the output frame with the required fields
-  Frame out_frame;
+  Frame out_frame = Frame::create();
   const AVChannelLayout swr_out_ch_layout =
       to_swr_channel_layout(get_channel_layout(get(), "out_chlayout"));
   if (const int ret = av_channel_layout_copy(&out_frame->ch_layout, &swr_out_ch_layout); ret < 0) {

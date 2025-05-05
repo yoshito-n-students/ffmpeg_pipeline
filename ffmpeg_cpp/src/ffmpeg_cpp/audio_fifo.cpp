@@ -17,6 +17,7 @@ AudioFifo::AudioFifo(const std::string &ch_layout_str, const std::string &format
   const AVSampleFormat format = av_get_sample_fmt(format_name.c_str());
 
   // Fill the template frame
+  template_frame_ = Frame::create();
   av_channel_layout_copy(&template_frame_->ch_layout, &ch_layout);
   template_frame_->format = format;
   template_frame_->sample_rate = sample_rate;
@@ -48,7 +49,7 @@ Frame AudioFifo::read(const int nb_samples) {
   // Prepare the empty frame with the same parameters as the template frame.
   // We do not copy parameters by Frame::Frame(const Frame&)
   // because the constructor copies the buffer as well.
-  Frame frame;
+  Frame frame = Frame::create();
   av_channel_layout_copy(&frame->ch_layout, &template_frame_->ch_layout);
   frame->format = template_frame_->format;
   frame->sample_rate = template_frame_->sample_rate;

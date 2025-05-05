@@ -35,7 +35,7 @@ VideoConverter::VideoConverter(const int src_width, const int src_height,
 }
 
 Frame VideoConverter::convert(const Frame &src_frame) {
-  Frame dst_frame;
+  Frame dst_frame = Frame::create();
   if (const int ret = sws_scale_frame(get(), dst_frame.get(), src_frame.get()); ret < 0) {
     throw Error("VideoConverter::convert(): Failed to convert frame", ret);
   }

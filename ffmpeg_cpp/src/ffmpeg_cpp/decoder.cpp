@@ -124,7 +124,7 @@ Frame Decoder::receive_frame() {
   // - AVERROR(EAGAIN): No frame available due to insufficient packets
   // - AVERROR_EOF: No frame available because the decoder has finished successfully
   // TODO: Notify the reason for the empty frame to the caller
-  Frame frame;
+  Frame frame = Frame::create();
   if (const int ret = avcodec_receive_frame(get(), frame.get());
       ret < 0 && ret != AVERROR(EAGAIN) && ret != AVERROR_EOF) {
     throw Error("Decoder::receive_frame(): Error during decoding", ret);
