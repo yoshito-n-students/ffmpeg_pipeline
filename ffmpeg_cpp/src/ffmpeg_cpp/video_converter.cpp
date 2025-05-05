@@ -19,19 +19,20 @@ namespace ffmpeg_cpp {
 // VideoConverter - RAII wrapper for SwsContext
 // ============================================
 
-VideoConverter::VideoConverter() {}
+VideoConverter VideoConverter::null() { return VideoConverter(nullptr); }
 
-VideoConverter::VideoConverter(const int src_width, const int src_height,
-                               const std::string &src_format_name, //
-                               const int dst_width, const int dst_height,
-                               const std::string &dst_format_name)
-    : VideoConverter() {
-  reset(sws_getContext(src_width, src_height, av_get_pix_fmt(src_format_name.c_str()), //
-                       dst_width, dst_height, av_get_pix_fmt(dst_format_name.c_str()), //
-                       0, nullptr, nullptr, nullptr));
-  if (!get()) {
-    throw Error("VideoConverter::VideoConverter(): Failed to create SwsContext");
+VideoConverter VideoConverter::create(const int src_width, const int src_height,
+                                      const std::string &src_format_name, //
+                                      const int dst_width, const int dst_height,
+                                      const std::string &dst_format_name) {
+  VideoConverter converter(
+      sws_getContext(src_width, src_height, av_get_pix_fmt(src_format_name.c_str()), //
+                     dst_width, dst_height, av_get_pix_fmt(dst_format_name.c_str()), //
+                     0, nullptr, nullptr, nullptr));
+  if (converter) {
+    throw Error("VideoConverter::create(): Failed to create SwsContext");
   }
+  return converter;
 }
 
 Frame VideoConverter::convert(const Frame &src_frame) {

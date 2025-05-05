@@ -340,16 +340,23 @@ private:
 // ===========================
 
 class VideoConverter : public std::unique_ptr<SwsContext, Deleter<SwsContext>> {
+private:
+  using std::unique_ptr<SwsContext, Deleter<SwsContext>>::unique_ptr;
+  VideoConverter() = delete;
+
 public:
   // Construct without underlying SwsContext
-  VideoConverter();
+  static VideoConverter null();
   // Initialize the converter for changing only the pixel format
-  VideoConverter(const int width, const int height, //
-                 const std::string &src_format_name, const std::string &dst_format_name)
-      : VideoConverter(width, height, src_format_name, width, height, dst_format_name) {};
+  static VideoConverter create(const int width, const int height, //
+                               const std::string &src_format_name,
+                               const std::string &dst_format_name) {
+    return create(width, height, src_format_name, width, height, dst_format_name);
+  }
   // Initialize the converter for changing the pixel format and the size
-  VideoConverter(const int src_width, const int src_height, const std::string &src_format_name,
-                 const int dst_width, const int dst_height, const std::string &dst_format_name);
+  static VideoConverter create(const int src_width, const int src_height,
+                               const std::string &src_format_name, const int dst_width,
+                               const int dst_height, const std::string &dst_format_name);
 
   int src_width() const;
   int src_height() const;

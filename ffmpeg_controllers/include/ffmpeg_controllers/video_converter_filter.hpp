@@ -43,7 +43,7 @@ protected:
     try {
       // Ensure the converter is configured
       if (!converter_) {
-        converter_ = ffmpeg_cpp::VideoConverter(
+        converter_ = ffmpeg_cpp::VideoConverter::create(
             input_frame->width, input_frame->height, input_frame.format_name(),
             // Keep the original size and pixel format if dst_{width_, height_, format_} are not set
             dst_width_ > 0 ? dst_width_ : input_frame->width,
@@ -68,7 +68,7 @@ protected:
 protected:
   std::size_t dst_width_, dst_height_;
   std::string dst_format_;
-  ffmpeg_cpp::VideoConverter converter_;
+  ffmpeg_cpp::VideoConverter converter_ = ffmpeg_cpp::VideoConverter::null();
 };
 
 } // namespace ffmpeg_controllers
