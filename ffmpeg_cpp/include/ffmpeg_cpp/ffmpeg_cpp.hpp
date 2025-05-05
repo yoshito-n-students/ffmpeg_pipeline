@@ -316,10 +316,14 @@ public:
 // ============================
 
 class AudioFifo : public std::unique_ptr<AVAudioFifo, Deleter<AVAudioFifo>> {
+private:
+  using std::unique_ptr<AVAudioFifo, Deleter<AVAudioFifo>>::unique_ptr;
+  AudioFifo() = delete;
+
 public:
-  AudioFifo();
-  AudioFifo(const std::string &ch_layout_str, const std::string &format_name,
-            const int sample_rate);
+  static AudioFifo null();
+  static AudioFifo create(const std::string &ch_layout_str, const std::string &format_name,
+                          const int sample_rate);
 
   std::string ch_layout_str() const;
   std::string format_name() const;

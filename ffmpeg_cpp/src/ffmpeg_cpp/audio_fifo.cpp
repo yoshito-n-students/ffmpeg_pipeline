@@ -7,26 +7,30 @@ namespace ffmpeg_cpp {
 // AudioFifo - RAII wrapper for AVAudioFifo
 // ========================================
 
-AudioFifo::AudioFifo() {}
+AudioFifo AudioFifo::null() { return AudioFifo(nullptr); }
 
-AudioFifo::AudioFifo(const std::string &ch_layout_str, const std::string &format_name,
-                     const int sample_rate)
-    : AudioFifo() {
+AudioFifo AudioFifo::create(const std::string &ch_layout_str, const std::string &format_name,
+                            const int sample_rate) {
   // Convert the given strings to data types
   const AVChannelLayout ch_layout = to_channel_layout(ch_layout_str);
   const AVSampleFormat format = av_get_sample_fmt(format_name.c_str());
 
-  // Fill the template frame
-  template_frame_ = Frame::create();
-  av_channel_layout_copy(&template_frame_->ch_layout, &ch_layout);
-  template_frame_->format = format;
-  template_frame_->sample_rate = sample_rate;
-
   // Allocate the AVAudioFifo
-  reset(av_audio_fifo_alloc(format, ch_layout.nb_channels, 1));
-  if (!get()) {
-    throw Error("AudioFifo::AudioFifo(): Failed to allocate AVAudioFifo");
+  AudioFifo fifo(av_audio_fifo_alloc(format, ch_layout.nb_channels, 1));
+  if (!fifo) {
+    throw Error("AudioFifo::create(): Failed to allocate AVAudioFifo");
   }
+
+  // Fill the template frame
+  fifo.template_frame_ = Frame::create();
+  if (const int ret = av_channel_layout_copy(&fifo.template_frame_->ch_layout, &ch_layout);
+      ret < 0) {
+    throw Error("AudioFifo::create(): Failed to copy channel layout", ret);
+  }
+  fifo.template_frame_->format = format;
+  fifo.template_frame_->sample_rate = sample_rate;
+
+  return fifo;
 }
 
 std::string AudioFifo::ch_layout_str() const { return to_string(template_frame_->ch_layout); }

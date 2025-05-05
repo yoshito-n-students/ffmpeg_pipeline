@@ -41,7 +41,7 @@ protected:
     try {
       // Ensure the FIFO is configured
       if (!fifo_) {
-        fifo_ = ffmpeg_cpp::AudioFifo(
+        fifo_ = ffmpeg_cpp::AudioFifo::create(
             // Keep the original channel layout if ch_layout_str_ is not set
             !ch_layout_str_.empty() ? ch_layout_str_ : input_frame.ch_layout_str(),
             input_frame.format_name(), input_frame->sample_rate);
@@ -82,7 +82,7 @@ protected:
 protected:
   std::string ch_layout_str_;
   int nb_samples_;
-  ffmpeg_cpp::AudioFifo fifo_;
+  ffmpeg_cpp::AudioFifo fifo_ = ffmpeg_cpp::AudioFifo::null();
 };
 
 } // namespace ffmpeg_controllers
