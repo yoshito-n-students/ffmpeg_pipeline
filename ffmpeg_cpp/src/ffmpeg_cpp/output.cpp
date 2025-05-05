@@ -16,7 +16,7 @@ namespace ffmpeg_cpp {
 Output Output::null() { return Output(nullptr); }
 
 Output Output::create(const std::string &format_name, const std::string &url,
-                      const CodecParameters &codec_params, Dictionary *const options) {
+                      const CodecParameters &codec_params, const Dictionary &options) {
   // Register all the input format types
   avdevice_register_all();
 
@@ -31,9 +31,9 @@ Output Output::create(const std::string &format_name, const std::string &url,
                       url + ")",
                   ret);
     }
-    oformat_ctx->flags |= AVFMT_FLAG_NONBLOCK;
     output.reset(oformat_ctx);
   }
+  output->flags |= AVFMT_FLAG_NONBLOCK;
 
   // Create a new stream in the output format context
   output.ostream_ = avformat_new_stream(output.get(), nullptr);
@@ -60,18 +60,17 @@ Output Output::create(const std::string &format_name, const std::string &url,
   // avformat_write_header() may free the options,
   // so we release the ownership of it from unique_ptr during calling the function.
   {
-    AVDictionary *options_ptr = options->release();
-    const int ret = avformat_write_header(output.get(), &options_ptr);
-    options->reset(options_ptr);
+    Dictionary writable_options = options;
+    AVDictionary *writable_options_ptr = writable_options.release();
+    const int ret = avformat_write_header(output.get(), &writable_options_ptr);
+    writable_options.reset(writable_options_ptr);
     if (ret < 0) {
       throw Error("Output::create(): Failed to write header", ret);
     }
-  }
-
-  // Check if the output accepts all the options
-  if (*options) {
-    throw Error("Output::create(): Output " + url + " does not accept options [" +
-                options->to_flow_style_yaml() + "]");
+    if (writable_options) {
+      throw Error("Output::create(): Output " + url + " does not accept options " +
+                  writable_options.to_flow_style_yaml());
+    }
   }
 
   return output;

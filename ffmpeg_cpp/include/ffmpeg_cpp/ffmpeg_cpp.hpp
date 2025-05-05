@@ -426,7 +426,7 @@ public:
   // Open the output device with the given format name and url,
   // and set the codec parameters and options to the stream
   static Output create(const std::string &format_name, const std::string &url,
-                       const CodecParameters &codec_params, Dictionary *const options);
+                       const CodecParameters &codec_params, const Dictionary &options);
 
   std::string format_name() const;
   std::string url() const;

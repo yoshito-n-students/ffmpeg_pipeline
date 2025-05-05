@@ -18,9 +18,9 @@ protected:
       // Try to get the parameters for the output from the hardware_info, or use default values
       const auto format = get_parameter_as<std::string>("format", "pulse"),
                  url = get_parameter_as<std::string>("url", "default");
-      auto codec_params = get_parameter_as<ffmpeg_cpp::CodecParameters>(
+      const auto codec_params = get_parameter_as<ffmpeg_cpp::CodecParameters>(
           "codec_parameters", ffmpeg_cpp::CodecParameters::null());
-      auto options =
+      const auto options =
           get_parameter_as<ffmpeg_cpp::Dictionary>("options", ffmpeg_cpp::Dictionary::null());
 
       // [EXPERIMENTAL] Try to complete the codec parameters (extradata, etc)
@@ -34,7 +34,7 @@ protected:
       }
 
       // Open the input with the parameters
-      output_ = ffmpeg_cpp::Output::create(format, url, codec_params, &options);
+      output_ = ffmpeg_cpp::Output::create(format, url, codec_params, options);
       RCLCPP_INFO(get_logger(), "Configured the output ([%s] %s)", output_.format_name().c_str(),
                   output_.url().c_str());
 
