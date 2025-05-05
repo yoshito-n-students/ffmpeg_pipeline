@@ -43,7 +43,7 @@ protected:
     try {
       // Ensure the converter is configured for the input frame
       if (!converter_) {
-        converter_ = ffmpeg_cpp::AudioConverter(
+        converter_ = ffmpeg_cpp::AudioConverter::create(
             input_frame.ch_layout_str(), input_frame.format_name(), input_frame->sample_rate,
             // Keep the original channel layout, format and sample rate if out_xxx_ are not set
             !out_ch_layout_str_.empty() ? out_ch_layout_str_ : input_frame.ch_layout_str(),
@@ -72,7 +72,7 @@ protected:
 protected:
   std::string out_ch_layout_str_, out_format_name_;
   int out_sample_rate_;
-  ffmpeg_cpp::AudioConverter converter_;
+  ffmpeg_cpp::AudioConverter converter_ = ffmpeg_cpp::AudioConverter::null();
 };
 
 } // namespace ffmpeg_controllers

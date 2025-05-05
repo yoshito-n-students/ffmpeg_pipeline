@@ -375,12 +375,16 @@ public:
 // ===========================
 
 class AudioConverter : public std::unique_ptr<SwrContext, Deleter<SwrContext>> {
+private:
+  using std::unique_ptr<SwrContext, Deleter<SwrContext>>::unique_ptr;
+  AudioConverter() = delete;
+
 public:
-  AudioConverter();
-  AudioConverter(const std::string &in_ch_layout_str, const std::string &in_format_name,
-                 const int in_sample_rate, //
-                 const std::string &out_ch_layout_str, const std::string &out_format_name,
-                 const int out_sample_rate);
+  static AudioConverter null();
+  static AudioConverter create(const std::string &in_ch_layout_str,
+                               const std::string &in_format_name, const int in_sample_rate,
+                               const std::string &out_ch_layout_str,
+                               const std::string &out_format_name, const int out_sample_rate);
 
   std::string in_ch_layout_str() const;
   std::string in_format_name() const;

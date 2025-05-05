@@ -13,13 +13,13 @@ namespace ffmpeg_cpp {
 // AudioConverter - RAII wrapper for SwrContext
 // ============================================
 
-AudioConverter::AudioConverter() {}
+AudioConverter AudioConverter::null() { return AudioConverter(nullptr); }
 
-AudioConverter::AudioConverter(const std::string &in_ch_layout_str,
-                               const std::string &in_format_name, const int in_sample_rate,
-                               const std::string &out_ch_layout_str,
-                               const std::string &out_format_name, const int out_sample_rate)
-    : AudioConverter() {
+AudioConverter AudioConverter::create(const std::string &in_ch_layout_str,
+                                      const std::string &in_format_name, const int in_sample_rate,
+                                      const std::string &out_ch_layout_str,
+                                      const std::string &out_format_name,
+                                      const int out_sample_rate) {
   SwrContext *swr_ctx = nullptr;
   const AVChannelLayout in_ch_layout = to_channel_layout(in_ch_layout_str),
                         out_ch_layout = to_channel_layout(out_ch_layout_str);
@@ -29,13 +29,14 @@ AudioConverter::AudioConverter(const std::string &in_ch_layout_str,
           &in_ch_layout, av_get_sample_fmt(in_format_name.c_str()), in_sample_rate,    //
           0, nullptr);
       ret < 0) {
-    throw Error("AudioConverter::AudioConverter(): Failed to create SwrContext", ret);
+    throw Error("AudioConverter::create(): Failed to create SwrContext", ret);
   }
-  reset(swr_ctx);
+  AudioConverter converter(swr_ctx);
 
-  if (const int ret = swr_init(get()); ret < 0) {
-    throw Error("AudioConverter::AudioConverter(): Failed to initialize SwrContext", ret);
+  if (const int ret = swr_init(converter.get()); ret < 0) {
+    throw Error("AudioConverter::create(): Failed to initialize SwrContext", ret);
   }
+  return converter;
 }
 
 // Helper to convert to the channel layout used internally by libswresample
