@@ -31,7 +31,7 @@ int main(int argc, char *argv[]) {
   try {
     // Open the input device
     av::Dictionary options = av::Dictionary::create(options_str);
-    av::Input input(url, "v4l2", &options, "video");
+    av::Input input = av::Input::create(url, "v4l2", &options, "video");
     const std::string codec_name = input.codec_parameters().codec_name();
 
     // Continuously read frames from the input device and publish them

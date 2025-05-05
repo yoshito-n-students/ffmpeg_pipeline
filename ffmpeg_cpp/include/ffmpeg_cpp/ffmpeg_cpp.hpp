@@ -203,13 +203,17 @@ public:
 // ======================================================
 
 class Input : public std::unique_ptr<AVFormatContext, Deleter<AVFormatContext>> {
+private:
+  using std::unique_ptr<AVFormatContext, Deleter<AVFormatContext>>::unique_ptr;
+  Input() = delete;
+
 public:
   // Construct without underlying AVFormatContext
-  Input();
+  static Input null();
   // Open the input device by avformat_open_input() with the given URL, format name, and options,
   // and find the best stream of the given media type
-  Input(const std::string &url, const std::string &format_name, Dictionary *const options,
-        const std::string &media_type_name);
+  static Input create(const std::string &url, const std::string &format_name,
+                      Dictionary *const options, const std::string &media_type_name);
 
   std::string format_name() const;
   std::string url() const;

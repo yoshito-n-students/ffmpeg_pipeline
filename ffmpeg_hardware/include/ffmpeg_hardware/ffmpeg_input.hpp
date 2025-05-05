@@ -37,7 +37,7 @@ protected:
               "{input_format: h264, video_size: 1920x1080, framerate: 30, timestamps: abs}"));
 
       // Open the input with the parameters
-      input_ = ffmpeg_cpp::Input(url, input_format, &options, media_type);
+      input_ = ffmpeg_cpp::Input::create(url, input_format, &options, media_type);
       RCLCPP_INFO(get_logger(), "Configured the input ([%s] %s)", input_.format_name().c_str(),
                   input_.url().c_str());
 
@@ -70,7 +70,7 @@ protected:
       set_state_from_pointer("packet", nullptr);
 
       // Close the input device
-      input_ = ffmpeg_cpp::Input();
+      input_ = ffmpeg_cpp::Input::null();
       RCLCPP_INFO(get_logger(), "Closed the input device");
       return CallbackReturn::SUCCESS;
     } catch (const std::runtime_error &error) {
@@ -104,7 +104,7 @@ protected:
   }
 
 protected:
-  ffmpeg_cpp::Input input_;
+  ffmpeg_cpp::Input input_ = ffmpeg_cpp::Input::null();
   ffmpeg_cpp::CodecParameters codec_params_ = ffmpeg_cpp::CodecParameters::null();
   ffmpeg_cpp::Packet packet_ = ffmpeg_cpp::Packet::null();
 };

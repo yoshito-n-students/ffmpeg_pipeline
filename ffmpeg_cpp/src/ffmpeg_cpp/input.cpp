@@ -13,21 +13,19 @@ namespace ffmpeg_cpp {
 // Input - RAII wrapper for AVFormatContext
 // ========================================
 
-Input::Input() {}
+Input Input::null() { return Input(nullptr); }
 
-Input::Input(const std::string &url, const std::string &format_name, Dictionary *const options,
-             const std::string &media_type_name)
-    : Input() {
+Input Input::create(const std::string &url, const std::string &format_name,
+                    Dictionary *const options, const std::string &media_type_name) {
   // Register all the input format types
   avdevice_register_all();
 
   // Allocate the input format context and set the non-blocking flag
-  if (AVFormatContext *const iformat_ctx = avformat_alloc_context(); iformat_ctx) {
-    iformat_ctx->flags |= AVFMT_FLAG_NONBLOCK;
-    reset(iformat_ctx);
-  } else {
+  Input input(avformat_alloc_context());
+  if (!input) {
     throw Error("Input::Input(): Failed to allocate AVFormatContext");
   }
+  input->flags |= AVFMT_FLAG_NONBLOCK;
 
   // Find the input format by name
   const AVInputFormat *iformat =
@@ -40,10 +38,10 @@ Input::Input(const std::string &url, const std::string &format_name, Dictionary 
   // avformat_open_input() may free the context and options,
   // so we release the ownership of them from unique_ptr during calling it.
   {
-    AVFormatContext *iformat_ctx = release();
+    AVFormatContext *iformat_ctx = input.release();
     AVDictionary *options_ptr = options->release();
     const int ret = avformat_open_input(&iformat_ctx, url.c_str(), iformat, &options_ptr);
-    reset(iformat_ctx);
+    input.reset(iformat_ctx);
     options->reset(options_ptr);
     if (ret < 0) {
       throw Error("Input::Input(): Failed to open input " + url, ret);
@@ -57,7 +55,7 @@ Input::Input(const std::string &url, const std::string &format_name, Dictionary 
   }
 
   // Retrieve stream information on the input
-  if (const int ret = avformat_find_stream_info(get(), nullptr); ret < 0) {
+  if (const int ret = avformat_find_stream_info(input.get(), nullptr); ret < 0) {
     throw Error("Input::Input(): Failed to find stream information", ret);
   }
 
@@ -84,11 +82,13 @@ Input::Input(const std::string &url, const std::string &format_name, Dictionary 
   }
 
   // Find the best stream of the given media type
-  istream_id_ = av_find_best_stream(get(), media_type, -1, -1, nullptr, 0);
-  if (istream_id_ < 0) {
+  input.istream_id_ = av_find_best_stream(input.get(), media_type, -1, -1, nullptr, 0);
+  if (input.istream_id_ < 0) {
     throw Error("Input::Input(): Failed to find the best stream of media type " + media_type_name,
-                istream_id_);
+                input.istream_id_);
   }
+
+  return input;
 }
 
 std::string Input::format_name() const {
