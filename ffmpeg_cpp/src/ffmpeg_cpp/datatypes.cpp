@@ -36,7 +36,7 @@ Packet Packet::create(const std::uint8_t *const data, const std::size_t size) {
   // Take the copy of the given data
   std::uint8_t *const data_copy = static_cast<std::uint8_t *>(av_malloc(size));
   if (!data_copy) {
-    throw Error("Packet::Packet(): Failed to allocate memory for packet data");
+    throw Error("Packet::create(): Failed to allocate memory for packet data");
   }
   std::memcpy(data_copy, data, size);
 
@@ -44,7 +44,7 @@ Packet Packet::create(const std::uint8_t *const data, const std::size_t size) {
   Packet packet = Packet::create();
   if (const int ret = av_packet_from_data(packet.get(), data_copy, size); ret < 0) {
     av_free(data_copy);
-    throw Error("Packet::Packet(): Failed to create a packet from data", ret);
+    throw Error("Packet::create(): Failed to create a packet from data", ret);
   }
   return packet;
 }
