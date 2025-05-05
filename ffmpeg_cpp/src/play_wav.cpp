@@ -24,7 +24,7 @@ int main(int argc, char *argv[]) {
               << " opened (codec: " << input.codec_parameters().codec_name() << ")" << std::endl;
 
     // Open the output device for the input codec parameters
-    av::Output output("pulse", "default", input.codec_parameters(), {});
+    av::Output output = av::Output::create("pulse", "default", input.codec_parameters(), nullptr);
     std::cout << "Output device opened" << std::endl;
 
     // Read packets from the input file and play them on the output device

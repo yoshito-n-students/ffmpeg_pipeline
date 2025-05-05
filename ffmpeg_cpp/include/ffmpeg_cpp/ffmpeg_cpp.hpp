@@ -416,13 +416,17 @@ public:
 // =======================================================
 
 class Output : public std::unique_ptr<AVFormatContext, Deleter<AVFormatContext>> {
+private:
+  using std::unique_ptr<AVFormatContext, Deleter<AVFormatContext>>::unique_ptr;
+  Output() = delete;
+
 public:
   // Construct without underlying AVFormatContext
-  Output();
+  static Output null();
   // Open the output device with the given format name and url,
   // and set the codec parameters and options to the stream
-  Output(const std::string &format_name, const std::string &url,
-         const CodecParameters &codec_params, Dictionary *const options);
+  static Output create(const std::string &format_name, const std::string &url,
+                       const CodecParameters &codec_params, Dictionary *const options);
 
   std::string format_name() const;
   std::string url() const;

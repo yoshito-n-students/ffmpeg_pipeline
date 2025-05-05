@@ -13,45 +13,46 @@ namespace ffmpeg_cpp {
 // Output - RAII wrapper for AVFormatContext
 // =========================================
 
-Output::Output() {}
+Output Output::null() { return Output(nullptr); }
 
-Output::Output(const std::string &format_name, const std::string &url,
-               const CodecParameters &codec_params, Dictionary *const options)
-    : Output() {
+Output Output::create(const std::string &format_name, const std::string &url,
+                      const CodecParameters &codec_params, Dictionary *const options) {
   // Register all the input format types
   avdevice_register_all();
 
   // Allocate the output format context and set the non-blocking flag
+  Output output(nullptr);
   {
     AVFormatContext *oformat_ctx = nullptr;
     if (const int ret =
             avformat_alloc_output_context2(&oformat_ctx, nullptr, format_name.c_str(), url.c_str());
         ret < 0) {
-      throw Error("Output::Output(): Failed to allocate AVFormatContext ([" + format_name + "] " +
+      throw Error("Output::create(): Failed to allocate AVFormatContext ([" + format_name + "] " +
                       url + ")",
                   ret);
     }
     oformat_ctx->flags |= AVFMT_FLAG_NONBLOCK;
-    reset(oformat_ctx);
+    output.reset(oformat_ctx);
   }
 
   // Create a new stream in the output format context
-  ostream_ = avformat_new_stream(get(), nullptr);
-  if (!ostream_) {
-    throw Error("Output::Output(): Failed to create new stream on AVFormatContext");
+  output.ostream_ = avformat_new_stream(output.get(), nullptr);
+  if (!output.ostream_) {
+    throw Error("Output::create(): Failed to create new stream on AVFormatContext");
   }
 
   // Set the parameters for the output stream
   // TODO: set required parameters for video streams
-  ostream_->time_base = AVRational{1, codec_params->sample_rate};
-  if (const int ret = avcodec_parameters_copy(ostream_->codecpar, codec_params.get()); ret < 0) {
-    throw Error("Output::Output(): Failed to set codec parameters for output stream", ret);
+  output.ostream_->time_base = AVRational{1, codec_params->sample_rate};
+  if (const int ret = avcodec_parameters_copy(output.ostream_->codecpar, codec_params.get());
+      ret < 0) {
+    throw Error("Output::create(): Failed to set codec parameters for output stream", ret);
   }
 
   // Open the file for writing if the format requires it
-  if (!(get()->oformat->flags & AVFMT_NOFILE)) {
-    if (const int ret = avio_open(&get()->pb, url.c_str(), AVIO_FLAG_WRITE); ret < 0) {
-      throw Error("Output::Output(): Failed to open output file " + url, ret);
+  if (!(output->oformat->flags & AVFMT_NOFILE)) {
+    if (const int ret = avio_open(&output->pb, url.c_str(), AVIO_FLAG_WRITE); ret < 0) {
+      throw Error("Output::create(): Failed to open output file " + url, ret);
     }
   }
 
@@ -60,18 +61,20 @@ Output::Output(const std::string &format_name, const std::string &url,
   // so we release the ownership of it from unique_ptr during calling the function.
   {
     AVDictionary *options_ptr = options->release();
-    const int ret = avformat_write_header(get(), &options_ptr);
+    const int ret = avformat_write_header(output.get(), &options_ptr);
     options->reset(options_ptr);
     if (ret < 0) {
-      throw Error("Output::Output(): Failed to write header", ret);
+      throw Error("Output::create(): Failed to write header", ret);
     }
   }
 
   // Check if the output accepts all the options
   if (*options) {
-    throw Error("Output::Output(): Output " + url + " does not accept options [" +
+    throw Error("Output::create(): Output " + url + " does not accept options [" +
                 options->to_flow_style_yaml() + "]");
   }
+
+  return output;
 }
 
 std::string Output::format_name() const {

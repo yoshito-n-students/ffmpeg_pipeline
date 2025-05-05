@@ -34,7 +34,7 @@ protected:
       }
 
       // Open the input with the parameters
-      output_ = ffmpeg_cpp::Output(format, url, codec_params, &options);
+      output_ = ffmpeg_cpp::Output::create(format, url, codec_params, &options);
       RCLCPP_INFO(get_logger(), "Configured the output ([%s] %s)", output_.format_name().c_str(),
                   output_.url().c_str());
 
@@ -65,7 +65,7 @@ protected:
       frame_ = ffmpeg_cpp::Frame::null();
 
       // Close the output device
-      output_ = ffmpeg_cpp::Output();
+      output_ = ffmpeg_cpp::Output::null();
       RCLCPP_INFO(get_logger(), "Closed the output device");
       return CallbackReturn::SUCCESS;
     } catch (const std::runtime_error &error) {
@@ -125,7 +125,7 @@ protected:
   }
 
 protected:
-  ffmpeg_cpp::Output output_;
+  ffmpeg_cpp::Output output_ = ffmpeg_cpp::Output::null();
   ffmpeg_cpp::Packet packet_ = ffmpeg_cpp::Packet::null();
   ffmpeg_cpp::Frame frame_ = ffmpeg_cpp::Frame::null();
   std::int64_t prev_dts_ = 0;
