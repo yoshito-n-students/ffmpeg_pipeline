@@ -234,8 +234,9 @@ public:
   // Construct without underlying AVCodecContext
   Decoder();
   // Allocate the codec context for the given arguments. All of them are optional.
-  // If the decoder name is given and codec_id in the codec parameters are set,
-  // the decoder name is preferred to find the decoder.
+  // The underlying decoder is determined by decoder_name if not empty,
+  // otherwise by codec_params->codec_id. If multiple decoders support the codec_id,
+  // ffmpeg selects the default one.
   Decoder(const std::string &decoder_name,
           const CodecParameters &codec_params = CodecParameters::null(),
           const Dictionary &decoder_options = Dictionary::null());

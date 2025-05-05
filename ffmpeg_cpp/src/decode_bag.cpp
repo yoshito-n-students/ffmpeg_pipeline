@@ -92,7 +92,8 @@ int main(int argc, char **argv) {
 
         // Initialize the decoder with the parameters if not already done
         if (!decoder) {
-          decoder = av::Decoder("", codec_params);
+          decoder = av::Decoder(
+              "" /* empty decoder name. codec_params->codec_id is used instead. */, codec_params);
           RCLCPP_INFO(node->get_logger(), "Configured decoder (%s|%s)",
                       decoder.codec_name().c_str(), decoder.hw_type_name().c_str());
         }
