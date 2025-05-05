@@ -29,8 +29,9 @@ protected:
     }
 
     try {
-      codec_options_ =
-          ffmpeg_cpp::Dictionary(get_user_parameter<std::string>("codec_options", "{}"));
+      decoder_name_ = get_user_parameter<std::string>("decoder_name", "");
+      decoder_options_ =
+          ffmpeg_cpp::Dictionary(get_user_parameter<std::string>("decoder_options", "{}"));
     } catch (const std::runtime_error &error) {
       RCLCPP_ERROR(get_logger(), "Error while getting parameter value: %s", error.what());
       return NodeReturn::ERROR;
@@ -46,8 +47,7 @@ protected:
     try {
       // Ensure the decoder is configured for the codec
       if (!decoder_) {
-        ffmpeg_cpp::Dictionary options(codec_options_); // Copy codec_options_ to avoid modifying it
-        decoder_ = ffmpeg_cpp::Decoder(codec_params, &options);
+        decoder_ = ffmpeg_cpp::Decoder(decoder_name_, codec_params, decoder_options_);
         if (const std::string hw_type_name = decoder_.hw_type_name(); hw_type_name == "none") {
           RCLCPP_INFO(get_logger(), "Configured decoder (%s)", decoder_.codec_name().c_str());
         } else {
@@ -90,8 +90,9 @@ protected:
   }
 
 protected:
+  std::string decoder_name_;
+  ffmpeg_cpp::Dictionary decoder_options_;
   ffmpeg_cpp::Decoder decoder_;
-  ffmpeg_cpp::Dictionary codec_options_;
 };
 
 } // namespace ffmpeg_controllers

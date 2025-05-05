@@ -55,68 +55,60 @@ static void set_context_options(AVCodecContext *const decoder_ctx) {
   }
 }
 
-Decoder::Decoder(const std::string &codec_name, Dictionary *const codec_options) : Decoder() {
-  // Find the decoder by name
-  const AVCodec *const codec = avcodec_find_decoder_by_name(codec_name.c_str());
+Decoder::Decoder(const std::string &decoder_name, const CodecParameters &codec_params,
+                 const Dictionary &decoder_options)
+    : Decoder() {
+  // Find the decoder by the given name or codec id
+  const AVCodec *codec = nullptr;
+  if (!decoder_name.empty()) {
+    codec = avcodec_find_decoder_by_name(decoder_name.c_str());
+  } else if (codec_params) {
+    codec = avcodec_find_decoder(codec_params->codec_id);
+  }
   if (!codec) {
-    throw Error("Decoder::Decoder(): " + codec_name + " was not recognized as a decoder name");
+    throw Error("Decoder::Decoder(): Failed to find the decoder");
   }
 
   // Allocate the decoder context and set some options
   reset(avcodec_alloc_context3(codec));
   if (!get()) {
-    throw Error("Decoder::Decoder(): Failed to allocate codec context");
+    throw Error("Decoder::Decoder(): Failed to allocate the decoder context");
   }
   set_context_options(get());
 
-  // Open the decoder. avcodec_open2() may free the options,
-  // so we release the ownership of it from unique_ptr during calling the function.
-  {
-    AVDictionary *codec_options_ptr = codec_options->release();
-    if (const int ret = avcodec_open2(get(), codec, &codec_options_ptr); ret < 0) {
-      throw Error("Decoder::Decoder(): Failed to open codec", ret);
+  // Import the codec parameters to the decoder context except for codec_{type, id}
+  // because they suppose to be already set by avcodec_alloc_context3()
+  // and are ommitted from the codec parameters.
+  if (codec_params) {
+    const AVMediaType codec_type = get()->codec_type;
+    const AVCodecID codec_id = get()->codec_id;
+    if (const int ret = avcodec_parameters_to_context(get(), codec_params.get()); ret < 0) {
+      throw Error("Decoder::Decoder(): Failed to import codec parameters", ret);
     }
-    codec_options->reset(codec_options_ptr);
+    get()->codec_type = codec_type;
+    get()->codec_id = codec_id;
   }
 
-  // Check if the decoder accepts all the options
-  if (*codec_options) {
-    throw Error("Decoder::Decoder(): Decoder does not accept option [" +
-                codec_options->to_flow_style_yaml() + "]");
-  }
-}
-
-Decoder::Decoder(const CodecParameters &codec_params, Dictionary *const codec_options) : Decoder() {
-  // Find the decoder by the given id
-  const AVCodec *const codec = avcodec_find_decoder(codec_params->codec_id);
-  if (!codec) {
-    throw Error("Decoder::Decoder(): Faild to find decoder");
-  }
-
-  // Allocate the decoder context and set some options
-  reset(avcodec_alloc_context3(codec));
-  if (!get()) {
-    throw Error("Decoder::Decoder(): Failed to allocate codec context");
-  }
-  set_context_options(get());
-
-  // Import the codec parameters to the decoder context
-  avcodec_parameters_to_context(get(), codec_params.get());
-
-  // Open the decoder. avcodec_open2() may free the options,
-  // so we release the ownership of it from unique_ptr during calling the function.
-  {
-    AVDictionary *codec_options_ptr = codec_options->release();
-    if (const int ret = avcodec_open2(get(), codec, &codec_options_ptr); ret < 0) {
-      throw Error("Decoder::Decoder(): Failed to open codec", ret);
+  // Open the decoder
+  if (decoder_options) {
+    // With the decoder options. We copy the given options and release the ownership of it
+    // during calling avcodec_open2() because the funtion modify the options.
+    Dictionary writable_options(decoder_options);
+    AVDictionary *writable_options_ptr = writable_options.release();
+    const int ret = avcodec_open2(get(), codec, &writable_options_ptr);
+    writable_options.reset(writable_options_ptr);
+    if (ret < 0) {
+      throw Error("Decoder::Decoder(): Failed to open the decoder", ret);
     }
-    codec_options->reset(codec_options_ptr);
-  }
-
-  // Check if the decoder accepts all the options
-  if (*codec_options) {
-    throw Error("Decoder::Decoder(): Decoder does not accept option " +
-                codec_options->to_flow_style_yaml());
+    if (writable_options) {
+      throw Error("Decoder::Decoder(): Options " + writable_options.to_flow_style_yaml() +
+                  " were not accepted by the decoder");
+    }
+  } else {
+    // Without the decoder options
+    if (const int ret = avcodec_open2(get(), codec, nullptr); ret < 0) {
+      throw Error("Decoder::Decoder(): Failed to open the decoder", ret);
+    }
   }
 }
 

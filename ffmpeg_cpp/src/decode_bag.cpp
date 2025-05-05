@@ -92,8 +92,7 @@ int main(int argc, char **argv) {
 
         // Initialize the decoder with the parameters if not already done
         if (!decoder) {
-          av::Dictionary options;
-          decoder = av::Decoder(codec_params, &options);
+          decoder = av::Decoder("", codec_params);
           RCLCPP_INFO(node->get_logger(), "Configured decoder (%s|%s)",
                       decoder.codec_name().c_str(), decoder.hw_type_name().c_str());
         }

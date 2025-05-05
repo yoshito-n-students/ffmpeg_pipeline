@@ -233,11 +233,12 @@ class Decoder : public std::unique_ptr<AVCodecContext, Deleter<AVCodecContext>> 
 public:
   // Construct without underlying AVCodecContext
   Decoder();
-  // Allocate the codec context for the given decoder name, codec parameters and options.
-  Decoder(const std::string &decoder_name, Dictionary *const codec_options);
-  Decoder(const CodecParameters &codec_params, Dictionary *const codec_options);
-  Decoder(const std::string &decoder_name, const CodecParameters &codec_params,
-          Dictionary *const codec_options);
+  // Allocate the codec context for the given arguments. All of them are optional.
+  // If the decoder name is given and codec_id in the codec parameters are set,
+  // the decoder name is preferred to find the decoder.
+  Decoder(const std::string &decoder_name,
+          const CodecParameters &codec_params = CodecParameters::null(),
+          const Dictionary &decoder_options = Dictionary::null());
 
   std::string codec_name() const;
   std::string hw_type_name() const;

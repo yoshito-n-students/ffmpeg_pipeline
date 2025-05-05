@@ -61,8 +61,8 @@ protected:
 
         // Configure the decoder for this fragment if needed
         if (!decoder_) {
-          ffmpeg_cpp::Dictionary options; // TODO: get options from the node parameter
-          decoder_ = ffmpeg_cpp::Decoder(fragment->format, &options);
+          // TODO: get options from the node parameter
+          decoder_ = ffmpeg_cpp::Decoder(fragment->format);
           RCLCPP_INFO(node_->get_logger(), "Configured decoder (%s|%s)",
                       decoder_.codec_name().c_str(), decoder_.hw_type_name().c_str());
         }
