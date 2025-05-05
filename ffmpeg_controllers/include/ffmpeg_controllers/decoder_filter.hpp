@@ -31,7 +31,7 @@ protected:
     try {
       decoder_name_ = get_user_parameter<std::string>("decoder_name", "");
       decoder_options_ =
-          ffmpeg_cpp::Dictionary(get_user_parameter<std::string>("decoder_options", "{}"));
+          ffmpeg_cpp::Dictionary::create(get_user_parameter<std::string>("decoder_options", "{}"));
     } catch (const std::runtime_error &error) {
       RCLCPP_ERROR(get_logger(), "Error while getting parameter value: %s", error.what());
       return NodeReturn::ERROR;
@@ -91,7 +91,7 @@ protected:
 
 protected:
   std::string decoder_name_;
-  ffmpeg_cpp::Dictionary decoder_options_;
+  ffmpeg_cpp::Dictionary decoder_options_ = ffmpeg_cpp::Dictionary::null();
   ffmpeg_cpp::Decoder decoder_;
 };
 

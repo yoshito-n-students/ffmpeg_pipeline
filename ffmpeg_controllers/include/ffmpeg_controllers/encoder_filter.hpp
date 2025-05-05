@@ -30,7 +30,7 @@ protected:
 
     try {
       codec_options_ =
-          ffmpeg_cpp::Dictionary(get_user_parameter<std::string>("codec_options", "{}"));
+          ffmpeg_cpp::Dictionary::create(get_user_parameter<std::string>("codec_options", "{}"));
       codec_params_ =
           ffmpeg_cpp::CodecParameters(get_user_parameter<std::string>("codec_parameters"));
     } catch (const std::runtime_error &error) {
@@ -102,7 +102,7 @@ protected:
 
 protected:
   ffmpeg_cpp::Encoder encoder_;
-  ffmpeg_cpp::Dictionary codec_options_;
+  ffmpeg_cpp::Dictionary codec_options_ = ffmpeg_cpp::Dictionary::null();
   ffmpeg_cpp::CodecParameters codec_params_;
 };
 
