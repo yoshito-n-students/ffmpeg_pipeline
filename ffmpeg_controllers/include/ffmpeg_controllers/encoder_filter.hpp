@@ -63,9 +63,9 @@ protected:
         // Configure the encoder with the codec parameters and options
         encoder_ = ffmpeg_cpp::Encoder::create(encoder_name_, codec_params_, encoder_options_);
         if (const std::string hw_type_name = encoder_.hw_type_name(); hw_type_name == "none") {
-          RCLCPP_INFO(get_logger(), "Configured encoder (%s)", encoder_.codec_name().c_str());
+          RCLCPP_INFO(get_logger(), "Configured encoder (%s)", encoder_->codec->name);
         } else {
-          RCLCPP_INFO(get_logger(), "Configured encoder (%s|%s)", encoder_.codec_name().c_str(),
+          RCLCPP_INFO(get_logger(), "Configured encoder (%s|%s)", encoder_->codec->name,
                       hw_type_name.c_str());
         }
       }

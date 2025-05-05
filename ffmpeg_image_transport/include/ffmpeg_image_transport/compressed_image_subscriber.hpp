@@ -64,8 +64,8 @@ protected:
         if (!decoder_) {
           // TODO: get options from the node parameter
           decoder_ = ffmpeg_cpp::Decoder::create(fragment->format);
-          RCLCPP_INFO(node_->get_logger(), "Configured decoder (%s|%s)",
-                      decoder_.codec_name().c_str(), decoder_.hw_type_name().c_str());
+          RCLCPP_INFO(node_->get_logger(), "Configured decoder (%s|%s)", decoder_->codec->name,
+                      decoder_.hw_type_name().c_str());
         }
 
         // Send the packet to the decoder

@@ -49,9 +49,9 @@ protected:
       if (!decoder_) {
         decoder_ = ffmpeg_cpp::Decoder::create(decoder_name_, codec_params, decoder_options_);
         if (const std::string hw_type_name = decoder_.hw_type_name(); hw_type_name == "none") {
-          RCLCPP_INFO(get_logger(), "Configured decoder (%s)", decoder_.codec_name().c_str());
+          RCLCPP_INFO(get_logger(), "Configured decoder (%s)", decoder_->codec->name);
         } else {
-          RCLCPP_INFO(get_logger(), "Configured decoder (%s|%s)", decoder_.codec_name().c_str(),
+          RCLCPP_INFO(get_logger(), "Configured decoder (%s|%s)", decoder_->codec->name,
                       hw_type_name.c_str());
         }
       }
