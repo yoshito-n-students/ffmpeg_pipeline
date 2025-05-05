@@ -60,9 +60,13 @@ Packet Packet::create(const ffmpeg_pipeline_msgs::msg::Packet &msg) {
 }
 
 Packet::Packet(const Packet &other) : std::unique_ptr<AVPacket, Deleter<AVPacket>>() {
-  *this = Packet::create();
-  if (const int ret = av_packet_ref(get(), other.get()); ret < 0) {
-    throw Error("Packet::Packet(): Failed to create a reference to packet", ret);
+  if (other) {
+    *this = create();
+    if (const int ret = av_packet_ref(get(), other.get()); ret < 0) {
+      throw Error("Packet::Packet(): Failed to create a reference to packet", ret);
+    }
+  } else {
+    *this = null();
   }
 }
 
@@ -95,9 +99,13 @@ Frame Frame::create() {
 }
 
 Frame::Frame(const Frame &other) : std::unique_ptr<AVFrame, Deleter<AVFrame>>() {
-  *this = Frame::create();
-  if (const int ret = av_frame_ref(get(), other.get()); ret < 0) {
-    throw Error("Frame::Frame(): Failed to create a reference to frame", ret);
+  if (other) {
+    *this = create();
+    if (const int ret = av_frame_ref(get(), other.get()); ret < 0) {
+      throw Error("Frame::Frame(): Failed to create a reference to frame", ret);
+    }
+  } else {
+    *this = null();
   }
 }
 

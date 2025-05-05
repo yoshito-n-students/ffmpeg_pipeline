@@ -19,12 +19,16 @@ Dictionary Dictionary::create(const std::string &yaml) {
 
 Dictionary::Dictionary(const Dictionary &other)
     : std::unique_ptr<AVDictionary, Deleter<AVDictionary>>() {
-  AVDictionary *dict = nullptr;
-  if (const int ret = av_dict_copy(&dict, other.get(), 0); ret < 0) {
-    av_dict_free(&dict);
-    throw Error("Dictionary::Dictionary(): Failed to copy dictionary", ret);
+  if (other) {
+    AVDictionary *dict = nullptr;
+    if (const int ret = av_dict_copy(&dict, other.get(), 0); ret < 0) {
+      av_dict_free(&dict);
+      throw Error("Dictionary::Dictionary(): Failed to copy dictionary", ret);
+    }
+    reset(dict);
+  } else {
+    *this = null();
   }
-  reset(dict);
 }
 
 std::string Dictionary::to_yaml() const {
