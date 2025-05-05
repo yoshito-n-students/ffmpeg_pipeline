@@ -41,14 +41,14 @@ static Packet make_packet(const Packet &buffer, std::uint8_t *const packet_data,
   if (buffer->buf->data <= packet_data &&
       packet_data + packet_size <= buffer->buf->data + buffer->buf->size) {
     // If the packet data is within the input buffer, refer to the buffer from the packet
-    Packet packet(buffer);
+    Packet packet = buffer;
     packet->data = packet_data;
     packet->size = packet_size;
     return packet;
   } else {
     // If the packet data is within the parser's internal buffer,
     // refer to the copy of the data to guarantee the lifetime of the data
-    return Packet(packet_data, packet_size);
+    return Packet::create(packet_data, packet_size);
   }
 }
 
@@ -63,7 +63,7 @@ std::pair<Packet, CodecParameters> Parser::parse_initial_packet(const Packet &bu
   // Return an empty packet and the default parameters
   // if no key-frame-equivalent packet is found
   if (!packet_data || get()->key_frame == 0) {
-    return {Packet(), CodecParameters()};
+    return {Packet::null(), CodecParameters::null()};
   }
 
   // Construct the initial packet based on the parsed data
@@ -72,7 +72,8 @@ std::pair<Packet, CodecParameters> Parser::parse_initial_packet(const Packet &bu
   // Copy the codec parameters from the codec context
   CodecParameters params;
   if (const int ret = avcodec_parameters_from_context(params.get(), codec_ctx_.get()); ret < 0) {
-    throw Error("Parser::parse_initial_packet(): Failed to copy codec parameters from context", ret);
+    throw Error("Parser::parse_initial_packet(): Failed to copy codec parameters from context",
+                ret);
   }
 
   return {packet, params};
@@ -87,7 +88,7 @@ Packet Parser::parse_next_packet(const Packet &buffer, std::int64_t *const pos) 
 
   // Return an empty packet if no packet data is found
   if (!packet_data) {
-    return Packet();
+    return Packet::null();
   }
 
   // Construct the packet based on the parsed data

@@ -79,7 +79,7 @@ Packet Encoder::receive_packet() {
   // - AVERROR(EAGAIN): No packet available due to insufficient input frames
   // - AVERROR_EOF: No packet available because the encoder has finished successfully
   // TODO: Notify the reason for the empty packet to the caller
-  Packet packet;
+  Packet packet = Packet::create();
   if (const int ret = avcodec_receive_packet(get(), packet.get());
       ret < 0 && ret != AVERROR(EAGAIN) && ret != AVERROR_EOF) {
     throw Error("Encoder::receive_packet(): Error during encoding", ret);

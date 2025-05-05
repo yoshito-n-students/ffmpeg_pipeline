@@ -108,7 +108,7 @@ CodecParameters Input::codec_parameters() const {
 
 Packet Input::read_frame() {
   while (true) {
-    Packet packet;
+    Packet packet = Packet::create();
     if (const int ret = av_read_frame(get(), packet.get());
         (ret >= 0 || ret == AVERROR(EAGAIN)) && packet->stream_index == istream_id_) {
       return packet;
