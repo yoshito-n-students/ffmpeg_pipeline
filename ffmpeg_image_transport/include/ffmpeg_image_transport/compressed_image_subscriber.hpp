@@ -107,8 +107,8 @@ protected:
 
             // Configure the image converter for this frame if needed
             if (!converter_) {
-              converter_ = ffmpeg_cpp::VideoConverter(frame->width, frame->height,
-                                                      frame.format_name(), dst_format_name);
+              converter_ = ffmpeg_cpp::VideoConverter::create(frame->width, frame->height,
+                                                              frame.format_name(), dst_format_name);
               RCLCPP_INFO(node_->get_logger(), "Initialized converter ([%s -> %s] %dx%d)",
                           converter_.src_format_name().c_str(),
                           converter_.dst_format_name().c_str(), //
@@ -135,7 +135,7 @@ private:
   rclcpp::Node *node_;
   ffmpeg_cpp::Parser parser_ = ffmpeg_cpp::Parser::null();
   ffmpeg_cpp::Decoder decoder_ = ffmpeg_cpp::Decoder::null();
-  ffmpeg_cpp::VideoConverter converter_;
+  ffmpeg_cpp::VideoConverter converter_ = ffmpeg_cpp::VideoConverter::null();
 };
 
 } // namespace ffmpeg_image_transport
