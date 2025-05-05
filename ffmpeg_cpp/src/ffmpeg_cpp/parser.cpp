@@ -10,30 +10,34 @@ namespace ffmpeg_cpp {
 // Parser - RAII wrapper for AVCodecParserContext
 // ==============================================
 
-Parser::Parser() {}
+Parser Parser::null() { return Parser(nullptr); }
 
-Parser::Parser(const std::string &codec_name) : Parser() {
-  // Find the codec by name
+Parser Parser::create(const std::string &codec_name) {
+  // Find the codec by name (TODO: find AV_CODEC_ID by name)
   const AVCodec *const codec = avcodec_find_decoder_by_name(codec_name.c_str());
   if (!codec) {
-    throw Error("Parser::Parser(): " + codec_name + " was not recognized as a codec name");
+    throw Error("Parser::create(): " + codec_name + " was not recognized as a codec name");
   }
 
   // Initialize the parser with the codec
-  reset(av_parser_init(codec->id));
-  if (!get()) {
-    throw Error("Parser::Parser(): Failed to initialize parser for codec (" + codec_name + ")");
+  Parser parser(av_parser_init(codec->id));
+  if (!parser) {
+    throw Error("Parser::create(): Failed to initialize parser for codec (" + codec_name + ")");
   }
 
   // Initialize the codec context to accumulate the codec parameters
-  codec_ctx_.reset(avcodec_alloc_context3(codec));
-  if (!codec_ctx_) {
-    throw Error("Parser::Parser(): Failed to allocate codec context for codec (" + codec_name +
+  parser.codec_ctx_.reset(avcodec_alloc_context3(codec));
+  if (!parser.codec_ctx_) {
+    throw Error("Parser::create(): Failed to allocate codec context for codec (" + codec_name +
                 ")");
   }
-  if (const int ret = avcodec_open2(codec_ctx_.get(), codec, nullptr); ret < 0) {
-    throw Error("Parser::Parser(): Failed to open codec", ret);
+
+  // TODO: Remove this if it works
+  if (const int ret = avcodec_open2(parser.codec_ctx_.get(), codec, nullptr); ret < 0) {
+    throw Error("Parser::create(): Failed to open codec", ret);
   }
+
+  return parser;
 }
 
 static Packet make_packet(const Packet &buffer, std::uint8_t *const packet_data,

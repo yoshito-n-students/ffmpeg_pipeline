@@ -48,7 +48,7 @@ int main(int argc, char **argv) {
   // the decoder, which decompresses the packets to frames,
   // and the converter, which converts the frames to BGR24 images.
   // They must be configured with the codec name or pixel format name before use.
-  av::Parser parser;
+  av::Parser parser = av::Parser::null();
   av::Decoder decoder = av::Decoder::null();
   av::VideoConverter converter;
 
@@ -66,7 +66,7 @@ int main(int argc, char **argv) {
     try {
       // Initialize the parser with the image format if not already done
       if (!parser) {
-        parser = av::Parser(comp_img->format);
+        parser = av::Parser::create(comp_img->format);
         RCLCPP_INFO(node->get_logger(), "Configured parser (codec: %s)",
                     parser.codec_names().front().c_str());
       }

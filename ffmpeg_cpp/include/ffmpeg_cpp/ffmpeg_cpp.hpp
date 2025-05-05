@@ -222,11 +222,15 @@ private:
 // ================================
 
 class Parser : public std::unique_ptr<AVCodecParserContext, Deleter<AVCodecParserContext>> {
+private:
+  using std::unique_ptr<AVCodecParserContext, Deleter<AVCodecParserContext>>::unique_ptr;
+  Parser() = delete;
+
 public:
   // Construct without underlying AVCodecParserContext
-  Parser();
+  static Parser null();
   // Allocate the parser context for the given codec name
-  Parser(const std::string &codec_name);
+  static Parser create(const std::string &codec_name);
 
   std::vector<std::string> codec_names() const;
 

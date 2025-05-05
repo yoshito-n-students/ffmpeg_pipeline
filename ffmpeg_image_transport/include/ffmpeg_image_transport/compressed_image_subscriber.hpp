@@ -35,7 +35,7 @@ protected:
     try {
       // Configure the parser for this fragment if needed
       if (!parser_) {
-        parser_ = ffmpeg_cpp::Parser(fragment->format);
+        parser_ = ffmpeg_cpp::Parser::create(fragment->format);
         RCLCPP_INFO(node_->get_logger(), "Configured parser (%s)",
                     parser_.codec_names().front().c_str());
       }
@@ -133,7 +133,7 @@ protected:
 
 private:
   rclcpp::Node *node_;
-  ffmpeg_cpp::Parser parser_;
+  ffmpeg_cpp::Parser parser_ = ffmpeg_cpp::Parser::null();
   ffmpeg_cpp::Decoder decoder_ = ffmpeg_cpp::Decoder::null();
   ffmpeg_cpp::VideoConverter converter_;
 };
