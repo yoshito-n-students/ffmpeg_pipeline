@@ -143,7 +143,7 @@ protected:
   }
 
 private:
-  ffmpeg_cpp::CodecParameters codec_params_;
+  ffmpeg_cpp::CodecParameters codec_params_ = ffmpeg_cpp::CodecParameters::null();
 };
 
 template <class Interface>

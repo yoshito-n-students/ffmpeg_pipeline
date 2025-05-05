@@ -68,7 +68,7 @@ protected:
 
 protected:
   ffmpeg_cpp::Parser parser_;
-  ffmpeg_cpp::CodecParameters output_params_;
+  ffmpeg_cpp::CodecParameters output_params_ = ffmpeg_cpp::CodecParameters::null();
 };
 
 } // namespace ffmpeg_controllers

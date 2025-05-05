@@ -32,7 +32,7 @@ protected:
       codec_options_ =
           ffmpeg_cpp::Dictionary::create(get_user_parameter<std::string>("codec_options", "{}"));
       codec_params_ =
-          ffmpeg_cpp::CodecParameters(get_user_parameter<std::string>("codec_parameters"));
+          ffmpeg_cpp::CodecParameters::create(get_user_parameter<std::string>("codec_parameters"));
     } catch (const std::runtime_error &error) {
       RCLCPP_ERROR(get_logger(), "Error while getting parameter value: %s", error.what());
       return NodeReturn::ERROR;
@@ -101,9 +101,9 @@ protected:
   }
 
 protected:
-  ffmpeg_cpp::Encoder encoder_;
   ffmpeg_cpp::Dictionary codec_options_ = ffmpeg_cpp::Dictionary::null();
-  ffmpeg_cpp::CodecParameters codec_params_;
+  ffmpeg_cpp::CodecParameters codec_params_ = ffmpeg_cpp::CodecParameters::null();
+  ffmpeg_cpp::Encoder encoder_;
 };
 
 } // namespace ffmpeg_controllers
