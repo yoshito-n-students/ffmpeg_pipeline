@@ -36,7 +36,7 @@ protected:
   on_generate(const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/,
               const ffmpeg_pipeline_msgs::msg::Packet &input_msg) override {
     try {
-      return {ControllerReturn::OK, ffmpeg_cpp::Packet(input_msg)};
+      return {ControllerReturn::OK, ffmpeg_cpp::Packet::create(input_msg)};
     } catch (const std::runtime_error &error) {
       RCLCPP_ERROR(get_logger(), "Error while updating packet: %s", error.what());
       return {ControllerReturn::ERROR, std::nullopt};

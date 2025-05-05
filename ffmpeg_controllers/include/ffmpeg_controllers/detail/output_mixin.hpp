@@ -108,7 +108,7 @@ protected:
   }
 
 private:
-  ffmpeg_cpp::Packet output_packet_;
+  ffmpeg_cpp::Packet output_packet_ = ffmpeg_cpp::Packet::null();
 };
 
 template <class Interface>

@@ -47,7 +47,7 @@ protected:
       // Try to find the packet and codec parameters until the buffer is fully parsed
       std::int64_t pos = 0;
       while (pos < input_packet->size) {
-        ffmpeg_cpp::Packet output_packet;
+        ffmpeg_cpp::Packet output_packet = ffmpeg_cpp::Packet::null();
         if (output_params_.codec_name() == "none") {
           std::tie(output_packet, output_params_) =
               parser_.parse_initial_packet(input_packet, &pos);

@@ -78,7 +78,7 @@ protected:
       // Extract as many packets as possible from the encoder and keep only the latest packet.
       // According to the ffmpeg's reference, there should be only one packet per frame
       // so no packets should be dropped.
-      ffmpeg_cpp::Packet packet;
+      ffmpeg_cpp::Packet packet = ffmpeg_cpp::Packet::null();
       while (true) {
         if (ffmpeg_cpp::Packet tmp_packet = encoder_.receive_packet(); !tmp_packet.empty()) {
           packet = std::move(tmp_packet); // Keep the latest packet

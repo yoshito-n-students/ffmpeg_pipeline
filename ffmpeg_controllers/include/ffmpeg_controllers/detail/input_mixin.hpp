@@ -157,7 +157,7 @@ protected:
 
 private:
   std::string input_name_;
-  decltype(ffmpeg_cpp::Packet()->dts) prev_dts_;
+  std::int64_t prev_dts_;
 };
 
 template <class Interface>
