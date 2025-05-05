@@ -22,13 +22,17 @@ namespace ffmpeg_cpp {
 // Packet - RAII wrapper for AVPacket
 // ==================================
 
-Packet::Packet() : std::unique_ptr<AVPacket, Deleter<AVPacket>>(av_packet_alloc()) {
-  if (!get()) {
-    throw Error("Packet::Packet(): Failed to allocate AVPacket");
+Packet Packet::null() { return Packet(nullptr); }
+
+Packet Packet::create() {
+  Packet packet(av_packet_alloc());
+  if (!packet) {
+    throw Error("Packet::create(): Failed to allocate AVPacket");
   }
+  return packet;
 }
 
-Packet::Packet(const std::uint8_t *const data, const std::size_t size) : Packet() {
+Packet Packet::create(const std::uint8_t *const data, const std::size_t size) {
   // Take the copy of the given data
   std::uint8_t *const data_copy = static_cast<std::uint8_t *>(av_malloc(size));
   if (!data_copy) {
@@ -37,22 +41,26 @@ Packet::Packet(const std::uint8_t *const data, const std::size_t size) : Packet(
   std::memcpy(data_copy, data, size);
 
   // Create the packet from the copied data
-  if (const int ret = av_packet_from_data(get(), data_copy, size); ret < 0) {
+  Packet packet = Packet::create();
+  if (const int ret = av_packet_from_data(packet.get(), data_copy, size); ret < 0) {
     av_free(data_copy);
     throw Error("Packet::Packet(): Failed to create a packet from data", ret);
   }
+  return packet;
 }
 
-Packet::Packet(const ffmpeg_pipeline_msgs::msg::Packet &msg)
-    : Packet(msg.data.data(), msg.data.size()) {
-  get()->pts = msg.pts;
-  get()->dts = msg.dts;
-  get()->duration = msg.duration;
-  get()->time_base.num = msg.time_base.num;
-  get()->time_base.den = msg.time_base.den;
+Packet Packet::create(const ffmpeg_pipeline_msgs::msg::Packet &msg) {
+  Packet packet = Packet::create(msg.data.data(), msg.data.size());
+  packet->pts = msg.pts;
+  packet->dts = msg.dts;
+  packet->duration = msg.duration;
+  packet->time_base.num = msg.time_base.num;
+  packet->time_base.den = msg.time_base.den;
+  return packet;
 }
 
-Packet::Packet(const Packet &other) : Packet() {
+Packet::Packet(const Packet &other) : std::unique_ptr<AVPacket, Deleter<AVPacket>>() {
+  *this = Packet::create();
   if (const int ret = av_packet_ref(get(), other.get()); ret < 0) {
     throw Error("Packet::Packet(): Failed to create a reference to packet", ret);
   }

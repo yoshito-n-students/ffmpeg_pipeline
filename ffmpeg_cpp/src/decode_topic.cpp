@@ -33,7 +33,7 @@ int main(int argc, char *argv[]) {
             if (packet_data->data.empty()) {
               return;
             }
-            av::Packet packet;
+            av::Packet packet = av::Packet::create();
             packet->data = packet_data->data.data();
             packet->size = packet_data->data.size();
 

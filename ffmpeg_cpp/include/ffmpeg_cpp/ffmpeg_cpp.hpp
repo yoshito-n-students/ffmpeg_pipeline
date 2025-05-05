@@ -58,13 +58,19 @@ template <typename T> struct Deleter {
 // =========================
 
 class Packet : public std::unique_ptr<AVPacket, Deleter<AVPacket>> {
+private:
+  using std::unique_ptr<AVPacket, Deleter<AVPacket>>::unique_ptr;
+  Packet() = delete;
+
 public:
+  // Construct without underlying AVPacket
+  static Packet null();
   // Allocate the packet and default the fields
-  Packet();
+  static Packet create();
   // Create a packet by copying the given data
-  Packet(const std::uint8_t *const data, const std::size_t size);
+  static Packet create(const std::uint8_t *const data, const std::size_t size);
   // Create a packet by copying the given message
-  Packet(const ffmpeg_pipeline_msgs::msg::Packet &msg);
+  static Packet create(const ffmpeg_pipeline_msgs::msg::Packet &msg);
   // Create a packet by referencing the data of the given packet.
   // If the data is not reference-counted, copy the data to a new packet.
   Packet(const Packet &other);

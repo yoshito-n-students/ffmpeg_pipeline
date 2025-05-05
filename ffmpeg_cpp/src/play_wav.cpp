@@ -29,7 +29,7 @@ int main(int argc, char *argv[]) {
 
     // Read packets from the input file and play them on the output device
     while (true) {
-      av::Packet packet;
+      av::Packet packet = av::Packet::null();
       while (true) {
         packet = input.read_frame();
         if (!packet.empty()) {
