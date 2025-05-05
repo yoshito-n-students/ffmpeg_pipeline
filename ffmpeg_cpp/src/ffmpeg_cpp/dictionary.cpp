@@ -6,25 +6,20 @@
 
 namespace ffmpeg_cpp {
 
-Dictionary Dictionary::null() {
-  Dictionary dict;
-  dict.reset(nullptr);
+Dictionary Dictionary::null() { return Dictionary(nullptr); }
+
+Dictionary Dictionary::create(const std::string &yaml) {
+  Dictionary dict = Dictionary::null();
+  if (!YAML::convert<Dictionary>::decode(YAML::Load(yaml), dict)) {
+    throw Error("Dictionary::create(): Failed to parse dictionary from yaml");
+  }
   return dict;
 }
 
-// TODO: rename to create()
-Dictionary::Dictionary() {}
-
-Dictionary::Dictionary(const std::string &yaml) : Dictionary() {
-  if (!YAML::convert<Dictionary>::decode(YAML::Load(yaml), *this)) {
-    throw Error("Dictionary::Dictionary(): Failed to parse dictionary from yaml");
-  }
-}
-
-Dictionary::Dictionary(const Dictionary &other) : Dictionary() {
+Dictionary::Dictionary(const Dictionary &other)
+    : std::unique_ptr<AVDictionary, Deleter<AVDictionary>>() {
   AVDictionary *dict = nullptr;
-  const int ret = av_dict_copy(&dict, other.get(), 0);
-  if (ret < 0) {
+  if (const int ret = av_dict_copy(&dict, other.get(), 0); ret < 0) {
     av_dict_free(&dict);
     throw Error("Dictionary::Dictionary(): Failed to copy dictionary", ret);
   }

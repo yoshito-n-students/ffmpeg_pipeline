@@ -135,12 +135,15 @@ public:
 // =============================
 
 class Dictionary : public std::unique_ptr<AVDictionary, Deleter<AVDictionary>> {
+private:
+  using std::unique_ptr<AVDictionary, Deleter<AVDictionary>>::unique_ptr;
+  Dictionary() = delete;
+
 public:
   // Construct without underlying AVDictionary
   static Dictionary null();
-  Dictionary();
   // Create a dictionary by parsing the given yaml string
-  Dictionary(const std::string &yaml);
+  static Dictionary create(const std::string &yaml);
   // Create a dictionary by copying the given dictionary
   Dictionary(const Dictionary &other);
   Dictionary &operator=(const Dictionary &other) {

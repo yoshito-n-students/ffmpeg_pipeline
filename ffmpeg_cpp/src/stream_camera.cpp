@@ -30,7 +30,7 @@ int main(int argc, char *argv[]) {
 
   try {
     // Open the input device
-    av::Dictionary options(options_str);
+    av::Dictionary options = av::Dictionary::create(options_str);
     av::Input input(url, "v4l2", &options, "video");
     const std::string codec_name = input.codec_parameters().codec_name();
 
