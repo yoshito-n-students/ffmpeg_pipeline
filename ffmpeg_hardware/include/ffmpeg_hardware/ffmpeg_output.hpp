@@ -39,7 +39,7 @@ protected:
                   output_.url().c_str());
 
       // Initialize the command variables
-      packet_ = ffmpeg_cpp::Packet();
+      packet_ = ffmpeg_cpp::Packet::create();
       frame_ = ffmpeg_cpp::Frame();
       packet_->dts = frame_->pkt_dts = prev_dts_ = 0;
 
@@ -61,7 +61,7 @@ protected:
       set_command_from_pointer("frame", nullptr);
 
       // Free the command variables
-      packet_ = ffmpeg_cpp::Packet();
+      packet_ = ffmpeg_cpp::Packet::null();
       frame_ = ffmpeg_cpp::Frame();
 
       // Close the output device
@@ -126,10 +126,9 @@ protected:
 
 protected:
   ffmpeg_cpp::Output output_;
-  ffmpeg_cpp::Packet packet_;
+  ffmpeg_cpp::Packet packet_ = ffmpeg_cpp::Packet::null();
   ffmpeg_cpp::Frame frame_;
-  std::common_type_t<decltype(ffmpeg_cpp::Packet()->dts), decltype(ffmpeg_cpp::Frame()->pkt_dts)>
-      prev_dts_;
+  std::int64_t prev_dts_;
 };
 
 } // namespace ffmpeg_hardware

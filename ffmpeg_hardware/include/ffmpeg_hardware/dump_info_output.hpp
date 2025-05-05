@@ -18,7 +18,7 @@ protected:
       // TODO: Print available parameters for debugging purposes
 
       // Initialize the command variables and register them to the interface
-      packet_ = ffmpeg_cpp::Packet();
+      packet_ = ffmpeg_cpp::Packet::create();
       frame_ = ffmpeg_cpp::Frame();
       packet_->dts = frame_->pkt_dts = prev_dts_ = 0;
       set_command_from_pointer("packet", &packet_);
@@ -35,7 +35,7 @@ protected:
       // Unregister the command variables to the interface and free them
       set_command_from_pointer("packet", nullptr);
       set_command_from_pointer("frame", nullptr);
-      packet_ = ffmpeg_cpp::Packet();
+      packet_ = ffmpeg_cpp::Packet::null();
       frame_ = ffmpeg_cpp::Frame();
       RCLCPP_INFO(get_logger(), "Closed the output device");
       return CallbackReturn::SUCCESS;
@@ -113,10 +113,9 @@ protected:
   }
 
 protected:
-  ffmpeg_cpp::Packet packet_;
+  ffmpeg_cpp::Packet packet_ = ffmpeg_cpp::Packet::null();
   ffmpeg_cpp::Frame frame_;
-  std::common_type_t<decltype(ffmpeg_cpp::Packet()->dts), decltype(ffmpeg_cpp::Frame()->pkt_dts)>
-      prev_dts_;
+  std::int64_t prev_dts_;
 };
 
 } // namespace ffmpeg_hardware
