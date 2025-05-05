@@ -95,6 +95,7 @@ Frame Frame::create() {
 }
 
 Frame::Frame(const Frame &other) : std::unique_ptr<AVFrame, Deleter<AVFrame>>() {
+  *this = Frame::create();
   if (const int ret = av_frame_ref(get(), other.get()); ret < 0) {
     throw Error("Frame::Frame(): Failed to create a reference to frame", ret);
   }
