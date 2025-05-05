@@ -65,13 +65,13 @@ Decoder Decoder::create(const std::string &decoder_name, const CodecParameters &
     codec = avcodec_find_decoder(codec_params->codec_id);
   }
   if (!codec) {
-    throw Error("Decoder::Decoder(): Failed to find the decoder");
+    throw Error("Decoder::create(): Failed to find the decoder");
   }
 
   // Allocate the decoder context and set some options
   Decoder decoder(avcodec_alloc_context3(codec));
   if (!decoder) {
-    throw Error("Decoder::Decoder(): Failed to allocate the decoder context");
+    throw Error("Decoder::create(): Failed to allocate the decoder context");
   }
   set_context_options(decoder.get());
 
@@ -82,7 +82,7 @@ Decoder Decoder::create(const std::string &decoder_name, const CodecParameters &
     const AVMediaType codec_type = decoder->codec_type;
     const AVCodecID codec_id = decoder->codec_id;
     if (const int ret = avcodec_parameters_to_context(decoder.get(), codec_params.get()); ret < 0) {
-      throw Error("Decoder::Decoder(): Failed to import codec parameters", ret);
+      throw Error("Decoder::create(): Failed to import codec parameters", ret);
     }
     decoder->codec_type = codec_type;
     decoder->codec_id = codec_id;
@@ -97,16 +97,16 @@ Decoder Decoder::create(const std::string &decoder_name, const CodecParameters &
     const int ret = avcodec_open2(decoder.get(), codec, &writable_options_ptr);
     writable_options.reset(writable_options_ptr);
     if (ret < 0) {
-      throw Error("Decoder::Decoder(): Failed to open the decoder", ret);
+      throw Error("Decoder::create(): Failed to open the decoder", ret);
     }
     if (writable_options) {
-      throw Error("Decoder::Decoder(): Options " + writable_options.to_flow_style_yaml() +
+      throw Error("Decoder::create(): Options " + writable_options.to_flow_style_yaml() +
                   " were not accepted by the decoder");
     }
   } else {
     // Without the decoder options
     if (const int ret = avcodec_open2(decoder.get(), codec, nullptr); ret < 0) {
-      throw Error("Decoder::Decoder(): Failed to open the decoder", ret);
+      throw Error("Decoder::create(): Failed to open the decoder", ret);
     }
   }
 
