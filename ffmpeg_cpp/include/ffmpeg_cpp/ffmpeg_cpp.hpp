@@ -213,7 +213,7 @@ public:
   // Open the input device by avformat_open_input() with the given URL, format name, and options,
   // and find the best stream of the given media type
   static Input create(const std::string &url, const std::string &format_name,
-                      Dictionary *const options, const std::string &media_type_name);
+                      const Dictionary &options, const std::string &media_type_name);
 
   std::string format_name() const;
   std::string url() const;

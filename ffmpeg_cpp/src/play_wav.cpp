@@ -19,7 +19,7 @@ int main(int argc, char *argv[]) {
 
   try {
     // Open the input file
-    av::Input input = av::Input::create(argv[1], "", {}, "audio");
+    av::Input input = av::Input::create(argv[1], "", av::Dictionary::null(), "audio");
     std::cout << "Input device " << input_filename
               << " opened (codec: " << input.codec_parameters().codec_name() << ")" << std::endl;
 

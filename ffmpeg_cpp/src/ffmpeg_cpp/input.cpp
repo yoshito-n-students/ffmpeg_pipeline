@@ -16,7 +16,7 @@ namespace ffmpeg_cpp {
 Input Input::null() { return Input(nullptr); }
 
 Input Input::create(const std::string &url, const std::string &format_name,
-                    Dictionary *const options, const std::string &media_type_name) {
+                    const Dictionary &options, const std::string &media_type_name) {
   // Register all the input format types
   avdevice_register_all();
 
@@ -39,19 +39,18 @@ Input Input::create(const std::string &url, const std::string &format_name,
   // so we release the ownership of them from unique_ptr during calling it.
   {
     AVFormatContext *iformat_ctx = input.release();
-    AVDictionary *options_ptr = options->release();
-    const int ret = avformat_open_input(&iformat_ctx, url.c_str(), iformat, &options_ptr);
+    Dictionary writable_options = options;
+    AVDictionary *writable_options_ptr = writable_options.release();
+    const int ret = avformat_open_input(&iformat_ctx, url.c_str(), iformat, &writable_options_ptr);
     input.reset(iformat_ctx);
-    options->reset(options_ptr);
+    writable_options.reset(writable_options_ptr);
     if (ret < 0) {
       throw Error("Input::Input(): Failed to open input " + url, ret);
     }
-  }
-
-  // Check if the input accepts all the options
-  if (*options) {
-    throw Error("Input::Input(): Input " + url + " does not accept option [" +
-                options->to_flow_style_yaml() + "]");
+    if (writable_options) {
+      throw Error("Input::Input(): Input " + url + " does not accept option [" +
+                  writable_options.to_flow_style_yaml() + "]");
+    }
   }
 
   // Retrieve stream information on the input
