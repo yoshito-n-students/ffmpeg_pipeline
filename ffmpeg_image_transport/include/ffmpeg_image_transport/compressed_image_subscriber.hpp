@@ -41,14 +41,15 @@ protected:
       }
 
       // Copy the data fragment to the reference-counted buffer with padding
-      const ffmpeg_cpp::Packet buffer(fragment->data.data(), fragment->data.size());
+      const ffmpeg_cpp::Packet buffer =
+          ffmpeg_cpp::Packet::create(fragment->data.data(), fragment->data.size());
 
       // Parse the buffer and decode the compressed data
       std::int64_t pos = 0;
       while (pos < buffer->size) {
         // Parse the buffer and get the packet.
         // Additionally accumulate the codec parameters if the decoder is not configured yet.
-        ffmpeg_cpp::Packet packet;
+        ffmpeg_cpp::Packet packet = ffmpeg_cpp::Packet::null();
         ffmpeg_cpp::CodecParameters params;
         if (!decoder_) {
           std::tie(packet, params) = parser_.parse_initial_packet(buffer, &pos);
