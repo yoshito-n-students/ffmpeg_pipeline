@@ -20,11 +20,11 @@ protected:
                  url = get_parameter_as<std::string>("url", "default");
       auto codec_params = get_parameter_as<ffmpeg_cpp::CodecParameters>(
           "codec_parameters", ffmpeg_cpp::CodecParameters());
-      auto options = get_parameter_as<ffmpeg_cpp::Dictionary>("options", ffmpeg_cpp::Dictionary());
+      auto options = ffmpeg_cpp::Dictionary::create(get_parameter_as<std::string>("options", "{}"));
 
       // [EXPERIMENTAL] Try to complete the codec parameters (extradata, etc)
       try {
-        ffmpeg_cpp::Dictionary options;
+        ffmpeg_cpp::Dictionary options = ffmpeg_cpp::Dictionary::null();
         ffmpeg_cpp::Encoder encoder(codec_params, &options);
         if (const int ret = avcodec_parameters_from_context(codec_params.get(), encoder.get())) {
           throw ffmpeg_cpp::Error("Failed to copy codec parameters from the encoder", ret);

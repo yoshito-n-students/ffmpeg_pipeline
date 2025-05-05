@@ -31,10 +31,9 @@ protected:
       const auto url = get_parameter_as<std::string>("url", "/dev/video0"),
                  input_format = get_parameter_as<std::string>("input_format", "v4l2"),
                  media_type = get_parameter_as<std::string>("media_type", "video");
-      auto options = get_parameter_as<ffmpeg_cpp::Dictionary>(
+      auto options = ffmpeg_cpp::Dictionary::create(get_parameter_as<std::string>(
           "options",
-          ffmpeg_cpp::Dictionary(
-              "{input_format: h264, video_size: 1920x1080, framerate: 30, timestamps: abs}"));
+          "{input_format: h264, video_size: 1920x1080, framerate: 30, timestamps: abs}"));
 
       // Open the input with the parameters
       input_ = ffmpeg_cpp::Input(url, input_format, &options, media_type);
