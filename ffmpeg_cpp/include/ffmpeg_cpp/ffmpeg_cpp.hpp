@@ -150,6 +150,7 @@ public:
 
 class CodecParameters : public std::unique_ptr<AVCodecParameters, Deleter<AVCodecParameters>> {
 public:
+  static CodecParameters null();
   // Allocate the codec parameters and default the fields
   CodecParameters();
   // Allocate the codec parameters and set fields from the given yaml string

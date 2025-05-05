@@ -24,6 +24,13 @@ namespace ffmpeg_cpp {
 // CodecParameters - RAII wrapper for AVCodecParameters
 // ====================================================
 
+CodecParameters CodecParameters::null() {
+  CodecParameters params;
+  params.reset(nullptr);
+  return params;
+}
+
+// TODO: rename to create()
 CodecParameters::CodecParameters()
     : std::unique_ptr<AVCodecParameters, Deleter<AVCodecParameters>>(avcodec_parameters_alloc()) {
   if (!get()) {
