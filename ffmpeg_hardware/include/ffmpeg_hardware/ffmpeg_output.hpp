@@ -40,7 +40,7 @@ protected:
 
       // Initialize the command variables
       packet_ = ffmpeg_cpp::Packet::create();
-      frame_ = ffmpeg_cpp::Frame();
+      frame_ = ffmpeg_cpp::Frame::create();
       packet_->dts = frame_->pkt_dts = prev_dts_ = 0;
 
       // Register the command variables to the interface
@@ -62,7 +62,7 @@ protected:
 
       // Free the command variables
       packet_ = ffmpeg_cpp::Packet::null();
-      frame_ = ffmpeg_cpp::Frame();
+      frame_ = ffmpeg_cpp::Frame::null();
 
       // Close the output device
       output_ = ffmpeg_cpp::Output();
@@ -127,8 +127,8 @@ protected:
 protected:
   ffmpeg_cpp::Output output_;
   ffmpeg_cpp::Packet packet_ = ffmpeg_cpp::Packet::null();
-  ffmpeg_cpp::Frame frame_;
-  std::int64_t prev_dts_;
+  ffmpeg_cpp::Frame frame_ = ffmpeg_cpp::Frame::null();
+  std::int64_t prev_dts_ = 0;
 };
 
 } // namespace ffmpeg_hardware
