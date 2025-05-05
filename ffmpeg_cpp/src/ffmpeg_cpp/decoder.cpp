@@ -88,10 +88,10 @@ Decoder Decoder::create(const std::string &decoder_name, const CodecParameters &
     decoder->codec_id = codec_id;
   }
 
-  // Open the decoder
-  if (decoder_options) {
-    // With the decoder options. We copy the given options and release the ownership of it
-    // during calling avcodec_open2() because the funtion modify the options.
+  // Open the decoder. We copy the given options and release the ownership of it
+  // during calling avcodec_open2() because the funtion modify the options.
+  // The following code should work even if the given options are nullptr.
+  {
     Dictionary writable_options = decoder_options;
     AVDictionary *writable_options_ptr = writable_options.release();
     const int ret = avcodec_open2(decoder.get(), codec, &writable_options_ptr);
@@ -102,11 +102,6 @@ Decoder Decoder::create(const std::string &decoder_name, const CodecParameters &
     if (writable_options) {
       throw Error("Decoder::create(): Options " + writable_options.to_flow_style_yaml() +
                   " were not accepted by the decoder");
-    }
-  } else {
-    // Without the decoder options
-    if (const int ret = avcodec_open2(decoder.get(), codec, nullptr); ret < 0) {
-      throw Error("Decoder::create(): Failed to open the decoder", ret);
     }
   }
 

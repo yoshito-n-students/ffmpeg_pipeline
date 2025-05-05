@@ -66,10 +66,10 @@ Encoder Encoder::create(const std::string &encoder_name, const CodecParameters &
     encoder->time_base = av_inv_q(codec_params->framerate);
   }
 
-  // Open the encoder
-  if (encoder_options) {
-    // With the encoder options. We copy the given options and release the ownership of it
-    // during calling avcodec_open2() because the funtion modify the options.
+  // Open the encoder. We copy the given options and release the ownership of it
+  // during calling avcodec_open2() because the funtion modify the options.
+  // The following code should work even if the given options are nullptr.
+  {
     Dictionary writable_options = encoder_options;
     AVDictionary *writable_options_ptr = writable_options.release();
     const int ret = avcodec_open2(encoder.get(), codec, &writable_options_ptr);
@@ -80,11 +80,6 @@ Encoder Encoder::create(const std::string &encoder_name, const CodecParameters &
     if (writable_options) {
       throw Error("Encoder::create(): Options " + writable_options.to_flow_style_yaml() +
                   " were not accepted by the encoder");
-    }
-  } else {
-    // Without the encoder options
-    if (const int ret = avcodec_open2(encoder.get(), codec, nullptr); ret < 0) {
-      throw Error("Encoder::create(): Failed to open the decoder", ret);
     }
   }
 
