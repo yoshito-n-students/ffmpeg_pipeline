@@ -74,7 +74,7 @@ protected:
   }
 
 private:
-  ffmpeg_cpp::Frame output_frame_;
+  ffmpeg_cpp::Frame output_frame_ = ffmpeg_cpp::Frame::null();
 };
 
 template <class Interface>

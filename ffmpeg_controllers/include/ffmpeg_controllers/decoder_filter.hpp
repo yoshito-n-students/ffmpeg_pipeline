@@ -62,7 +62,7 @@ protected:
       // Extract as many frames as possible from the decoder and keep only the latest frame.
       // According to the ffmpeg's reference, there should be only one frame per video packet
       // so no frames should be dropped.
-      ffmpeg_cpp::Frame frame;
+      ffmpeg_cpp::Frame frame = ffmpeg_cpp::Frame::null();
       while (true) {
         if (ffmpeg_cpp::Frame tmp_frame = decoder_.receive_frame(); !tmp_frame.empty()) {
           frame = std::move(tmp_frame); // Keep the latest frame

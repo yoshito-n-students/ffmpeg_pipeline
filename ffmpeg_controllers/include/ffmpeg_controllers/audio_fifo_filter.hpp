@@ -53,7 +53,7 @@ protected:
       fifo_.write(input_frame);
 
       // Take the latest frame from the FIFO
-      ffmpeg_cpp::Frame output_frame;
+      ffmpeg_cpp::Frame output_frame = ffmpeg_cpp::Frame::null();
       while (true) {
         if (ffmpeg_cpp::Frame tmp_frame = fifo_.read(nb_samples_); !tmp_frame.empty()) {
           if (!output_frame.empty()) {
