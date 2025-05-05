@@ -137,7 +137,10 @@ public:
 class Dictionary : public std::unique_ptr<AVDictionary, Deleter<AVDictionary>> {
 private:
   using std::unique_ptr<AVDictionary, Deleter<AVDictionary>>::unique_ptr;
-  Dictionary() = delete;
+  // yaml-cpp needs a default constructor to create the object
+  Dictionary() {};
+  friend struct YAML::as_if<Dictionary, void>;
+  friend struct YAML::as_if<Dictionary, Dictionary>;
 
 public:
   // Construct without underlying AVDictionary
@@ -166,7 +169,10 @@ public:
 class CodecParameters : public std::unique_ptr<AVCodecParameters, Deleter<AVCodecParameters>> {
 private:
   using std::unique_ptr<AVCodecParameters, Deleter<AVCodecParameters>>::unique_ptr;
-  CodecParameters() = delete;
+  // yaml-cpp needs a default constructor to create the object
+  CodecParameters() {};
+  friend struct YAML::as_if<CodecParameters, void>;
+  friend struct YAML::as_if<CodecParameters, CodecParameters>;
 
 public:
   // Construct without underlying AVCodecParameters

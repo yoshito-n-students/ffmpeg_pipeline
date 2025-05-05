@@ -35,11 +35,13 @@ CodecParameters CodecParameters::create() {
 }
 
 CodecParameters CodecParameters::create(const std::string &yaml) {
-  CodecParameters params = CodecParameters::create();
-  if (!YAML::convert<CodecParameters>::decode(YAML::Load(yaml), params)) {
-    throw Error("CodecParameters::CodecParameters(): Failed to parse codec parameters from yaml");
+  try {
+    return YAML::Load(yaml).as<CodecParameters>();
+  } catch (const std::exception &error) {
+    throw Error(
+        std::string("CodecParameters::create(): Failed to create codec parameters from yaml: ") +
+        error.what());
   }
-  return params;
 }
 
 CodecParameters::CodecParameters(const CodecParameters &other)
@@ -91,6 +93,9 @@ static void decode_if_exists(const Node &yaml, const std::string &key, AVRationa
 bool convert<ffmpeg_cpp::CodecParameters>::decode(const Node &yaml,
                                                   ffmpeg_cpp::CodecParameters &params) {
   try {
+    if (!params) {
+      params = ffmpeg_cpp::CodecParameters::create();
+    }
     // === For any codec type ===
     if (const Node elem = yaml["codec"]; elem) {
       const std::string codec_name = elem.as<std::string>();

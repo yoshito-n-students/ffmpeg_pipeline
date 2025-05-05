@@ -9,11 +9,12 @@ namespace ffmpeg_cpp {
 Dictionary Dictionary::null() { return Dictionary(nullptr); }
 
 Dictionary Dictionary::create(const std::string &yaml) {
-  Dictionary dict = Dictionary::null();
-  if (!YAML::convert<Dictionary>::decode(YAML::Load(yaml), dict)) {
-    throw Error("Dictionary::create(): Failed to parse dictionary from yaml");
+  try {
+    return YAML::Load(yaml).as<Dictionary>();
+  } catch (const std::exception &error) {
+    throw Error(std::string("Dictionary::create(): Failed to create dictionary from yaml: ") +
+                error.what());
   }
-  return dict;
 }
 
 Dictionary::Dictionary(const Dictionary &other)
