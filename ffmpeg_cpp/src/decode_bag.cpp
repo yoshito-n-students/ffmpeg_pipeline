@@ -49,7 +49,7 @@ int main(int argc, char **argv) {
   // and the converter, which converts the frames to BGR24 images.
   // They must be configured with the codec name or pixel format name before use.
   av::Parser parser;
-  av::Decoder decoder;
+  av::Decoder decoder = av::Decoder::null();
   av::VideoConverter converter;
 
   // Decode and convert each message in the bag
@@ -92,7 +92,7 @@ int main(int argc, char **argv) {
 
         // Initialize the decoder with the parameters if not already done
         if (!decoder) {
-          decoder = av::Decoder(
+          decoder = av::Decoder::create(
               "" /* empty decoder name. codec_params->codec_id is used instead. */, codec_params);
           RCLCPP_INFO(node->get_logger(), "Configured decoder (%s|%s)",
                       decoder.codec_name().c_str(), decoder.hw_type_name().c_str());

@@ -250,16 +250,20 @@ private:
 // ===============================================
 
 class Decoder : public std::unique_ptr<AVCodecContext, Deleter<AVCodecContext>> {
+private:
+  using std::unique_ptr<AVCodecContext, Deleter<AVCodecContext>>::unique_ptr;
+  Decoder() = delete;
+
 public:
   // Construct without underlying AVCodecContext
-  Decoder();
-  // Allocate the codec context for the given arguments. All of them are optional.
+  static Decoder null();
+  // Allocate the AVCodecContext for the given arguments. All of them are optional.
   // The underlying decoder is determined by decoder_name if not empty,
   // otherwise by codec_params->codec_id. If multiple decoders support the codec_id,
   // ffmpeg selects the default one.
-  Decoder(const std::string &decoder_name,
-          const CodecParameters &codec_params = CodecParameters::null(),
-          const Dictionary &decoder_options = Dictionary::null());
+  static Decoder create(const std::string &decoder_name,
+                        const CodecParameters &codec_params = CodecParameters::null(),
+                        const Dictionary &decoder_options = Dictionary::null());
 
   std::string codec_name() const;
   std::string hw_type_name() const;

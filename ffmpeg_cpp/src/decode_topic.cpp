@@ -19,7 +19,7 @@ int main(int argc, char *argv[]) {
   try {
     // The decoder, which decompresses H.264 video packets
     // and the converter, which converts the decoded frames to BGR24 images
-    av::Decoder decoder;
+    av::Decoder decoder = av::Decoder::null();
     av::VideoConverter converter;
 
     // Create a publisher to publish the decoded images
@@ -39,7 +39,7 @@ int main(int argc, char *argv[]) {
 
             // Initialize the decoder if not already done
             if (!decoder) {
-              decoder = av::Decoder(packet_data->format);
+              decoder = av::Decoder::create(packet_data->format);
               RCLCPP_INFO(node->get_logger(), "Configured decoder (codec: %s, hw: %s)",
                           decoder.codec_name().c_str(), decoder.hw_type_name().c_str());
             }

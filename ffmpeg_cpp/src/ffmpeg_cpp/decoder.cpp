@@ -16,7 +16,7 @@ namespace ffmpeg_cpp {
 // Decoder - RAII wrapper for AVCodecContext
 // =========================================
 
-Decoder::Decoder() {}
+Decoder Decoder::null() { return Decoder(nullptr); }
 
 static void set_context_options(AVCodecContext *const decoder_ctx) {
   // Set the options to enable error concealment and format preference.
@@ -55,9 +55,8 @@ static void set_context_options(AVCodecContext *const decoder_ctx) {
   }
 }
 
-Decoder::Decoder(const std::string &decoder_name, const CodecParameters &codec_params,
-                 const Dictionary &decoder_options)
-    : Decoder() {
+Decoder Decoder::create(const std::string &decoder_name, const CodecParameters &codec_params,
+                        const Dictionary &decoder_options) {
   // Find the decoder by the given name or codec id
   const AVCodec *codec = nullptr;
   if (!decoder_name.empty()) {
@@ -70,32 +69,32 @@ Decoder::Decoder(const std::string &decoder_name, const CodecParameters &codec_p
   }
 
   // Allocate the decoder context and set some options
-  reset(avcodec_alloc_context3(codec));
-  if (!get()) {
+  Decoder decoder(avcodec_alloc_context3(codec));
+  if (!decoder) {
     throw Error("Decoder::Decoder(): Failed to allocate the decoder context");
   }
-  set_context_options(get());
+  set_context_options(decoder.get());
 
   // Import the codec parameters to the decoder context except for codec_{type, id}
   // because they suppose to be already set by avcodec_alloc_context3()
   // and are ommitted from the codec parameters.
   if (codec_params) {
-    const AVMediaType codec_type = get()->codec_type;
-    const AVCodecID codec_id = get()->codec_id;
-    if (const int ret = avcodec_parameters_to_context(get(), codec_params.get()); ret < 0) {
+    const AVMediaType codec_type = decoder->codec_type;
+    const AVCodecID codec_id = decoder->codec_id;
+    if (const int ret = avcodec_parameters_to_context(decoder.get(), codec_params.get()); ret < 0) {
       throw Error("Decoder::Decoder(): Failed to import codec parameters", ret);
     }
-    get()->codec_type = codec_type;
-    get()->codec_id = codec_id;
+    decoder->codec_type = codec_type;
+    decoder->codec_id = codec_id;
   }
 
   // Open the decoder
   if (decoder_options) {
     // With the decoder options. We copy the given options and release the ownership of it
     // during calling avcodec_open2() because the funtion modify the options.
-    Dictionary writable_options(decoder_options);
+    Dictionary writable_options = decoder_options;
     AVDictionary *writable_options_ptr = writable_options.release();
-    const int ret = avcodec_open2(get(), codec, &writable_options_ptr);
+    const int ret = avcodec_open2(decoder.get(), codec, &writable_options_ptr);
     writable_options.reset(writable_options_ptr);
     if (ret < 0) {
       throw Error("Decoder::Decoder(): Failed to open the decoder", ret);
@@ -106,10 +105,12 @@ Decoder::Decoder(const std::string &decoder_name, const CodecParameters &codec_p
     }
   } else {
     // Without the decoder options
-    if (const int ret = avcodec_open2(get(), codec, nullptr); ret < 0) {
+    if (const int ret = avcodec_open2(decoder.get(), codec, nullptr); ret < 0) {
       throw Error("Decoder::Decoder(): Failed to open the decoder", ret);
     }
   }
+
+  return decoder;
 }
 
 void Decoder::send_packet(const Packet &packet) {

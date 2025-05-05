@@ -63,7 +63,7 @@ protected:
         // Configure the decoder for this fragment if needed
         if (!decoder_) {
           // TODO: get options from the node parameter
-          decoder_ = ffmpeg_cpp::Decoder(fragment->format);
+          decoder_ = ffmpeg_cpp::Decoder::create(fragment->format);
           RCLCPP_INFO(node_->get_logger(), "Configured decoder (%s|%s)",
                       decoder_.codec_name().c_str(), decoder_.hw_type_name().c_str());
         }
@@ -134,7 +134,7 @@ protected:
 private:
   rclcpp::Node *node_;
   ffmpeg_cpp::Parser parser_;
-  ffmpeg_cpp::Decoder decoder_;
+  ffmpeg_cpp::Decoder decoder_ = ffmpeg_cpp::Decoder::null();
   ffmpeg_cpp::VideoConverter converter_;
 };
 
