@@ -6,6 +6,13 @@
 
 namespace ffmpeg_cpp {
 
+Dictionary Dictionary::null() {
+  Dictionary dict;
+  dict.reset(nullptr);
+  return dict;
+}
+
+// TODO: rename to create()
 Dictionary::Dictionary() {}
 
 Dictionary::Dictionary(const std::string &yaml) : Dictionary() {

@@ -125,6 +125,7 @@ public:
 class Dictionary : public std::unique_ptr<AVDictionary, Deleter<AVDictionary>> {
 public:
   // Construct without underlying AVDictionary
+  static Dictionary null();
   Dictionary();
   // Create a dictionary by parsing the given yaml string
   Dictionary(const std::string &yaml);
