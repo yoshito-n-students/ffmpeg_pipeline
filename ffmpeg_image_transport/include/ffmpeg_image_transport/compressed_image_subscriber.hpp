@@ -50,7 +50,7 @@ protected:
         // Parse the buffer and get the packet.
         // Additionally accumulate the codec parameters if the decoder is not configured yet.
         ffmpeg_cpp::Packet packet = ffmpeg_cpp::Packet::null();
-        ffmpeg_cpp::CodecParameters params;
+        ffmpeg_cpp::CodecParameters params = ffmpeg_cpp::CodecParameters::null();
         if (!decoder_) {
           std::tie(packet, params) = parser_.parse_initial_packet(buffer, &pos);
         } else {
