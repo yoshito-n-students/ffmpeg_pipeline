@@ -18,8 +18,8 @@ protected:
       // Try to get the parameters for the output from the hardware_info, or use default values
       const auto format = get_parameter_as<std::string>("format", "pulse"),
                  url = get_parameter_as<std::string>("url", "default");
-      auto codec_params = get_parameter_as<ffmpeg_cpp::CodecParameters>(
-          "codec_parameters", ffmpeg_cpp::CodecParameters());
+      auto codec_params = ffmpeg_cpp::CodecParameters::create(
+          get_parameter_as<std::string>("codec_parameters", "{}"));
       auto options = ffmpeg_cpp::Dictionary::create(get_parameter_as<std::string>("options", "{}"));
 
       // [EXPERIMENTAL] Try to complete the codec parameters (extradata, etc)

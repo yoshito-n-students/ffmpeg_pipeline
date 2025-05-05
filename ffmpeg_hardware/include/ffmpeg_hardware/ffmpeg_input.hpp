@@ -104,7 +104,7 @@ protected:
 
 protected:
   ffmpeg_cpp::Input input_;
-  ffmpeg_cpp::CodecParameters codec_params_;
+  ffmpeg_cpp::CodecParameters codec_params_ = ffmpeg_cpp::CodecParameters::null();
   ffmpeg_cpp::Packet packet_ = ffmpeg_cpp::Packet::null();
 };
 
