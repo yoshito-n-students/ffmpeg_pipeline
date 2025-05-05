@@ -164,12 +164,17 @@ public:
 // ==================================
 
 class CodecParameters : public std::unique_ptr<AVCodecParameters, Deleter<AVCodecParameters>> {
+private:
+  using std::unique_ptr<AVCodecParameters, Deleter<AVCodecParameters>>::unique_ptr;
+  CodecParameters() = delete;
+
 public:
+  // Construct without underlying AVCodecParameters
   static CodecParameters null();
   // Allocate the codec parameters and default the fields
-  CodecParameters();
+  static CodecParameters create();
   // Allocate the codec parameters and set fields from the given yaml string
-  CodecParameters(const std::string &yaml);
+  static CodecParameters create(const std::string &yaml);
   // Create a codec parameters by copying the given codec parameters
   CodecParameters(const CodecParameters &other);
   CodecParameters &operator=(const CodecParameters &other) {

@@ -24,27 +24,27 @@ namespace ffmpeg_cpp {
 // CodecParameters - RAII wrapper for AVCodecParameters
 // ====================================================
 
-CodecParameters CodecParameters::null() {
-  CodecParameters params;
-  params.reset(nullptr);
+CodecParameters CodecParameters::null() { return CodecParameters(nullptr); }
+
+CodecParameters CodecParameters::create() {
+  CodecParameters params(avcodec_parameters_alloc());
+  if (!params) {
+    throw Error("CodecParameters::create(): Failed to allocate AVCodecParameters");
+  }
   return params;
 }
 
-// TODO: rename to create()
-CodecParameters::CodecParameters()
-    : std::unique_ptr<AVCodecParameters, Deleter<AVCodecParameters>>(avcodec_parameters_alloc()) {
-  if (!get()) {
-    throw Error("CodecParameters::CodecParameters(): Failed to allocate AVCodecParameters");
-  }
-}
-
-CodecParameters::CodecParameters(const std::string &yaml) : CodecParameters() {
-  if (!YAML::convert<CodecParameters>::decode(YAML::Load(yaml), *this)) {
+CodecParameters CodecParameters::create(const std::string &yaml) {
+  CodecParameters params = CodecParameters::create();
+  if (!YAML::convert<CodecParameters>::decode(YAML::Load(yaml), params)) {
     throw Error("CodecParameters::CodecParameters(): Failed to parse codec parameters from yaml");
   }
+  return params;
 }
 
-CodecParameters::CodecParameters(const CodecParameters &other) : CodecParameters() {
+CodecParameters::CodecParameters(const CodecParameters &other)
+    : std::unique_ptr<AVCodecParameters, Deleter<AVCodecParameters>>() {
+  *this = CodecParameters::create();
   if (const int ret = avcodec_parameters_copy(get(), other.get()); ret < 0) {
     throw Error("CodecParameters::CodecParameters(): Failed to copy codec parameters", ret);
   }

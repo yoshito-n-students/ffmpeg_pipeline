@@ -80,7 +80,7 @@ int main(int argc, char **argv) {
         // Parse the buffer to extract the compressed packet.
         // Additionally, probe the codec parameters for the decoder if it has not been initialized.
         av::Packet packet = av::Packet::null();
-        av::CodecParameters codec_params;
+        av::CodecParameters codec_params = av::CodecParameters::null();
         if (!decoder) {
           std::tie(packet, codec_params) = parser.parse_initial_packet(buffer, &pos);
         } else {

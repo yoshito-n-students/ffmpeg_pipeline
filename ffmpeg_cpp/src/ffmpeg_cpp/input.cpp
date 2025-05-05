@@ -98,7 +98,7 @@ std::string Input::format_name() const {
 std::string Input::url() const { return (get() && get()->url) ? get()->url : ""; }
 
 CodecParameters Input::codec_parameters() const {
-  CodecParameters params;
+  CodecParameters params = CodecParameters::create();
   if (const int ret = avcodec_parameters_copy(params.get(), get()->streams[istream_id_]->codecpar);
       ret < 0) {
     throw Error("Input::codec_parameters(): Failed to copy codec parameters", ret);

@@ -70,7 +70,7 @@ std::pair<Packet, CodecParameters> Parser::parse_initial_packet(const Packet &bu
   const Packet packet = make_packet(buffer, packet_data, packet_size);
 
   // Copy the codec parameters from the codec context
-  CodecParameters params;
+  CodecParameters params = CodecParameters::create();
   if (const int ret = avcodec_parameters_from_context(params.get(), codec_ctx_.get()); ret < 0) {
     throw Error("Parser::parse_initial_packet(): Failed to copy codec parameters from context",
                 ret);
