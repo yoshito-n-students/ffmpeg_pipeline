@@ -14,30 +14,36 @@ namespace ffmpeg_cpp {
 // Decoder - RAII wrapper for AVCodecContext
 // =========================================
 
-Encoder::Encoder() {}
+Encoder Encoder::null() { return Encoder(nullptr); }
 
-Encoder::Encoder(const CodecParameters &codec_params, Dictionary *const codec_options) : Encoder() {
-  // Find the encoder by the given id
-  const AVCodec *const codec = avcodec_find_encoder(codec_params->codec_id);
+Encoder Encoder::create(const std::string &encoder_name, const CodecParameters &codec_params,
+                        const Dictionary &encoder_options) {
+  // Find the encoder by the given name or codec id
+  const AVCodec *codec = nullptr;
+  if (!encoder_name.empty()) {
+    codec = avcodec_find_encoder_by_name(encoder_name.c_str());
+  } else if (codec_params) {
+    codec = avcodec_find_encoder(codec_params->codec_id);
+  }
   if (!codec) {
-    throw Error("Encoder::Encoder(): Faild to find encoder");
+    throw Error("Encoder::create(): Faild to find encoder");
   }
 
   // Allocate the encoder context
-  reset(avcodec_alloc_context3(codec));
-  if (!get()) {
-    throw Error("Encoder::Encoder(): Failed to allocate codec context");
+  Encoder encoder(avcodec_alloc_context3(codec));
+  if (!encoder) {
+    throw Error("Encoder::create(): Failed to allocate codec context");
   }
 
   // Create a hardware acceleration context supported by the encoder.
   // If multiple hardware devices are supported, the first one is used.
-  if (!get()->hw_device_ctx) {
+  if (!encoder->hw_device_ctx) {
     for (int i = 0;; ++i) {
-      const AVCodecHWConfig *const hw_config = avcodec_get_hw_config(get()->codec, i);
-      if (hw_config                                                         // HW config exists
+      if (const AVCodecHWConfig *const hw_config = avcodec_get_hw_config(encoder->codec, i);
+          hw_config                                                         // HW config exists
           && (hw_config->methods & AV_CODEC_HW_CONFIG_METHOD_HW_DEVICE_CTX) // HW context supported
-          && av_hwdevice_ctx_create(&get()->hw_device_ctx, hw_config->device_type, nullptr, nullptr,
-                                    0) == 0 // HW context created
+          && av_hwdevice_ctx_create(&encoder->hw_device_ctx, hw_config->device_type, nullptr,
+                                    nullptr, 0) == 0 // HW context created
       ) {
         break; // exit the loop if the HW context is created successfully
       } else if (!hw_config) {
@@ -46,25 +52,43 @@ Encoder::Encoder(const CodecParameters &codec_params, Dictionary *const codec_op
     }
   }
 
-  // Import the codec parameters to the encoder context
-  avcodec_parameters_to_context(get(), codec_params.get());
-  get()->time_base = av_inv_q(codec_params->framerate);
-
-  // Open the encoder. avcodec_open2() may free the options,
-  // so we release the ownership of it from unique_ptr during calling the function.
-  {
-    AVDictionary *codec_options_ptr = codec_options->release();
-    if (const int ret = avcodec_open2(get(), codec, &codec_options_ptr); ret < 0) {
-      throw Error("Encoder::Encoder(): Failed to open codec", ret);
+  // Import the codec parameters to the encoder context except for codec_{type, id}
+  // because they suppose to be already set by avcodec_alloc_context3()
+  // and are ommitted from the codec parameters.
+  if (codec_params) {
+    const AVMediaType codec_type = encoder->codec_type;
+    const AVCodecID codec_id = encoder->codec_id;
+    if (const int ret = avcodec_parameters_to_context(encoder.get(), codec_params.get()); ret < 0) {
+      throw Error("Encoder::create(): Failed to import codec parameters", ret);
     }
-    codec_options->reset(codec_options_ptr);
+    encoder->codec_type = codec_type;
+    encoder->codec_id = codec_id;
+    encoder->time_base = av_inv_q(codec_params->framerate);
   }
 
-  // Check if the encoder accepts all the options
-  if (*codec_options) {
-    throw Error("Encoder::Encoder(): Encoder does not accept option " +
-                codec_options->to_flow_style_yaml());
+  // Open the encoder
+  if (encoder_options) {
+    // With the encoder options. We copy the given options and release the ownership of it
+    // during calling avcodec_open2() because the funtion modify the options.
+    Dictionary writable_options = encoder_options;
+    AVDictionary *writable_options_ptr = writable_options.release();
+    const int ret = avcodec_open2(encoder.get(), codec, &writable_options_ptr);
+    writable_options.reset(writable_options_ptr);
+    if (ret < 0) {
+      throw Error("Encoder::create(): Failed to open the encoder", ret);
+    }
+    if (writable_options) {
+      throw Error("Encoder::create(): Options " + writable_options.to_flow_style_yaml() +
+                  " were not accepted by the encoder");
+    }
+  } else {
+    // Without the encoder options
+    if (const int ret = avcodec_open2(encoder.get(), codec, nullptr); ret < 0) {
+      throw Error("Encoder::create(): Failed to open the decoder", ret);
+    }
   }
+
+  return encoder;
 }
 
 void Encoder::send_frame(const Frame &frame) {

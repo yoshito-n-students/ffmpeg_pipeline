@@ -24,8 +24,7 @@ protected:
 
       // [EXPERIMENTAL] Try to complete the codec parameters (extradata, etc)
       try {
-        ffmpeg_cpp::Dictionary options = ffmpeg_cpp::Dictionary::null();
-        ffmpeg_cpp::Encoder encoder(codec_params, &options);
+        ffmpeg_cpp::Encoder encoder = ffmpeg_cpp::Encoder::create("", codec_params);
         if (const int ret = avcodec_parameters_from_context(codec_params.get(), encoder.get())) {
           throw ffmpeg_cpp::Error("Failed to copy codec parameters from the encoder", ret);
         }

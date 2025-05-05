@@ -29,10 +29,11 @@ protected:
     }
 
     try {
-      codec_options_ =
-          ffmpeg_cpp::Dictionary::create(get_user_parameter<std::string>("codec_options", "{}"));
+      encoder_name_ = get_user_parameter<std::string>("encoder_name", "");
       codec_params_ =
           ffmpeg_cpp::CodecParameters::create(get_user_parameter<std::string>("codec_parameters"));
+      encoder_options_ =
+          ffmpeg_cpp::Dictionary::create(get_user_parameter<std::string>("codec_options", "{}"));
     } catch (const std::runtime_error &error) {
       RCLCPP_ERROR(get_logger(), "Error while getting parameter value: %s", error.what());
       return NodeReturn::ERROR;
@@ -59,11 +60,8 @@ protected:
           codec_params_->sample_rate = input_frame->sample_rate;
         }
 
-        // Prepare a copy of codec options to avoid modifying the original
-        ffmpeg_cpp::Dictionary options(codec_options_);
-
         // Configure the encoder with the codec parameters and options
-        encoder_ = ffmpeg_cpp::Encoder(codec_params_, &options);
+        encoder_ = ffmpeg_cpp::Encoder::create(encoder_name_, codec_params_, encoder_options_);
         if (const std::string hw_type_name = encoder_.hw_type_name(); hw_type_name == "none") {
           RCLCPP_INFO(get_logger(), "Configured encoder (%s)", encoder_.codec_name().c_str());
         } else {
@@ -101,9 +99,10 @@ protected:
   }
 
 protected:
-  ffmpeg_cpp::Dictionary codec_options_ = ffmpeg_cpp::Dictionary::null();
+  std::string encoder_name_;
   ffmpeg_cpp::CodecParameters codec_params_ = ffmpeg_cpp::CodecParameters::null();
-  ffmpeg_cpp::Encoder encoder_;
+  ffmpeg_cpp::Dictionary encoder_options_ = ffmpeg_cpp::Dictionary::null();
+  ffmpeg_cpp::Encoder encoder_ = ffmpeg_cpp::Encoder::null();
 };
 
 } // namespace ffmpeg_controllers

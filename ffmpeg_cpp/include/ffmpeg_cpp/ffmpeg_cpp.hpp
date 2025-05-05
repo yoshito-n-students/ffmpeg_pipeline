@@ -281,11 +281,20 @@ public:
 // ===============================================
 
 class Encoder : public std::unique_ptr<AVCodecContext, Deleter<AVCodecContext>> {
+private:
+  using std::unique_ptr<AVCodecContext, Deleter<AVCodecContext>>::unique_ptr;
+  Encoder() = delete;
+
 public:
   // Construct without underlying AVCodecContext
-  Encoder();
-  // Allocate the codec context for the given codec parameters and options
-  Encoder(const CodecParameters &codec_params, Dictionary *const codec_options);
+  static Encoder null();
+  // Allocate the AVCodecContext for the given arguments. All of them are optional.
+  // The underlying encoder is determined by encoder_name if not empty,
+  // otherwise by codec_params->codec_id. If multiple encoders support the codec_id,
+  // ffmpeg selects the default one.
+  static Encoder create(const std::string &encoder_name,
+                        const CodecParameters &codec_params = CodecParameters::null(),
+                        const Dictionary &encoder_options = Dictionary::null());
 
   std::string codec_name() const;
   std::string hw_type_name() const;
