@@ -94,8 +94,8 @@ int main(int argc, char **argv) {
         if (!decoder) {
           decoder = av::Decoder::create(
               "" /* empty decoder name. codec_params->codec_id is used instead. */, codec_params);
-          RCLCPP_INFO(node->get_logger(), "Configured decoder (%s|%s)",
-                      decoder.codec_name().c_str(), decoder.hw_type_name().c_str());
+          RCLCPP_INFO(node->get_logger(), "Configured decoder (%s|%s)", decoder->codec->name,
+                      decoder.hw_type_name().c_str());
         }
 
         // Send the packet to the decoder
