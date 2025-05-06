@@ -18,45 +18,8 @@ namespace ffmpeg_cpp {
 
 Decoder Decoder::null() { return Decoder(nullptr); }
 
-static void set_context_options(AVCodecContext *const decoder_ctx) {
-  // Set the options to enable error concealment and format preference.
-  // Some options are for video decoders, but they suppose no problem for other decoders.
-  decoder_ctx->workaround_bugs = FF_BUG_AUTODETECT;
-  decoder_ctx->err_recognition = AV_EF_CRCCHECK;
-  decoder_ctx->error_concealment = FF_EC_GUESS_MVS | FF_EC_DEBLOCK;
-  decoder_ctx->get_format = [](AVCodecContext *decoder_ctx, const AVPixelFormat *formats) {
-    // Prefer the first pixel formats compatible with ROS image encodings
-    // to avoid unnecessary conversions after decoding
-    for (const AVPixelFormat *format = formats; *format != AV_PIX_FMT_NONE; ++format) {
-      if (std::any_of(std::begin(format_encoding_pairs), std::end(format_encoding_pairs),
-                      [format](const auto &pair) { return pair.first == *format; })) {
-        return *format;
-      }
-    }
-    // If no compatible pixel format is found, defer to the default behavior
-    return avcodec_default_get_format(decoder_ctx, formats);
-  };
-
-  // Create a hardware acceleration context supported by the decoder.
-  // If multiple hardware devices are supported, the first one is used.
-  if (!decoder_ctx->hw_device_ctx) {
-    for (int i = 0;; ++i) {
-      const AVCodecHWConfig *const hw_config = avcodec_get_hw_config(decoder_ctx->codec, i);
-      if (hw_config                                                         // HW config exists
-          && (hw_config->methods & AV_CODEC_HW_CONFIG_METHOD_HW_DEVICE_CTX) // HW context supported
-          && av_hwdevice_ctx_create(&decoder_ctx->hw_device_ctx, hw_config->device_type, nullptr,
-                                    nullptr, 0) == 0 // HW context created
-      ) {
-        break; // exit the loop if the HW context is created successfully
-      } else if (!hw_config) {
-        break; // exit the loop if no more HW config is available
-      }
-    }
-  }
-}
-
 Decoder Decoder::create(const std::string &decoder_name, const CodecParameters &codec_params,
-                        const Dictionary &decoder_options) {
+                        const std::string &request_format_name, const Dictionary &decoder_options) {
   // Find the decoder by the given name or codec id
   const AVCodec *codec = nullptr;
   if (!decoder_name.empty()) {
@@ -73,7 +36,29 @@ Decoder Decoder::create(const std::string &decoder_name, const CodecParameters &
   if (!decoder) {
     throw Error("Decoder::create(): Failed to allocate the decoder context");
   }
-  set_context_options(decoder.get());
+
+  // Set the options to enable error concealment and format preference.
+  // Some options are for video decoders, but they suppose no problem for other decoders.
+  decoder->workaround_bugs = FF_BUG_AUTODETECT;
+  decoder->err_recognition = AV_EF_CRCCHECK;
+  decoder->error_concealment = FF_EC_GUESS_MVS | FF_EC_DEBLOCK;
+
+  // Create a hardware acceleration context supported by the decoder.
+  // If multiple hardware devices are supported, the first one is used.
+  if (!decoder->hw_device_ctx) {
+    for (int i = 0;; ++i) {
+      const AVCodecHWConfig *const hw_config = avcodec_get_hw_config(decoder->codec, i);
+      if (hw_config                                                         // HW config exists
+          && (hw_config->methods & AV_CODEC_HW_CONFIG_METHOD_HW_DEVICE_CTX) // HW context supported
+          && av_hwdevice_ctx_create(&decoder->hw_device_ctx, hw_config->device_type, nullptr,
+                                    nullptr, 0) == 0 // HW context created
+      ) {
+        break; // exit the loop if the HW context is created successfully
+      } else if (!hw_config) {
+        break; // exit the loop if no more HW config is available
+      }
+    }
+  }
 
   // Import the codec parameters to the decoder context except for codec_{type, id}
   // because they suppose to be already set by avcodec_alloc_context3()
@@ -86,6 +71,46 @@ Decoder Decoder::create(const std::string &decoder_name, const CodecParameters &
     }
     decoder->codec_type = codec_type;
     decoder->codec_id = codec_id;
+  }
+
+  // Set pixel or sample format preference
+  if (!request_format_name.empty()) {
+    switch (decoder->codec_type) {
+    case AVMEDIA_TYPE_VIDEO:
+      if (const AVPixelFormat request_pixel_fmt = av_get_pix_fmt(request_format_name.c_str());
+          request_pixel_fmt != AV_PIX_FMT_NONE) {
+        // Utilize request_sample_fmt field to record the desired pixel format
+        decoder->request_sample_fmt = static_cast<AVSampleFormat>(request_pixel_fmt);
+        // get_format is called when the decoder decides the destination pixel format.
+        // We select the requested pixel format if it is supported by the decoder,
+        // otherwise defer to the default behavior.
+        decoder->get_format = [](AVCodecContext *decoder_ctx, const AVPixelFormat *formats) {
+          for (const AVPixelFormat *format = formats; *format != AV_PIX_FMT_NONE; ++format) {
+            if (*format == static_cast<AVPixelFormat>(decoder_ctx->request_sample_fmt)) {
+              return *format;
+            }
+          }
+          return avcodec_default_get_format(decoder_ctx, formats);
+        };
+      } else {
+        throw Error("Decoder::create(): " + request_format_name +
+                    " is not a valid pixel format name");
+      }
+      break;
+    case AVMEDIA_TYPE_AUDIO:
+      if (const AVSampleFormat request_sample_fmt = av_get_sample_fmt(request_format_name.c_str());
+          request_sample_fmt != AV_SAMPLE_FMT_NONE) {
+        // Utilize request_sample_fmt field as usual
+        decoder->request_sample_fmt = request_sample_fmt;
+      } else {
+        throw Error("Decoder::create(): " + request_format_name +
+                    " is not a valid sample format name");
+      }
+      break;
+    default:
+      // Warn that the request format is not supported?
+      break;
+    }
   }
 
   // Open the decoder. We copy the given options and release the ownership of it

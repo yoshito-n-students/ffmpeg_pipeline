@@ -30,6 +30,7 @@ protected:
 
     try {
       decoder_name_ = get_user_parameter<std::string>("decoder_name", "");
+      request_format_name_ = get_user_parameter<std::string>("request_format_name", "");
       decoder_options_ =
           ffmpeg_cpp::Dictionary::create(get_user_parameter<std::string>("decoder_options", "{}"));
     } catch (const std::runtime_error &error) {
@@ -47,7 +48,8 @@ protected:
     try {
       // Ensure the decoder is configured for the codec
       if (!decoder_) {
-        decoder_ = ffmpeg_cpp::Decoder::create(decoder_name_, codec_params, decoder_options_);
+        decoder_ = ffmpeg_cpp::Decoder::create(decoder_name_, codec_params, request_format_name_,
+                                               decoder_options_);
         if (const std::string hw_type_name = decoder_.hw_type_name(); hw_type_name == "none") {
           RCLCPP_INFO(get_logger(), "Configured decoder (%s)", decoder_->codec->name);
         } else {
@@ -90,7 +92,7 @@ protected:
   }
 
 protected:
-  std::string decoder_name_;
+  std::string decoder_name_, request_format_name_;
   ffmpeg_cpp::Dictionary decoder_options_ = ffmpeg_cpp::Dictionary::null();
   ffmpeg_cpp::Decoder decoder_ = ffmpeg_cpp::Decoder::null();
 };

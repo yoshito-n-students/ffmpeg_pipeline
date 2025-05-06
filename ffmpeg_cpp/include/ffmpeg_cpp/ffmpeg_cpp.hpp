@@ -277,6 +277,7 @@ public:
   // ffmpeg selects the default one.
   static Decoder create(const std::string &decoder_name,
                         const CodecParameters &codec_params = CodecParameters::null(),
+                        const std::string &request_format_name = "",
                         const Dictionary &decoder_options = Dictionary::null());
 
   std::string codec_name() const;
