@@ -63,7 +63,8 @@ protected:
         // Configure the decoder for this fragment if needed
         if (!decoder_) {
           // TODO: get options from the node parameter
-          decoder_ = ffmpeg_cpp::Decoder::create(fragment->format);
+          decoder_ = ffmpeg_cpp::Decoder::create(
+              "" /* empty decoder name. params->codec_id is used instead. */, params);
           if (const std::string hw_type_name = decoder_.hw_type_name(); hw_type_name == "none") {
             RCLCPP_INFO(node_->get_logger(), "Configured decoder (%s)", decoder_->codec->name);
           } else {
