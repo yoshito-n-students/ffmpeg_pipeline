@@ -31,11 +31,12 @@ encoder_filter:
     input_name: frame_size_converter
     encoder_name: libopus
     codec_parameters: |
+      codec: opus
       bit_rate: 64000
       format: s16
       ch_layout: stereo
       framerate: [25, 1]
-    codec_options: |
+    encoder_options: |
       application: lowdelay
       frame_duration: 40
 
