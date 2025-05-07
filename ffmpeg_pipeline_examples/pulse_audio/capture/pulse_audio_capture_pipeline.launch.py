@@ -53,13 +53,13 @@ def generate_launch_description():
         package='controller_manager',
         executable='spawner',
         arguments=[
-            '--param-file', 
+            '--param-file',
             robot_controllers,
-            '--activate-as-group', 
+            '--activate-as-group',
             'raw_packet_broadcaster',
             'decoder_filter',
             'encoder_filter',
-            'packet_broadcaster',   
+            'packet_broadcaster',
         ],
     )
 
