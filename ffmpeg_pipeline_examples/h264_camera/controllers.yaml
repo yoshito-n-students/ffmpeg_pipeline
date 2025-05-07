@@ -1,5 +1,7 @@
 controller_manager:
   ros__parameters:
+    # As noted in robot_description.urdf.xacro, we expect 24 images (packets) per sec from the camera.
+    # The update rate of the controller must be greater than this value not to miss any packets.
     update_rate: 30  # Hz
 
 compressed_image_broadcaster:
