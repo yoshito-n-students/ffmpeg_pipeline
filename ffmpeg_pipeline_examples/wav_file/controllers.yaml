@@ -29,8 +29,8 @@ encoder_filter:
   ros__parameters:
     type: ffmpeg_controllers/EncoderFilter
     input_name: frame_size_converter
+    encoder_name: libopus
     codec_parameters: |
-      codec: opus
       bit_rate: 64000
       format: s16
       ch_layout: stereo
