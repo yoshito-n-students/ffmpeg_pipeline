@@ -18,7 +18,7 @@ Parser Parser::create(const std::string &codec_name) {
     void *iterate_ctx = nullptr;
     while (true) {
       if (const AVCodec *const codec = av_codec_iterate(&iterate_ctx);
-          codec && codec->name == codec_name) {
+          codec && avcodec_get_name(codec->id) == codec_name) {
         return codec;
       } else if (!codec) {
         throw Error("Parser::create(): " + codec_name + " was not recognized as a codec name");
