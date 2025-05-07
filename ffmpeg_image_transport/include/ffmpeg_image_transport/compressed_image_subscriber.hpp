@@ -64,8 +64,12 @@ protected:
         if (!decoder_) {
           // TODO: get options from the node parameter
           decoder_ = ffmpeg_cpp::Decoder::create(fragment->format);
-          RCLCPP_INFO(node_->get_logger(), "Configured decoder (%s|%s)", decoder_->codec->name,
-                      decoder_.hw_type_name().c_str());
+          if (const std::string hw_type_name = decoder_.hw_type_name(); hw_type_name == "none") {
+            RCLCPP_INFO(node_->get_logger(), "Configured decoder (%s)", decoder_->codec->name);
+          } else {
+            RCLCPP_INFO(node_->get_logger(), "Configured decoder (%s|%s)", decoder_->codec->name,
+                        hw_type_name.c_str());
+          }
         }
 
         // Send the packet to the decoder
@@ -109,10 +113,9 @@ protected:
             if (!converter_) {
               converter_ = ffmpeg_cpp::VideoConverter::create(frame->width, frame->height,
                                                               frame.format_name(), dst_format_name);
-              RCLCPP_INFO(node_->get_logger(), "Initialized converter ([%s -> %s] %dx%d)",
-                          converter_.src_format_name().c_str(),
-                          converter_.dst_format_name().c_str(), //
-                          converter_.src_width(), converter_.src_height());
+              RCLCPP_INFO(node_->get_logger(), "Initialized converter ([%s] %dx%d -> [%s])",
+                          converter_.src_format_name().c_str(), converter_.src_width(),
+                          converter_.src_height(), converter_.dst_format_name().c_str());
             }
 
             // Make the destination image
