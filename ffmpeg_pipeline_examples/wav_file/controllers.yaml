@@ -4,6 +4,12 @@ controller_manager:
     # To play it at normal speed, we need to process frames at a rate of 44100 / 1024 = 43.066... Hz.
     update_rate: 43 # must be integer
 
+# Send raw packets from the input device to network
+raw_packet_broadcaster:
+  ros__parameters:
+    type: ffmpeg_controllers/PacketBroadcaster
+    input_name: audio_streamer
+
 # Decompress the packets from the input file
 decoder_filter:
   ros__parameters:
