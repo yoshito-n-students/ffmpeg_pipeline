@@ -44,22 +44,22 @@ protected:
   template <typename T>
   std::enable_if_t<std::is_pointer_v<T> || std::is_same_v<T, std::nullptr_t>, void>
   set_command_from_pointer(const std::string &iface_name, const T value) {
-    Interface::set_command(make_interface_description(iface_name, "").get_name(),
+    Interface::set_command(make_interface_description(iface_name).get_name(),
                            static_cast<double>(reinterpret_cast<std::uintptr_t>(value)));
   }
 
   template <typename T>
   std::enable_if_t<std::is_pointer_v<T> || std::is_same_v<T, std::nullptr_t>, void>
   set_state_from_pointer(const std::string &iface_name, const T value) {
-    Interface::set_state(make_interface_description(iface_name, "").get_name(),
+    Interface::set_state(make_interface_description(iface_name).get_name(),
                          static_cast<double>(reinterpret_cast<std::uintptr_t>(value)));
   }
 
   hardware_interface::InterfaceDescription
-  make_interface_description(const std::string &iface_name, const std::string &data_type) const {
+  make_interface_description(const std::string &iface_name) const {
     hardware_interface::InterfaceInfo info;
     info.name = iface_name;
-    info.data_type = data_type;
+    info.data_type = "double";
     return hardware_interface::InterfaceDescription{Interface::info_.name, info};
   }
 };

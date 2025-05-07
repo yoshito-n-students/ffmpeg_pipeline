@@ -80,8 +80,7 @@ protected:
 
   std::vector<hardware_interface::InterfaceDescription>
   export_unlisted_command_interface_descriptions() override {
-    return {make_interface_description("packet", "ffmpeg_cpp::Packet*"),
-            make_interface_description("frame", "ffmpeg_cpp::Frame*")};
+    return {make_interface_description("packet"), make_interface_description("frame")};
   }
 
   hardware_interface::return_type read(const rclcpp::Time & /*time*/,

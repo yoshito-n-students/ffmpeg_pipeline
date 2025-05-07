@@ -85,8 +85,7 @@ protected:
 
   std::vector<hardware_interface::InterfaceDescription>
   export_unlisted_state_interface_descriptions() override {
-    return {make_interface_description("codec_parameters", "const ffmpeg_cpp::CodecParameters*"),
-            make_interface_description("packet", "const ffmpeg_cpp::Packet*")};
+    return {make_interface_description("codec_parameters"), make_interface_description("packet")};
   }
 
   hardware_interface::return_type read(const rclcpp::Time & /*time*/,
