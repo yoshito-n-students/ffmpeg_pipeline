@@ -33,7 +33,7 @@ protected:
       codec_params_ =
           ffmpeg_cpp::CodecParameters::create(get_user_parameter<std::string>("codec_parameters"));
       encoder_options_ =
-          ffmpeg_cpp::Dictionary::create(get_user_parameter<std::string>("codec_options", "{}"));
+          ffmpeg_cpp::Dictionary::create(get_user_parameter<std::string>("encoder_options", "{}"));
     } catch (const std::runtime_error &error) {
       RCLCPP_ERROR(get_logger(), "Error while getting parameter value: %s", error.what());
       return NodeReturn::ERROR;
