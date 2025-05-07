@@ -114,7 +114,7 @@ protected:
             if (!converter_) {
               converter_ = ffmpeg_cpp::VideoConverter::create(frame->width, frame->height,
                                                               frame.format_name(), dst_format_name);
-              RCLCPP_INFO(node_->get_logger(), "Initialized converter ([%s] %dx%d -> [%s])",
+              RCLCPP_INFO(node_->get_logger(), "Configured converter ([%s] %dx%d -> [%s])",
                           converter_.src_format_name().c_str(), converter_.src_width(),
                           converter_.src_height(), converter_.dst_format_name().c_str());
             }
