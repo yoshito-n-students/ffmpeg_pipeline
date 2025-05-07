@@ -13,6 +13,7 @@
   <depend>ffmpeg_controllers</depend>
   <depend>ffmpeg_hardware</depend>
   <depend>ffmpeg_image_transport</depend>
+  <depend>image_view</depend>
   <depend>robot_state_publisher</depend>
   <depend>ros2launch</depend>
   <depend>xacro</depend>

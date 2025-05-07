@@ -53,10 +53,23 @@ def generate_launch_description():
         arguments=['compressed_image_broadcaster', '--param-file', robot_controllers],
     )
 
+    image_view_node = Node(
+        package='image_view',
+        executable='image_view',
+        output='both',
+        remappings=[
+            ('image', 'compressed_image_broadcaster/image'),
+        ],
+        parameters=[
+            {'image_transport': 'ffmpeg'},
+        ],
+    )
+
     nodes = [
         control_node,
         robot_description_pub_node,
         compressed_image_broadcaster_spawner,
+        image_view_node,
     ]
 
     return LaunchDescription(nodes)
