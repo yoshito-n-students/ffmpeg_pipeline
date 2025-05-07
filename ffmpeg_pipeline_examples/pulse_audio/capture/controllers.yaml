@@ -16,7 +16,7 @@ decoder_filter:
     type: ffmpeg_controllers/DecoderFilter
     input_name: pulse_audio
 
-# Compress the frames to a format that can be sent over the network
+# Compress the frames to a format suitable for network transmission
 encoder_filter:
   ros__parameters:
     type: ffmpeg_controllers/EncoderFilter
@@ -31,7 +31,7 @@ encoder_filter:
       application: lowdelay
       frame_duration: 40
 
-# Send the packets to the network
+# Send the compressed packets to the network
 packet_broadcaster:
   ros__parameters:
     type: ffmpeg_controllers/PacketBroadcaster
