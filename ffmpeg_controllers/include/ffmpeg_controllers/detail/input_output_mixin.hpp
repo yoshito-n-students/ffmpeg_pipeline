@@ -110,7 +110,6 @@ protected:
           std::forward<Arg>(arg));
     }
   }
-
 };
 
 } // namespace ffmpeg_controllers
