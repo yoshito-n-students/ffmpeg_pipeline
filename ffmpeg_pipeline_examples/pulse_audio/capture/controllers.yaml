@@ -23,6 +23,7 @@ encoder_filter:
     input_name: decoder_filter
     encoder_name: libopus
     codec_parameters: |
+      codec: opus
       bit_rate: 64000
       format: s16
       ch_layout: stereo
