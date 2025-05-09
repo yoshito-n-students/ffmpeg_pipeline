@@ -225,6 +225,8 @@ protected:
           [this](const typename InputMessage::ConstSharedPtr msg) {
             msg_buffer_.writeFromNonRT(StampedMessage(msg, Base::get_node()->now()));
           });
+      RCLCPP_INFO(Base::get_logger(), "Created subscription to %s",
+                  subscription_->get_topic_name());
       return Base::NodeReturn::SUCCESS;
     } catch (const std::runtime_error &error) {
       RCLCPP_ERROR(Base::get_logger(), "Error while creating subscription: %s", error.what());

@@ -302,6 +302,8 @@ protected:
           output_topic_, rclcpp::SystemDefaultsQoS());
       async_publisher_ =
           std::make_unique<realtime_tools::RealtimePublisher<OutputMessage>>(underlying_publisher_);
+      RCLCPP_INFO(Base::get_logger(), "Created publisher on %s",
+                  underlying_publisher_->get_topic_name());
       return Base::NodeReturn::SUCCESS;
     } catch (const std::runtime_error &error) {
       RCLCPP_ERROR(Base::get_logger(), "Error while creating publishers: %s", error.what());
