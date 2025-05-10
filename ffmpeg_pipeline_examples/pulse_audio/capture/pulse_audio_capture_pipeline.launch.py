@@ -58,6 +58,7 @@ def generate_launch_description():
             '--activate-as-group',
             'raw_packet_broadcaster',
             'decoder_filter',
+            'frame_broadcaster',
             'encoder_filter',
             'packet_broadcaster',
         ],
