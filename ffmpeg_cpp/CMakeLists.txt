@@ -21,14 +21,14 @@ add_library(
   src/ffmpeg_cpp/audio_converter.cpp
   src/ffmpeg_cpp/audio_fifo.cpp
   src/ffmpeg_cpp/codec_parameters.cpp
-  src/ffmpeg_cpp/datatypes.cpp
   src/ffmpeg_cpp/decoder.cpp
   src/ffmpeg_cpp/dictionary.cpp
   src/ffmpeg_cpp/encoder.cpp
+  src/ffmpeg_cpp/frame.cpp
   src/ffmpeg_cpp/input.cpp
   src/ffmpeg_cpp/output.cpp
+  src/ffmpeg_cpp/packet.cpp
   src/ffmpeg_cpp/parser.cpp
-  # src/ffmpeg_cpp/resampler.cpp
   src/ffmpeg_cpp/utility.cpp
   src/ffmpeg_cpp/video_converter.cpp)
 target_include_directories(

@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 
+#include <ffmpeg_pipeline_msgs/msg/frame.hpp>
 #include <ffmpeg_pipeline_msgs/msg/packet.hpp>
 #include <rclcpp/time.hpp>
 
@@ -128,6 +129,9 @@ public:
 
   // Copy the frame to the CPU-accessible memory
   Frame transfer_data() const;
+
+  // Convert the frame to a message
+  ffmpeg_pipeline_msgs::msg::Frame to_msg(const rclcpp::Time &stamp) const;
 };
 
 // =============================
