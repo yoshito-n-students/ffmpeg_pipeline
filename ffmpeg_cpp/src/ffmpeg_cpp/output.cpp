@@ -17,7 +17,7 @@ Output Output::null() { return Output(nullptr); }
 
 Output Output::create(const std::string &format_name, const std::string &url,
                       const CodecParameters &codec_params, const Dictionary &options) {
-  // Register all the input format types
+  // Register all the output format types
   avdevice_register_all();
 
   // Allocate the output format context and set the non-blocking flag
