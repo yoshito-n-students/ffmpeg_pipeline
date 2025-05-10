@@ -109,14 +109,13 @@ bool Output::write_uncoded_frame(const Frame &frame) {
   // because we need to modify the timestamp of the input frame,
   // and av_write_uncoded_frame() frees the frame after use
   AVFrame *const output_frame = av_frame_clone(frame.get());
-  if(!output_frame) {
+  if (!output_frame) {
     throw Error("Output::write_uncoded_frame(): Failed to clone frame");
   }
   output_frame->pts = output_frame->pkt_dts = increasing_dts_++;
 
   // Write the uncoded frame to the output stream
-  if (const int ret = av_write_uncoded_frame(get(), ostream_->index, output_frame);
-      ret >= 0) {
+  if (const int ret = av_write_uncoded_frame(get(), ostream_->index, output_frame); ret >= 0) {
     return true; // Successfully written
   } else if (ret == AVERROR(EAGAIN)) {
     return false; // The output device is not ready to accept more data
