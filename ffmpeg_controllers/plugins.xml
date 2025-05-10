@@ -48,6 +48,15 @@
         </description>
     </class>
 
+    <class name="ffmpeg_controllers/FrameBroadcaster"
+           type="ffmpeg_controllers::FrameBroadcaster"
+           base_class_type="controller_interface::ControllerInterface">
+        <description>
+            This controller reads ffmpeg_cpp::Frame from the state interface owned by other controller
+            and publishes it as ffmpeg_pipeline_msgs::msg::Frame.
+        </description>
+    </class>
+
     <class name="ffmpeg_controllers/FrameWriter"
            type="ffmpeg_controllers::FrameWriter"
            base_class_type="controller_interface::ControllerInterface">
