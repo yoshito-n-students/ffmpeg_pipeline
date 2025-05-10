@@ -17,39 +17,6 @@ extern "C" {
 
 namespace ffmpeg_cpp {
 
-// ==============================================
-// AVPixelFormat <-> sensor_msgs::image_encodings
-// ==============================================
-
-static constexpr std::pair<AVPixelFormat, const char *> format_encoding_pairs[] = {
-    // RGB formats
-    {AV_PIX_FMT_RGB24, sensor_msgs::image_encodings::RGB8},
-    {AV_PIX_FMT_RGBA, sensor_msgs::image_encodings::RGBA8},
-    {AV_PIX_FMT_RGB48, sensor_msgs::image_encodings::RGB16},
-    {AV_PIX_FMT_RGBA64, sensor_msgs::image_encodings::RGBA16},
-    // BGR formats
-    {AV_PIX_FMT_BGR24, sensor_msgs::image_encodings::BGR8},
-    {AV_PIX_FMT_BGRA, sensor_msgs::image_encodings::BGRA8},
-    {AV_PIX_FMT_BGR48, sensor_msgs::image_encodings::BGR16},
-    {AV_PIX_FMT_BGRA64, sensor_msgs::image_encodings::BGRA16},
-    // Grayscale formats
-    {AV_PIX_FMT_GRAY8, sensor_msgs::image_encodings::MONO8},
-    {AV_PIX_FMT_GRAY16, sensor_msgs::image_encodings::MONO16},
-    // bayer formats
-    {AV_PIX_FMT_BAYER_RGGB8, sensor_msgs::image_encodings::BAYER_RGGB8},
-    {AV_PIX_FMT_BAYER_RGGB16, sensor_msgs::image_encodings::BAYER_RGGB16},
-    {AV_PIX_FMT_BAYER_BGGR8, sensor_msgs::image_encodings::BAYER_BGGR8},
-    {AV_PIX_FMT_BAYER_BGGR16, sensor_msgs::image_encodings::BAYER_BGGR16},
-    {AV_PIX_FMT_BAYER_GRBG8, sensor_msgs::image_encodings::BAYER_GRBG8},
-    {AV_PIX_FMT_BAYER_GRBG16, sensor_msgs::image_encodings::BAYER_GRBG16},
-    {AV_PIX_FMT_BAYER_GBRG8, sensor_msgs::image_encodings::BAYER_GBRG8},
-    {AV_PIX_FMT_BAYER_GBRG16, sensor_msgs::image_encodings::BAYER_GBRG16},
-    // YUV formats
-    {AV_PIX_FMT_UYVY422, sensor_msgs::image_encodings::UYVY},
-    {AV_PIX_FMT_YUYV422, sensor_msgs::image_encodings::YUYV},
-    {AV_PIX_FMT_NV21, sensor_msgs::image_encodings::NV21},
-    {AV_PIX_FMT_NV24, sensor_msgs::image_encodings::NV24}};
-
 // ==============
 // to std::string
 // ==============
@@ -91,12 +58,42 @@ static inline std::string to_string(const AVChannelLayout &ch_layout) {
 // from std::string
 // ================
 
+static inline AVMediaType to_media_type(const std::string &str) {
+  if (str == av_get_media_type_string(AVMEDIA_TYPE_VIDEO)) {
+    return AVMEDIA_TYPE_VIDEO;
+  } else if (str == av_get_media_type_string(AVMEDIA_TYPE_AUDIO)) {
+    return AVMEDIA_TYPE_AUDIO;
+  } else if (str == av_get_media_type_string(AVMEDIA_TYPE_DATA)) {
+    return AVMEDIA_TYPE_DATA;
+  } else if (str == av_get_media_type_string(AVMEDIA_TYPE_SUBTITLE)) {
+    return AVMEDIA_TYPE_SUBTITLE;
+  } else if (str == av_get_media_type_string(AVMEDIA_TYPE_ATTACHMENT)) {
+    return AVMEDIA_TYPE_ATTACHMENT;
+  } else if (str == av_get_media_type_string(AVMEDIA_TYPE_NB)) {
+    return AVMEDIA_TYPE_NB;
+  } else {
+    return AVMEDIA_TYPE_UNKNOWN;
+  }
+}
+
 static inline AVChannelLayout to_channel_layout(const std::string &str) {
   AVChannelLayout ch_layout;
   if (const int ret = av_channel_layout_from_string(&ch_layout, str.c_str()); ret < 0) {
     ch_layout.nb_channels = 0; // make it invalid if parsing fails
   }
   return ch_layout;
+}
+
+static inline const AVCodec *find_codec(const std::string &name) {
+  void *iterate_ctx = nullptr;
+  while (true) {
+    if (const AVCodec *const codec = av_codec_iterate(&iterate_ctx);
+        codec && avcodec_get_name(codec->id) == name) {
+      return codec;
+    } else if (!codec) {
+      return nullptr;
+    }
+  }
 }
 
 // ===========

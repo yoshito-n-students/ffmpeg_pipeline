@@ -7,6 +7,8 @@ extern "C" {
 
 #include <ffmpeg_cpp/ffmpeg_cpp.hpp>
 
+#include "internal.hpp"
+
 namespace ffmpeg_cpp {
 
 // ========================================
@@ -59,23 +61,7 @@ Input Input::create(const std::string &url, const std::string &format_name,
   }
 
   // Identify the media type from the name
-  const AVMediaType media_type = [](const std::string &name) {
-    if (name == av_get_media_type_string(AVMEDIA_TYPE_VIDEO)) {
-      return AVMEDIA_TYPE_VIDEO;
-    } else if (name == av_get_media_type_string(AVMEDIA_TYPE_AUDIO)) {
-      return AVMEDIA_TYPE_AUDIO;
-    } else if (name == av_get_media_type_string(AVMEDIA_TYPE_DATA)) {
-      return AVMEDIA_TYPE_DATA;
-    } else if (name == av_get_media_type_string(AVMEDIA_TYPE_SUBTITLE)) {
-      return AVMEDIA_TYPE_SUBTITLE;
-    } else if (name == av_get_media_type_string(AVMEDIA_TYPE_ATTACHMENT)) {
-      return AVMEDIA_TYPE_ATTACHMENT;
-    } else if (name == av_get_media_type_string(AVMEDIA_TYPE_NB)) {
-      return AVMEDIA_TYPE_NB;
-    } else {
-      return AVMEDIA_TYPE_UNKNOWN;
-    }
-  }(media_type_name);
+  const AVMediaType media_type = to_media_type(media_type_name);
   if (media_type == AVMEDIA_TYPE_UNKNOWN) {
     throw Error("Input::Input(): " + media_type_name + " was not recognized as a media type");
   }

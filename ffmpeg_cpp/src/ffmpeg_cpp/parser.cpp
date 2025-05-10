@@ -4,6 +4,8 @@ extern "C" {
 
 #include <ffmpeg_cpp/ffmpeg_cpp.hpp>
 
+#include "internal.hpp"
+
 namespace ffmpeg_cpp {
 
 // ==============================================
@@ -14,17 +16,10 @@ Parser Parser::null() { return Parser(nullptr); }
 
 Parser Parser::create(const std::string &codec_name) {
   // Find the codec by name
-  const AVCodec *const codec = [&codec_name]() {
-    void *iterate_ctx = nullptr;
-    while (true) {
-      if (const AVCodec *const codec = av_codec_iterate(&iterate_ctx);
-          codec && avcodec_get_name(codec->id) == codec_name) {
-        return codec;
-      } else if (!codec) {
-        throw Error("Parser::create(): " + codec_name + " was not recognized as a codec name");
-      }
-    }
-  }();
+  const AVCodec *const codec = find_codec(codec_name);
+  if (!codec) {
+    throw Error("Parser::create(): " + codec_name + " was not recognized as a codec name");
+  }
 
   // Initialize the parser with the codec
   Parser parser(av_parser_init(codec->id));
