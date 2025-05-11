@@ -41,117 +41,50 @@ protected:
 // Mixin class depending on OutputOption
 // =====================================
 
-template <typename OutputOption, class Interface> class OutputMixin;
+template <typename OutputOption, class ControllerIface> class OutputMixin;
 
-template <class Interface>
-class OutputMixin<output_options::Export<ffmpeg_cpp::Frame>, Interface>
-    : public virtual ControllerInterfaceAdapter<Interface>,
-      public OnWriteContract<output_options::Export<ffmpeg_cpp::Frame>> {
+template <typename Object, class ControllerIface>
+class OutputMixin<output_options::Export<Object>, ControllerIface>
+    : public virtual ControllerInterfaceAdapter<ControllerIface>,
+      public OnWriteContract<output_options::Export<Object>> {
 private:
-  using Base = ControllerInterfaceAdapter<Interface>;
+  using Base = ControllerInterfaceAdapter<ControllerIface>;
 
 protected:
   typename Base::NodeReturn on_init() override {
     // Names of intraprocess read-only variables to be exported
-    Base::exported_state_interface_names_.emplace_back("frame");
+    Base::exported_state_interface_names_.emplace_back(HardwareInterfaceName<Object>);
     return Base::NodeReturn::SUCCESS;
   }
 
   typename Base::NodeReturn
   on_deactivate(const rclcpp_lifecycle::State & /*previous_state*/) override {
-    // Unregister the frame from state interface owned by this controller
-    return Base::set_state_from_pointer("frame", nullptr) ? Base::NodeReturn::SUCCESS
-                                                          : Base::NodeReturn::ERROR;
+    // Unregister the object from state interface owned by this controller
+    return Base::set_state_from_pointer(HardwareInterfaceName<Object>, nullptr)
+               ? Base::NodeReturn::SUCCESS
+               : Base::NodeReturn::ERROR;
   }
 
   typename Base::ControllerReturn on_write(const rclcpp::Time & /*time*/,
                                            const rclcpp::Duration & /*period*/,
-                                           ffmpeg_cpp::Frame &&input_frame) override {
-    // Export the given frame to the state interface owned by this controller
-    output_frame_ = std::move(input_frame);
-    return Base::set_state_from_pointer("frame", &output_frame_) ? Base::ControllerReturn::OK
-                                                                 : Base::ControllerReturn::ERROR;
-  }
-
-private:
-  ffmpeg_cpp::Frame output_frame_ = ffmpeg_cpp::Frame::null();
-};
-
-template <class Interface>
-class OutputMixin<output_options::Export<ffmpeg_cpp::Packet>, Interface>
-    : public virtual ControllerInterfaceAdapter<Interface>,
-      public OnWriteContract<output_options::Export<ffmpeg_cpp::Packet>> {
-private:
-  using Base = ControllerInterfaceAdapter<Interface>;
-
-protected:
-  typename Base::NodeReturn on_init() override {
-    // Names of intraprocess read-only variables to be exported
-    Base::exported_state_interface_names_.emplace_back("packet");
-    return Base::NodeReturn::SUCCESS;
-  }
-
-  typename Base::NodeReturn
-  on_deactivate(const rclcpp_lifecycle::State & /*previous_state*/) override {
-    // Unregister the frame from state interface owned by this controller
-    return Base::set_state_from_pointer("packet", nullptr) ? Base::NodeReturn::SUCCESS
-                                                           : Base::NodeReturn::ERROR;
-  }
-
-  typename Base::ControllerReturn on_write(const rclcpp::Time & /*time*/,
-                                           const rclcpp::Duration & /*period*/,
-                                           ffmpeg_cpp::Packet &&input_packet) override {
-    // Export the given codec parameters and packet to the state interfaces owned by this controller
-    output_packet_ = std::move(input_packet);
-    return Base::set_state_from_pointer("packet", &output_packet_) ? Base::ControllerReturn::OK
-                                                                   : Base::ControllerReturn::ERROR;
-  }
-
-private:
-  ffmpeg_cpp::Packet output_packet_ = ffmpeg_cpp::Packet::null();
-};
-
-template <class Interface>
-class OutputMixin<output_options::Export<ffmpeg_cpp::CodecParameters>, Interface>
-    : public virtual ControllerInterfaceAdapter<Interface>,
-      public OnWriteContract<output_options::Export<ffmpeg_cpp::CodecParameters>> {
-private:
-  using Base = ControllerInterfaceAdapter<Interface>;
-
-protected:
-  typename Base::NodeReturn on_init() override {
-    // Names of intraprocess read-only variables to be exported
-    Base::exported_state_interface_names_.emplace_back("codec_parameters");
-    return Base::NodeReturn::SUCCESS;
-  }
-
-  typename Base::NodeReturn
-  on_deactivate(const rclcpp_lifecycle::State & /*previous_state*/) override {
-    // Unregister the frame from state interface owned by this controller
-    return (Base::set_state_from_pointer("codec_parameters", nullptr)) ? Base::NodeReturn::SUCCESS
-                                                                       : Base::NodeReturn::ERROR;
-  }
-
-  typename Base::ControllerReturn on_write(const rclcpp::Time & /*time*/,
-                                           const rclcpp::Duration & /*period*/,
-                                           ffmpeg_cpp::CodecParameters &&codec_params) override {
-    // Export the given codec parameters and packet to the state interfaces owned by this controller
-    codec_params_ = std::move(codec_params);
-    return Base::set_state_from_pointer("codec_parameters", &codec_params_)
+                                           Object &&input_object) override {
+    // Export the given object to the state interface owned by this controller
+    output_object_ = std::move(input_object);
+    return Base::set_state_from_pointer(HardwareInterfaceName<Object>, &output_object_)
                ? Base::ControllerReturn::OK
                : Base::ControllerReturn::ERROR;
   }
 
 private:
-  ffmpeg_cpp::CodecParameters codec_params_ = ffmpeg_cpp::CodecParameters::null();
+  Object output_object_ = Object::null();
 };
 
-template <class Interface>
-class OutputMixin<output_options::Write<ffmpeg_cpp::Frame>, Interface>
-    : public virtual ControllerInterfaceAdapter<Interface>,
-      public OnWriteContract<output_options::Write<ffmpeg_cpp::Frame>> {
+template <typename Object, class ControllerIface>
+class OutputMixin<output_options::Write<Object>, ControllerIface>
+    : public virtual ControllerInterfaceAdapter<ControllerIface>,
+      public OnWriteContract<output_options::Write<Object>> {
 private:
-  using Base = ControllerInterfaceAdapter<Interface>;
+  using Base = ControllerInterfaceAdapter<ControllerIface>;
 
 protected:
   typename Base::NodeReturn on_init() override {
@@ -167,21 +100,21 @@ protected:
 
   controller_interface::InterfaceConfiguration command_interface_configuration() const override {
     return {controller_interface::interface_configuration_type::INDIVIDUAL,
-            {output_name_ + "/frame"}};
+            {output_name_ + "/" + HardwareInterfaceName<Object>}};
   }
 
   typename Base::ControllerReturn on_write(const rclcpp::Time & /*time*/,
                                            const rclcpp::Duration & /*period*/,
-                                           ffmpeg_cpp::Frame &&input_frame) override {
-    if (const auto output_frame =
-            Base::template get_command_as_pointer<ffmpeg_cpp::Frame>(output_name_, "frame");
-        output_frame) {
-      // Update the command variable with the given packet
-      *output_frame = std::move(input_frame);
+                                           Object &&input_object) override {
+    if (const auto output_object = Base::template get_command_as_pointer<Object>(
+            output_name_, HardwareInterfaceName<Object>);
+        output_object) {
+      // Update the command variable with the given object
+      *output_object = std::move(input_object);
       return Base::ControllerReturn::OK;
     } else {
       // It is still OK if the command variable is not available
-      RCLCPP_WARN(Base::get_logger(), "Failed to get output frame. Will skip this update.");
+      RCLCPP_WARN(Base::get_logger(), "Failed to get output object. Will skip this update.");
       return Base::ControllerReturn::OK;
     }
   }
@@ -190,102 +123,12 @@ private:
   std::string output_name_;
 };
 
-template <class Interface>
-class OutputMixin<output_options::Write<ffmpeg_cpp::Packet>, Interface>
-    : public virtual ControllerInterfaceAdapter<Interface>,
-      public OnWriteContract<output_options::Write<ffmpeg_cpp::Packet>> {
-private:
-  using Base = ControllerInterfaceAdapter<Interface>;
-
-protected:
-  typename Base::NodeReturn on_init() override {
-    try {
-      // The name of the hardware or controller to which the command interface is written
-      output_name_ = Base::template get_user_parameter<std::string>("output_name");
-      return Base::NodeReturn::SUCCESS;
-    } catch (const std::runtime_error &error) {
-      RCLCPP_ERROR(Base::get_logger(), "Error while getting parameter value: %s", error.what());
-      return Base::NodeReturn::ERROR;
-    }
-  }
-
-  controller_interface::InterfaceConfiguration command_interface_configuration() const override {
-    return {controller_interface::interface_configuration_type::INDIVIDUAL,
-            {output_name_ + "/packet"}};
-  }
-
-  typename Base::ControllerReturn on_write(const rclcpp::Time & /*time*/,
-                                           const rclcpp::Duration & /*period*/,
-                                           ffmpeg_cpp::Packet &&input_packet) override {
-    if (const auto output_packet =
-            Base::template get_command_as_pointer<ffmpeg_cpp::Packet>(output_name_, "packet");
-        output_packet) {
-      // Update the command variable with the given packet
-      *output_packet = std::move(input_packet);
-      return Base::ControllerReturn::OK;
-    } else {
-      // It is still OK if the command variable is not available
-      RCLCPP_WARN(Base::get_logger(), "Failed to get output packet. Will skip this update.");
-      return Base::ControllerReturn::OK;
-    }
-  }
-
-private:
-  std::string output_name_;
-};
-
-template <class Interface>
-class OutputMixin<output_options::Write<ffmpeg_cpp::CodecParameters>, Interface>
-    : public virtual ControllerInterfaceAdapter<Interface>,
-      public OnWriteContract<output_options::Write<ffmpeg_cpp::CodecParameters>> {
-private:
-  using Base = ControllerInterfaceAdapter<Interface>;
-
-protected:
-  typename Base::NodeReturn on_init() override {
-    try {
-      // The name of the hardware or controller to which the command interface is written
-      output_name_ = Base::template get_user_parameter<std::string>("output_name");
-      return Base::NodeReturn::SUCCESS;
-    } catch (const std::runtime_error &error) {
-      RCLCPP_ERROR(Base::get_logger(), "Error while getting parameter value: %s", error.what());
-      return Base::NodeReturn::ERROR;
-    }
-  }
-
-  controller_interface::InterfaceConfiguration command_interface_configuration() const override {
-    return {controller_interface::interface_configuration_type::INDIVIDUAL,
-            {output_name_ + "/codec_parameters"}};
-  }
-
-  typename Base::ControllerReturn on_write(const rclcpp::Time & /*time*/,
-                                           const rclcpp::Duration & /*period*/,
-                                           ffmpeg_cpp::CodecParameters &&input_params) override {
-    if (const auto output_params =
-            Base::template get_command_as_pointer<ffmpeg_cpp::CodecParameters>(output_name_,
-                                                                               "codec_parameters");
-        output_params) {
-      // Update the command variable with the given ones
-      *output_params = std::move(input_params);
-      return Base::ControllerReturn::OK;
-    } else {
-      // It is still OK if the command variable is not available
-      RCLCPP_WARN(Base::get_logger(),
-                  "Failed to get output codec parameters. Will skip this update.");
-      return Base::ControllerReturn::OK;
-    }
-  }
-
-private:
-  std::string output_name_;
-};
-
-template <typename Message, class Interface>
-class OutputMixin<output_options::Publish<Message>, Interface>
-    : public virtual ControllerInterfaceAdapter<Interface>,
+template <typename Message, class ControllerIface>
+class OutputMixin<output_options::Publish<Message>, ControllerIface>
+    : public virtual ControllerInterfaceAdapter<ControllerIface>,
       public OnWriteContract<output_options::Publish<Message>> {
 private:
-  using Base = ControllerInterfaceAdapter<Interface>;
+  using Base = ControllerInterfaceAdapter<ControllerIface>;
 
 protected:
   using OutputMessage = Message;
@@ -330,13 +173,13 @@ private:
   std::unique_ptr<realtime_tools::RealtimePublisher<OutputMessage>> async_publisher_;
 };
 
-template <typename... OutputOptions, class Interface>
-class OutputMixin<std::tuple<OutputOptions...>, Interface>
-    : public OutputMixin<OutputOptions, Interface>...,
+template <typename... OutputOptions, class ControllerIface>
+class OutputMixin<std::tuple<OutputOptions...>, ControllerIface>
+    : public OutputMixin<OutputOptions, ControllerIface>...,
       public OnWriteContract<std::tuple<OutputOptions...>> {
 private:
-  using BaseCommon = ControllerInterfaceAdapter<Interface>;
-  template <typename OutputOption> using BaseOutput = OutputMixin<OutputOption, Interface>;
+  using BaseCommon = ControllerInterfaceAdapter<ControllerIface>;
+  template <typename OutputOption> using BaseOutput = OutputMixin<OutputOption, ControllerIface>;
 
 protected:
   typename BaseCommon::NodeReturn on_init() override {

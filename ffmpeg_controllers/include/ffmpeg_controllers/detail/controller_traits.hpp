@@ -7,6 +7,7 @@
 #include <controller_interface/chainable_controller_interface.hpp>
 #include <controller_interface/controller_interface.hpp>
 #include <ffmpeg_controllers/controller_options.hpp>
+#include <ffmpeg_cpp/ffmpeg_cpp.hpp>
 
 namespace ffmpeg_controllers {
 
@@ -36,6 +37,20 @@ template <typename Message> struct GetOutputFor<output_options::Publish<Message>
   using Result = Message;
 };
 template <typename OutputOption> using OutputFor = typename GetOutputFor<OutputOption>::Result;
+
+// Hardware interface name for the given object type
+template <typename Object> struct GetHardwareInterfaceName;
+template <> struct GetHardwareInterfaceName<ffmpeg_cpp::Frame> {
+  static constexpr const char *Value = "frame";
+};
+template <> struct GetHardwareInterfaceName<ffmpeg_cpp::Packet> {
+  static constexpr const char *Value = "packet";
+};
+template <> struct GetHardwareInterfaceName<ffmpeg_cpp::CodecParameters> {
+  static constexpr const char *Value = "codec_parameters";
+};
+template <typename Object>
+inline constexpr const char *HardwareInterfaceName = GetHardwareInterfaceName<Object>::Value;
 
 // Supported controller interface type for the given input and output options
 template <typename InputOption, typename OutputOption> struct GetControllerInterfaceFor {

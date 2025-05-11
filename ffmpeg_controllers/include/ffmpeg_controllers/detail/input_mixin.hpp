@@ -50,14 +50,14 @@ protected:
 // Mixin class depending on InputOption
 // ====================================
 
-template <typename InputOption, class Interface> class InputMixin;
+template <typename InputOption, class ControllerIface> class InputMixin;
 
-template <class Interface>
-class InputMixin<input_options::Read<ffmpeg_cpp::Frame>, Interface>
-    : public virtual ControllerInterfaceAdapter<Interface>,
+template <class ControllerIface>
+class InputMixin<input_options::Read<ffmpeg_cpp::Frame>, ControllerIface>
+    : public virtual ControllerInterfaceAdapter<ControllerIface>,
       public OnReadContract<input_options::Read<ffmpeg_cpp::Frame>> {
 private:
-  using Base = ControllerInterfaceAdapter<Interface>;
+  using Base = ControllerInterfaceAdapter<ControllerIface>;
 
 protected:
   typename Base::NodeReturn on_init() override {
@@ -79,14 +79,14 @@ protected:
 
   controller_interface::InterfaceConfiguration state_interface_configuration() const override {
     return {controller_interface::interface_configuration_type::INDIVIDUAL,
-            {input_name_ + "/frame"}};
+            {input_name_ + "/" + HardwareInterfaceName<ffmpeg_cpp::Frame>}};
   }
 
   OnReadReturn<input_options::Read<ffmpeg_cpp::Frame>>
   on_read(const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/,
           input_options::Read<ffmpeg_cpp::Frame>) override {
-    if (const auto input_frame =
-            Base::template get_state_as_pointer<ffmpeg_cpp::Frame>(input_name_, "frame");
+    if (const auto input_frame = Base::template get_state_as_pointer<ffmpeg_cpp::Frame>(
+            input_name_, HardwareInterfaceName<ffmpeg_cpp::Frame>);
         input_frame && (*input_frame)->pkt_dts > prev_dts_) {
       // Return the input frame if it is new
       prev_dts_ = (*input_frame)->pkt_dts;
@@ -106,12 +106,12 @@ private:
   std::int64_t prev_dts_;
 };
 
-template <class Interface>
-class InputMixin<input_options::Read<ffmpeg_cpp::Packet>, Interface>
-    : public virtual ControllerInterfaceAdapter<Interface>,
+template <class ControllerIface>
+class InputMixin<input_options::Read<ffmpeg_cpp::Packet>, ControllerIface>
+    : public virtual ControllerInterfaceAdapter<ControllerIface>,
       public OnReadContract<input_options::Read<ffmpeg_cpp::Packet>> {
 private:
-  using Base = ControllerInterfaceAdapter<Interface>;
+  using Base = ControllerInterfaceAdapter<ControllerIface>;
 
 protected:
   typename Base::NodeReturn on_init() override {
@@ -133,14 +133,14 @@ protected:
 
   controller_interface::InterfaceConfiguration state_interface_configuration() const override {
     return {controller_interface::interface_configuration_type::INDIVIDUAL,
-            {input_name_ + "/packet"}};
+            {input_name_ + "/" + HardwareInterfaceName<ffmpeg_cpp::Packet>}};
   }
 
   OnReadReturn<input_options::Read<ffmpeg_cpp::Packet>>
   on_read(const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/,
           input_options::Read<ffmpeg_cpp::Packet>) override {
-    if (const auto input_packet =
-            Base::template get_state_as_pointer<ffmpeg_cpp::Packet>(input_name_, "packet");
+    if (const auto input_packet = Base::template get_state_as_pointer<ffmpeg_cpp::Packet>(
+            input_name_, HardwareInterfaceName<ffmpeg_cpp::Packet>);
         input_packet && (*input_packet)->dts > prev_dts_) {
       // Return the input packet if it is new
       prev_dts_ = (*input_packet)->dts;
@@ -160,12 +160,12 @@ private:
   std::int64_t prev_dts_;
 };
 
-template <class Interface>
-class InputMixin<input_options::Read<ffmpeg_cpp::CodecParameters>, Interface>
-    : public virtual ControllerInterfaceAdapter<Interface>,
-      public OnReadContract<input_options::Read<ffmpeg_cpp::CodecParameters>> {
+template <typename Object, class ControllerIface>
+class InputMixin<input_options::Read<Object>, ControllerIface>
+    : public virtual ControllerInterfaceAdapter<ControllerIface>,
+      public OnReadContract<input_options::Read<Object>> {
 private:
-  using Base = ControllerInterfaceAdapter<Interface>;
+  using Base = ControllerInterfaceAdapter<ControllerIface>;
 
 protected:
   typename Base::NodeReturn on_init() override {
@@ -181,18 +181,18 @@ protected:
 
   controller_interface::InterfaceConfiguration state_interface_configuration() const override {
     return {controller_interface::interface_configuration_type::INDIVIDUAL,
-            {input_name_ + "/codec_parameters"}};
+            {input_name_ + "/" + HardwareInterfaceName<Object>}};
   }
 
-  OnReadReturn<input_options::Read<ffmpeg_cpp::CodecParameters>>
-  on_read(const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/,
-          input_options::Read<ffmpeg_cpp::CodecParameters>) override {
-    if (const auto codec_params = Base::template get_state_as_pointer<ffmpeg_cpp::CodecParameters>(
-            input_name_, "codec_parameters");
-        codec_params) {
-      return {Base::ControllerReturn::OK, std::cref(*codec_params)};
+  OnReadReturn<input_options::Read<Object>> on_read(const rclcpp::Time & /*time*/,
+                                                    const rclcpp::Duration & /*period*/,
+                                                    input_options::Read<Object>) override {
+    if (const auto object =
+            Base::template get_state_as_pointer<Object>(input_name_, HardwareInterfaceName<Object>);
+        object) {
+      return {Base::ControllerReturn::OK, std::cref(*object)};
     } else {
-      // RCLCPP_WARN(Base::get_logger(), "Failed to get codec parameters. Will skip this update.");
+      // RCLCPP_WARN(Base::get_logger(), "Failed to get input object. Will skip this update.");
       return {Base::ControllerReturn::OK, std::nullopt};
     }
   }
@@ -201,12 +201,12 @@ private:
   std::string input_name_;
 };
 
-template <typename Message, class Interface>
-class InputMixin<input_options::Subscribe<Message>, Interface>
-    : public virtual ControllerInterfaceAdapter<Interface>,
+template <typename Message, class ControllerIface>
+class InputMixin<input_options::Subscribe<Message>, ControllerIface>
+    : public virtual ControllerInterfaceAdapter<ControllerIface>,
       public OnReadContract<input_options::Subscribe<Message>> {
 private:
-  using Base = ControllerInterfaceAdapter<Interface>;
+  using Base = ControllerInterfaceAdapter<ControllerIface>;
   using StampedMessage = message_filters::MessageEvent<Message>;
 
 protected:
@@ -265,13 +265,13 @@ private:
   rclcpp::Time prev_stamp_;
 };
 
-template <typename... InputOptions, class Interface>
-class InputMixin<std::tuple<InputOptions...>, Interface>
-    : public InputMixin<InputOptions, Interface>...,
+template <typename... InputOptions, class ControllerIface>
+class InputMixin<std::tuple<InputOptions...>, ControllerIface>
+    : public InputMixin<InputOptions, ControllerIface>...,
       public OnReadContract<std::tuple<InputOptions...>> {
 private:
-  using BaseCommon = ControllerInterfaceAdapter<Interface>;
-  template <typename InputOption> using BaseInput = InputMixin<InputOption, Interface>;
+  using BaseCommon = ControllerInterfaceAdapter<ControllerIface>;
+  template <typename InputOption> using BaseInput = InputMixin<InputOption, ControllerIface>;
 
 protected:
   typename BaseCommon::NodeReturn on_init() override {
