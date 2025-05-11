@@ -57,6 +57,15 @@
         </description>
     </class>
 
+    <class name="ffmpeg_controllers/FrameReceiver"
+           type="ffmpeg_controllers::FrameReceiver"
+           base_class_type="controller_interface::ChainableControllerInterface">
+        <description>
+            This controller subscribes ffmpeg_pipeline_msgs::Frame
+            and export it as ffmpeg_cpp::Frame on the state interface owned by this controller.
+        </description>
+    </class>
+
     <class name="ffmpeg_controllers/FrameWriter"
            type="ffmpeg_controllers::FrameWriter"
            base_class_type="controller_interface::ControllerInterface">
