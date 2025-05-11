@@ -37,24 +37,26 @@ template <typename Message> struct GetOutputFor<output_options::Publish<Message>
 };
 template <typename OutputOption> using OutputFor = typename GetOutputFor<OutputOption>::Result;
 
-// Supported interface type for the given input and output options
-template <typename InputOption, typename OutputOption> struct GetInterfaceFor {
+// Supported controller interface type for the given input and output options
+template <typename InputOption, typename OutputOption> struct GetControllerInterfaceFor {
   using Result = controller_interface::ControllerInterface;
 };
 template <typename InputOption, typename Object>
-struct GetInterfaceFor<InputOption, output_options::Export<Object>> {
+struct GetControllerInterfaceFor<InputOption, output_options::Export<Object>> {
   using Result = controller_interface::ChainableControllerInterface;
 };
 template <typename InputOption, typename... OutputOptions>
-struct GetInterfaceFor<InputOption, std::tuple<OutputOptions...>> {
-  using Result = std::conditional_t<
-      std::conjunction_v<std::is_same<typename GetInterfaceFor<InputOption, OutputOptions>::Result,
-                                      controller_interface::ControllerInterface>...>,
-      controller_interface::ControllerInterface,
-      controller_interface::ChainableControllerInterface>;
+struct GetControllerInterfaceFor<InputOption, std::tuple<OutputOptions...>> {
+  using Result =
+      std::conditional_t<std::conjunction_v<std::is_same<
+                             typename GetControllerInterfaceFor<InputOption, OutputOptions>::Result,
+                             controller_interface::ControllerInterface>...>,
+                         controller_interface::ControllerInterface,
+                         controller_interface::ChainableControllerInterface>;
 };
 template <typename InputOption, typename OutputOption>
-using InterfaceFor = typename GetInterfaceFor<InputOption, OutputOption>::Result;
+using ControllerInterfaceFor =
+    typename GetControllerInterfaceFor<InputOption, OutputOption>::Result;
 
 } // namespace ffmpeg_controllers
 

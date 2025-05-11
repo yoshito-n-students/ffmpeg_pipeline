@@ -54,14 +54,15 @@ protected:
 // =====================================================
 
 template <typename InputOption, typename OutputOption>
-class InputOutputMixin : public InputMixin<InputOption, InterfaceFor<InputOption, OutputOption>>,
-                         public OutputMixin<OutputOption, InterfaceFor<InputOption, OutputOption>>,
-                         public OnGenerateContract<InputOption, OutputOption> {
+class InputOutputMixin
+    : public InputMixin<InputOption, ControllerInterfaceFor<InputOption, OutputOption>>,
+      public OutputMixin<OutputOption, ControllerInterfaceFor<InputOption, OutputOption>>,
+      public OnGenerateContract<InputOption, OutputOption> {
 private:
-  using Interface = InterfaceFor<InputOption, OutputOption>;
-  using BaseCommon = InterfaceAdapter<Interface>;
-  using BaseInput = InputMixin<InputOption, Interface>;
-  using BaseOutput = OutputMixin<OutputOption, Interface>;
+  using ControllerIface = ControllerInterfaceFor<InputOption, OutputOption>;
+  using BaseCommon = InterfaceAdapter<ControllerIface>;
+  using BaseInput = InputMixin<InputOption, ControllerIface>;
+  using BaseOutput = OutputMixin<OutputOption, ControllerIface>;
 
 protected:
   typename BaseCommon::NodeReturn on_init() override {
