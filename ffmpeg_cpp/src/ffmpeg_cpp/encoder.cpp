@@ -93,17 +93,17 @@ void Encoder::send_frame(const Frame &frame) {
 }
 
 Packet Encoder::receive_packet() {
-  // If the return value of avcodec_receive_packet() is one of the following, return packet
-  // - 0: The packet was successfully encoded
-  // - AVERROR(EAGAIN): No packet available due to insufficient input frames
-  // - AVERROR_EOF: No packet available because the encoder has finished successfully
-  // TODO: Notify the reason for the empty packet to the caller
   Packet packet = Packet::create();
   if (const int ret = avcodec_receive_packet(get(), packet.get());
-      ret < 0 && ret != AVERROR(EAGAIN) && ret != AVERROR_EOF) {
+      ret >= 0 /* The packet was successfully encoded */) {
+    return packet;
+  } else if (
+      ret == AVERROR(EAGAIN) /* No packet available due to insufficient input frames */ ||
+      ret == AVERROR_EOF /* No packet available because the encoder has finished successfully */) {
+    return Packet::null();
+  } else { /* ret < 0; Error during encoding */
     throw Error("Encoder::receive_packet(): Error during encoding", ret);
   }
-  return packet;
 }
 
 std::string Encoder::codec_name() const { return avcodec_get_name(get()->codec_id); }

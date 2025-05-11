@@ -140,17 +140,17 @@ void Decoder::send_packet(const Packet &packet) {
 }
 
 Frame Decoder::receive_frame() {
-  // If the return value of avcodec_receive_frame() is one of the following, return frame
-  // - 0: The frame was successfully decoded
-  // - AVERROR(EAGAIN): No frame available due to insufficient packets
-  // - AVERROR_EOF: No frame available because the decoder has finished successfully
-  // TODO: Notify the reason for the empty frame to the caller
   Frame frame = Frame::create();
   if (const int ret = avcodec_receive_frame(get(), frame.get());
-      ret < 0 && ret != AVERROR(EAGAIN) && ret != AVERROR_EOF) {
+      ret >= 0 /* The frame was successfully decoded */) {
+    return frame;
+  } else if (
+      ret == AVERROR(EAGAIN) /* No frame available due to insufficient packets */ ||
+      ret == AVERROR_EOF /* No frame available because the decoder has finished successfully */) {
+    return Frame::null();
+  } else { /* ret < 0; Error during decoding */
     throw Error("Decoder::receive_frame(): Error during decoding", ret);
   }
-  return frame;
 }
 
 std::string Decoder::codec_name() const { return avcodec_get_name(get()->codec_id); }
