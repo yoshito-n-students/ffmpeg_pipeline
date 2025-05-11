@@ -1,3 +1,5 @@
+#include <cstring> // for std::memcpy()
+
 extern "C" {
 #include <libavcodec/avcodec.h>
 #include <libavutil/avutil.h>
@@ -23,6 +25,39 @@ Frame Frame::create() {
   if (!frame) {
     throw Error("Frame::create(): Failed to allocate AVFrame");
   }
+  return frame;
+}
+
+Frame Frame::create(const std::uint8_t *const data, const std::size_t size) {
+  Frame frame = Frame::create();
+  frame->buf[0] = av_buffer_alloc(size);
+  if (!frame->buf[0]) {
+    throw Error("Frame::create(): Failed to allocate AVBuffer for frame");
+  }
+  std::memcpy(frame->buf[0]->data, data, size);
+  frame->data[0] = frame->buf[0]->data;
+  return frame;
+}
+
+Frame Frame::create(const ffmpeg_pipeline_msgs::msg::Frame &msg) {
+  Frame frame = Frame::create(msg.data.data(), msg.data.size());
+  if (msg.width > 0 && msg.height > 0) {
+    frame->format = av_get_pix_fmt(msg.format.c_str());
+  } else if (msg.nb_samples > 0) {
+    frame->format = av_get_sample_fmt(msg.format.c_str());
+  }
+  frame->pts = msg.pts;
+  frame->pkt_dts = msg.pkt_dts;
+  frame->time_base.num = msg.time_base.num;
+  frame->time_base.den = msg.time_base.den;
+  // Audio-specific fields
+  frame->nb_samples = msg.nb_samples;
+  frame->sample_rate = msg.sample_rate;
+  frame->ch_layout = to_channel_layout(msg.ch_layout);
+  frame->duration = msg.duration;
+  // Video-specific fields
+  frame->width = msg.width;
+  frame->height = msg.height;
   return frame;
 }
 

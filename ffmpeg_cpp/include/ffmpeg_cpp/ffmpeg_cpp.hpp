@@ -106,6 +106,10 @@ public:
   static Frame null();
   // Allocate the frame and default the fields
   static Frame create();
+  // Create a frame by copying the given data
+  static Frame create(const std::uint8_t *const data, const std::size_t size);
+  // Create a frame by copying the given message
+  static Frame create(const ffmpeg_pipeline_msgs::msg::Frame &msg);
   // Create a frame by referencing the data of the given frame.
   // If the data is not reference-counted, copy the data to a new frame.
   Frame(const Frame &other);
