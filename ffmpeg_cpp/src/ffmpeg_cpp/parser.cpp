@@ -34,11 +34,6 @@ Parser Parser::create(const std::string &codec_name) {
                 ")");
   }
 
-  // TODO: Remove this if it works
-  if (const int ret = avcodec_open2(parser.codec_ctx_.get(), codec, nullptr); ret < 0) {
-    throw Error("Parser::create(): Failed to open codec", ret);
-  }
-
   return parser;
 }
 
