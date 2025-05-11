@@ -3,6 +3,7 @@ extern "C" {
 #include <libavutil/avutil.h>
 #include <libavutil/hwcontext.h>
 #include <libavutil/imgutils.h>
+#include <libavutil/samplefmt.h>
 }
 
 #include <ffmpeg_cpp/ffmpeg_cpp.hpp>
@@ -59,7 +60,28 @@ std::string Frame::ch_layout_str() const { return to_string(get()->ch_layout); }
 ffmpeg_pipeline_msgs::msg::Frame Frame::to_msg(const rclcpp::Time &stamp) const {
   ffmpeg_pipeline_msgs::msg::Frame msg;
   msg.header.stamp = stamp;
-  // TODO: Copy the data from the frame to the message
+  // Common fields for video and audio frames
+  msg.format = format_name();
+  {
+    const int data_size = av_samples_get_buffer_size(
+        nullptr, get()->ch_layout.nb_channels, get()->nb_samples,
+        static_cast<AVSampleFormat>(get()->format), 1 /* 1: no_alignment */);
+    if (data_size < 0) {
+      throw Error("Frame::to_msg(): Failed to get buffer size", data_size);
+    }
+    // TODO: Warn or throw if data[1] is not null
+    msg.data.assign(get()->data[0], get()->data[0] + data_size);
+  }
+  msg.pts = get()->pts;
+  msg.pkt_dts = get()->pkt_dts;
+  msg.time_base.num = get()->time_base.num;
+  msg.time_base.den = get()->time_base.den;
+  // Audio-specific fields
+  msg.nb_samples = get()->nb_samples;
+  msg.sample_rate = get()->sample_rate;
+  msg.ch_layout = ch_layout_str();
+  msg.duration = get()->duration;
+  // TODO: Fill video-specific fields
   return msg;
 }
 
