@@ -81,7 +81,9 @@ ffmpeg_pipeline_msgs::msg::Frame Frame::to_msg(const rclcpp::Time &stamp) const 
   msg.sample_rate = get()->sample_rate;
   msg.ch_layout = ch_layout_str();
   msg.duration = get()->duration;
-  // TODO: Fill video-specific fields
+  // Video-specific fields
+  msg.width = get()->width;
+  msg.height = get()->height;
   return msg;
 }
 

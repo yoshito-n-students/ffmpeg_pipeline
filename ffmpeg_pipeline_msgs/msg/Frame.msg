@@ -10,4 +10,6 @@ int32 nb_samples
 int32 sample_rate
 string ch_layout
 int64 duration
-# TODO: add video-only fields
+# Video only
+int32 width
+int32 height
