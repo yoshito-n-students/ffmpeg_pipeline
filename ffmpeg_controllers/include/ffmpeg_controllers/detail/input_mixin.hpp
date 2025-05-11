@@ -8,8 +8,8 @@
 #include <utility> // for std::pair<>
 
 #include <ffmpeg_controllers/controller_options.hpp>
+#include <ffmpeg_controllers/detail/controller_interface_adapter.hpp>
 #include <ffmpeg_controllers/detail/controller_traits.hpp>
-#include <ffmpeg_controllers/detail/interface_adapter.hpp>
 #include <ffmpeg_cpp/ffmpeg_cpp.hpp>
 #include <message_filters/message_event.h>
 #include <rclcpp/duration.hpp>
@@ -54,10 +54,10 @@ template <typename InputOption, class Interface> class InputMixin;
 
 template <class Interface>
 class InputMixin<input_options::Read<ffmpeg_cpp::Frame>, Interface>
-    : public virtual InterfaceAdapter<Interface>,
+    : public virtual ControllerInterfaceAdapter<Interface>,
       public OnReadContract<input_options::Read<ffmpeg_cpp::Frame>> {
 private:
-  using Base = InterfaceAdapter<Interface>;
+  using Base = ControllerInterfaceAdapter<Interface>;
 
 protected:
   typename Base::NodeReturn on_init() override {
@@ -108,10 +108,10 @@ private:
 
 template <class Interface>
 class InputMixin<input_options::Read<ffmpeg_cpp::Packet>, Interface>
-    : public virtual InterfaceAdapter<Interface>,
+    : public virtual ControllerInterfaceAdapter<Interface>,
       public OnReadContract<input_options::Read<ffmpeg_cpp::Packet>> {
 private:
-  using Base = InterfaceAdapter<Interface>;
+  using Base = ControllerInterfaceAdapter<Interface>;
 
 protected:
   typename Base::NodeReturn on_init() override {
@@ -162,10 +162,10 @@ private:
 
 template <class Interface>
 class InputMixin<input_options::Read<ffmpeg_cpp::CodecParameters>, Interface>
-    : public virtual InterfaceAdapter<Interface>,
+    : public virtual ControllerInterfaceAdapter<Interface>,
       public OnReadContract<input_options::Read<ffmpeg_cpp::CodecParameters>> {
 private:
-  using Base = InterfaceAdapter<Interface>;
+  using Base = ControllerInterfaceAdapter<Interface>;
 
 protected:
   typename Base::NodeReturn on_init() override {
@@ -203,10 +203,10 @@ private:
 
 template <typename Message, class Interface>
 class InputMixin<input_options::Subscribe<Message>, Interface>
-    : public virtual InterfaceAdapter<Interface>,
+    : public virtual ControllerInterfaceAdapter<Interface>,
       public OnReadContract<input_options::Subscribe<Message>> {
 private:
-  using Base = InterfaceAdapter<Interface>;
+  using Base = ControllerInterfaceAdapter<Interface>;
   using StampedMessage = message_filters::MessageEvent<Message>;
 
 protected:
@@ -270,7 +270,7 @@ class InputMixin<std::tuple<InputOptions...>, Interface>
     : public InputMixin<InputOptions, Interface>...,
       public OnReadContract<std::tuple<InputOptions...>> {
 private:
-  using BaseCommon = InterfaceAdapter<Interface>;
+  using BaseCommon = ControllerInterfaceAdapter<Interface>;
   template <typename InputOption> using BaseInput = InputMixin<InputOption, Interface>;
 
 protected:

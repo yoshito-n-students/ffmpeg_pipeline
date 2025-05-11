@@ -7,8 +7,8 @@
 
 #include <controller_interface/controller_interface_base.hpp> // for controller_interface::return_type
 #include <ffmpeg_controllers/controller_options.hpp>
+#include <ffmpeg_controllers/detail/controller_interface_adapter.hpp>
 #include <ffmpeg_controllers/detail/controller_traits.hpp>
-#include <ffmpeg_controllers/detail/interface_adapter.hpp>
 #include <ffmpeg_cpp/ffmpeg_cpp.hpp>
 #include <rclcpp/duration.hpp>
 #include <rclcpp/publisher.hpp>
@@ -45,10 +45,10 @@ template <typename OutputOption, class Interface> class OutputMixin;
 
 template <class Interface>
 class OutputMixin<output_options::Export<ffmpeg_cpp::Frame>, Interface>
-    : public virtual InterfaceAdapter<Interface>,
+    : public virtual ControllerInterfaceAdapter<Interface>,
       public OnWriteContract<output_options::Export<ffmpeg_cpp::Frame>> {
 private:
-  using Base = InterfaceAdapter<Interface>;
+  using Base = ControllerInterfaceAdapter<Interface>;
 
 protected:
   typename Base::NodeReturn on_init() override {
@@ -79,10 +79,10 @@ private:
 
 template <class Interface>
 class OutputMixin<output_options::Export<ffmpeg_cpp::Packet>, Interface>
-    : public virtual InterfaceAdapter<Interface>,
+    : public virtual ControllerInterfaceAdapter<Interface>,
       public OnWriteContract<output_options::Export<ffmpeg_cpp::Packet>> {
 private:
-  using Base = InterfaceAdapter<Interface>;
+  using Base = ControllerInterfaceAdapter<Interface>;
 
 protected:
   typename Base::NodeReturn on_init() override {
@@ -113,10 +113,10 @@ private:
 
 template <class Interface>
 class OutputMixin<output_options::Export<ffmpeg_cpp::CodecParameters>, Interface>
-    : public virtual InterfaceAdapter<Interface>,
+    : public virtual ControllerInterfaceAdapter<Interface>,
       public OnWriteContract<output_options::Export<ffmpeg_cpp::CodecParameters>> {
 private:
-  using Base = InterfaceAdapter<Interface>;
+  using Base = ControllerInterfaceAdapter<Interface>;
 
 protected:
   typename Base::NodeReturn on_init() override {
@@ -148,10 +148,10 @@ private:
 
 template <class Interface>
 class OutputMixin<output_options::Write<ffmpeg_cpp::Frame>, Interface>
-    : public virtual InterfaceAdapter<Interface>,
+    : public virtual ControllerInterfaceAdapter<Interface>,
       public OnWriteContract<output_options::Write<ffmpeg_cpp::Frame>> {
 private:
-  using Base = InterfaceAdapter<Interface>;
+  using Base = ControllerInterfaceAdapter<Interface>;
 
 protected:
   typename Base::NodeReturn on_init() override {
@@ -192,10 +192,10 @@ private:
 
 template <class Interface>
 class OutputMixin<output_options::Write<ffmpeg_cpp::Packet>, Interface>
-    : public virtual InterfaceAdapter<Interface>,
+    : public virtual ControllerInterfaceAdapter<Interface>,
       public OnWriteContract<output_options::Write<ffmpeg_cpp::Packet>> {
 private:
-  using Base = InterfaceAdapter<Interface>;
+  using Base = ControllerInterfaceAdapter<Interface>;
 
 protected:
   typename Base::NodeReturn on_init() override {
@@ -236,10 +236,10 @@ private:
 
 template <class Interface>
 class OutputMixin<output_options::Write<ffmpeg_cpp::CodecParameters>, Interface>
-    : public virtual InterfaceAdapter<Interface>,
+    : public virtual ControllerInterfaceAdapter<Interface>,
       public OnWriteContract<output_options::Write<ffmpeg_cpp::CodecParameters>> {
 private:
-  using Base = InterfaceAdapter<Interface>;
+  using Base = ControllerInterfaceAdapter<Interface>;
 
 protected:
   typename Base::NodeReturn on_init() override {
@@ -282,10 +282,10 @@ private:
 
 template <typename Message, class Interface>
 class OutputMixin<output_options::Publish<Message>, Interface>
-    : public virtual InterfaceAdapter<Interface>,
+    : public virtual ControllerInterfaceAdapter<Interface>,
       public OnWriteContract<output_options::Publish<Message>> {
 private:
-  using Base = InterfaceAdapter<Interface>;
+  using Base = ControllerInterfaceAdapter<Interface>;
 
 protected:
   using OutputMessage = Message;
@@ -335,7 +335,7 @@ class OutputMixin<std::tuple<OutputOptions...>, Interface>
     : public OutputMixin<OutputOptions, Interface>...,
       public OnWriteContract<std::tuple<OutputOptions...>> {
 private:
-  using BaseCommon = InterfaceAdapter<Interface>;
+  using BaseCommon = ControllerInterfaceAdapter<Interface>;
   template <typename OutputOption> using BaseOutput = OutputMixin<OutputOption, Interface>;
 
 protected:

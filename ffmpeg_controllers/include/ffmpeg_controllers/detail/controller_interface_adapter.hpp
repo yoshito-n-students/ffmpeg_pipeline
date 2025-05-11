@@ -1,5 +1,5 @@
-#ifndef FFMPEG_CONTROLLERS_DETAIL_INTERFACE_ADAPTER_HPP
-#define FFMPEG_CONTROLLERS_DETAIL_INTERFACE_ADAPTER_HPP
+#ifndef FFMPEG_CONTROLLERS_DETAIL_CONTROLLER_INTERFACE_ADAPTER_HPP
+#define FFMPEG_CONTROLLERS_DETAIL_CONTROLLER_INTERFACE_ADAPTER_HPP
 
 #include <cstdint>
 #include <string>
@@ -13,18 +13,19 @@
 
 namespace ffmpeg_controllers {
 
-// ===================================
-// Interface adapter for mixin classes
-// ===================================
+// ==============================================
+// Controller interface adapter for mixin classes
+// ==============================================
 
-template <class Interface> class InterfaceAdapter;
+template <class ControllerIface> class ControllerInterfaceAdapter;
 
-// Common base class for all variations of InterfaceAdapter<>
-template <class Interface> class InterfaceAdapterBase : public virtual Interface {
+// Common base class for all variations of ControllerInterfaceAdapter<>
+template <class ControllerIface>
+class ControllerInterfaceAdapterBase : public virtual ControllerIface {
 protected:
   // Provide consistent aliases for the return values of virtual interface functions
-  using NodeReturn = typename Interface::CallbackReturn;      // for node-related functions
-  using ControllerReturn = controller_interface::return_type; // for controller-related functions
+  using NodeReturn = typename ControllerIface::CallbackReturn; // for node-related functions
+  using ControllerReturn = controller_interface::return_type;  // for controller-related functions
 
   // Provide default implementations for virtual functions
   // defined but not implemented in controller_interface::[Chainable]ControllerInterface
@@ -44,17 +45,17 @@ protected:
 
   // Provide some utility functions for derived classes
 
-  rclcpp::Logger get_logger() const { return Interface::get_node()->get_logger(); }
+  rclcpp::Logger get_logger() const { return ControllerIface::get_node()->get_logger(); }
 
   template <typename T> T get_user_parameter(const std::string &name) {
-    if (!Interface::get_node()->has_parameter(name)) {
-      Interface::get_node()->template declare_parameter<T>(name);
+    if (!ControllerIface::get_node()->has_parameter(name)) {
+      ControllerIface::get_node()->template declare_parameter<T>(name);
     }
-    return Interface::get_node()->get_parameter(name).template get_value<T>();
+    return ControllerIface::get_node()->get_parameter(name).template get_value<T>();
   }
 
   // Get the user parameter value with a default value.
-  // Unlike Interface::auto_declare(), this function does not set the parameter value
+  // Unlike ControllerIface::auto_declare(), this function does not set the parameter value
   // via declare_parameter(name, default_val) or get_parameter_or(name, default_val).
   // This ensures the parameter value is set by the user, not by other modules in the controller.
   template <typename T> T get_user_parameter(const std::string &name, const T &default_value) {
@@ -71,7 +72,7 @@ protected:
                                 const std::string &iface_name) const {
     // Find the state interface specified by iface_name
     // exported from the hardware or chained controller specified by prefix_name
-    for (const auto &iface : Interface::state_interfaces_) {
+    for (const auto &iface : ControllerIface::state_interfaces_) {
       if (iface.get_prefix_name() == prefix_name && iface.get_interface_name() == iface_name) {
         // Convert the double value held by the state interface to a pointer type and return it
         if (const auto double_value = iface.template get_optional<double>(); double_value) {
@@ -87,7 +88,7 @@ protected:
   T *get_command_as_pointer(const std::string &prefix_name, const std::string &iface_name) const {
     // Find the state interface specified by iface_name
     // exported from the hardware or chained controller specified by prefix_name
-    for (const auto &iface : Interface::command_interfaces_) {
+    for (const auto &iface : ControllerIface::command_interfaces_) {
       if (iface.get_prefix_name() == prefix_name && iface.get_interface_name() == iface_name) {
         // Convert the double value held by the state interface to a pointer type and return it
         if (const auto double_value = iface.template get_optional<double>(); double_value) {
@@ -145,10 +146,10 @@ protected:
 };
 
 template <>
-class InterfaceAdapter<controller_interface::ControllerInterface>
-    : public virtual InterfaceAdapterBase<controller_interface::ControllerInterface> {
+class ControllerInterfaceAdapter<controller_interface::ControllerInterface>
+    : public virtual ControllerInterfaceAdapterBase<controller_interface::ControllerInterface> {
 private:
-  using Base = InterfaceAdapterBase<controller_interface::ControllerInterface>;
+  using Base = ControllerInterfaceAdapterBase<controller_interface::ControllerInterface>;
 
 protected:
   Base::ControllerReturn update(const rclcpp::Time &time, const rclcpp::Duration &period) override {
@@ -157,10 +158,11 @@ protected:
 };
 
 template <>
-class InterfaceAdapter<controller_interface::ChainableControllerInterface>
-    : public virtual InterfaceAdapterBase<controller_interface::ChainableControllerInterface> {
+class ControllerInterfaceAdapter<controller_interface::ChainableControllerInterface>
+    : public virtual ControllerInterfaceAdapterBase<
+          controller_interface::ChainableControllerInterface> {
 private:
-  using Base = InterfaceAdapterBase<controller_interface::ChainableControllerInterface>;
+  using Base = ControllerInterfaceAdapterBase<controller_interface::ChainableControllerInterface>;
 
 protected:
   Base::ControllerReturn

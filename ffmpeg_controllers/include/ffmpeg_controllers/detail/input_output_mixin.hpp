@@ -6,9 +6,9 @@
 #include <type_traits>
 
 #include <controller_interface/controller_interface_base.hpp> // for controller_interface::return_type
+#include <ffmpeg_controllers/detail/controller_interface_adapter.hpp>
 #include <ffmpeg_controllers/detail/controller_traits.hpp>
 #include <ffmpeg_controllers/detail/input_mixin.hpp>
-#include <ffmpeg_controllers/detail/interface_adapter.hpp>
 #include <ffmpeg_controllers/detail/output_mixin.hpp>
 #include <rclcpp/duration.hpp>
 #include <rclcpp/time.hpp>
@@ -60,7 +60,7 @@ class InputOutputMixin
       public OnGenerateContract<InputOption, OutputOption> {
 private:
   using ControllerIface = ControllerInterfaceFor<InputOption, OutputOption>;
-  using BaseCommon = InterfaceAdapter<ControllerIface>;
+  using BaseCommon = ControllerInterfaceAdapter<ControllerIface>;
   using BaseInput = InputMixin<InputOption, ControllerIface>;
   using BaseOutput = OutputMixin<OutputOption, ControllerIface>;
 
