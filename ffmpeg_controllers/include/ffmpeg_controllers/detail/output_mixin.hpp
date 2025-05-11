@@ -134,7 +134,7 @@ protected:
   using OutputMessage = Message;
 
   typename Base::NodeReturn on_init() override {
-    output_topic_ = "~/output";
+    output_topic_ = TopicName<Message>;
     return Base::NodeReturn::SUCCESS;
   }
 

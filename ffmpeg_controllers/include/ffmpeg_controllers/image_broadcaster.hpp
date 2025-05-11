@@ -14,23 +14,7 @@ namespace ffmpeg_controllers {
 
 class ImageBroadcaster : public ControllerBase<input_options::Read<ffmpeg_cpp::Frame>,
                                                output_options::Publish<sensor_msgs::msg::Image>> {
-private:
-  using Base = ControllerBase<input_options::Read<ffmpeg_cpp::Frame>,
-                              output_options::Publish<sensor_msgs::msg::Image>>;
-
 protected:
-  NodeReturn on_init() override {
-    // Initialize the base class first
-    if (const NodeReturn base_ret = Base::on_init(); base_ret != NodeReturn::SUCCESS) {
-      return base_ret;
-    }
-
-    // Name of interprocess topic to publish
-    output_topic_ = "~/image";
-
-    return NodeReturn::SUCCESS;
-  }
-
   OnGenerateReturn<output_options::Publish<sensor_msgs::msg::Image>>
   on_generate(const rclcpp::Time &time, const rclcpp::Duration & /*period*/,
               const ffmpeg_cpp::Frame &input_frame) override {

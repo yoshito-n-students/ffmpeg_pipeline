@@ -8,6 +8,10 @@
 #include <controller_interface/controller_interface.hpp>
 #include <ffmpeg_controllers/controller_options.hpp>
 #include <ffmpeg_cpp/ffmpeg_cpp.hpp>
+#include <ffmpeg_pipeline_msgs/msg/frame.hpp>
+#include <ffmpeg_pipeline_msgs/msg/packet.hpp>
+#include <sensor_msgs/msg/compressed_image.hpp>
+#include <sensor_msgs/msg/image.hpp>
 
 namespace ffmpeg_controllers {
 
@@ -51,6 +55,22 @@ template <> struct GetHardwareInterfaceName<ffmpeg_cpp::CodecParameters> {
 };
 template <typename Object>
 inline constexpr const char *HardwareInterfaceName = GetHardwareInterfaceName<Object>::Value;
+
+// Topic name for the given message type
+template <typename Message> struct GetTopicName;
+template <> struct GetTopicName<ffmpeg_pipeline_msgs::msg::Packet> {
+  static constexpr const char *Value = "~/packet";
+};
+template <> struct GetTopicName<ffmpeg_pipeline_msgs::msg::Frame> {
+  static constexpr const char *Value = "~/frame";
+};
+template <> struct GetTopicName<sensor_msgs::msg::Image> {
+  static constexpr const char *Value = "~/image";
+};
+template <> struct GetTopicName<sensor_msgs::msg::CompressedImage> {
+  static constexpr const char *Value = "~/image/ffmpeg";
+};
+template <typename Message> inline constexpr const char *TopicName = GetTopicName<Message>::Value;
 
 // Supported controller interface type for the given input and output options
 template <typename InputOption, typename OutputOption> struct GetControllerInterfaceFor {

@@ -15,23 +15,7 @@ namespace ffmpeg_controllers {
 class FrameReceiver
     : public ControllerBase<input_options::Subscribe<ffmpeg_pipeline_msgs::msg::Frame>,
                             output_options::Export<ffmpeg_cpp::Frame>> {
-private:
-  using Base = ControllerBase<input_options::Subscribe<ffmpeg_pipeline_msgs::msg::Frame>,
-                              output_options::Export<ffmpeg_cpp::Frame>>;
-
 protected:
-  NodeReturn on_init() override {
-    // Initialize the base class first
-    if (const NodeReturn base_ret = Base::on_init(); base_ret != NodeReturn::SUCCESS) {
-      return base_ret;
-    }
-
-    // Name of interprocess topic to be subscribed to
-    input_topic_ = "~/frame";
-
-    return NodeReturn::SUCCESS;
-  }
-
   OnGenerateReturn<output_options::Export<ffmpeg_cpp::Frame>>
   on_generate(const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/,
               const ffmpeg_pipeline_msgs::msg::Frame &input_msg) override {

@@ -213,7 +213,7 @@ protected:
   using InputMessage = Message;
 
   typename Base::NodeReturn on_init() override {
-    input_topic_ = "~/input";
+    input_topic_ = TopicName<Message>;
     return Base::NodeReturn::SUCCESS;
   }
 

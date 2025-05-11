@@ -12,23 +12,7 @@ namespace ffmpeg_controllers {
 class FrameBroadcaster
     : public ControllerBase<input_options::Read<ffmpeg_cpp::Frame>,
                             output_options::Publish<ffmpeg_pipeline_msgs::msg::Frame>> {
-private:
-  using Base = ControllerBase<input_options::Read<ffmpeg_cpp::Frame>,
-                              output_options::Publish<ffmpeg_pipeline_msgs::msg::Frame>>;
-
 protected:
-  NodeReturn on_init() override {
-    // Initialize the base class first
-    if (const NodeReturn base_ret = Base::on_init(); base_ret != NodeReturn::SUCCESS) {
-      return base_ret;
-    }
-
-    // Name of interprocess topic to publish
-    output_topic_ = "~/frame";
-
-    return NodeReturn::SUCCESS;
-  }
-
   OnGenerateReturn<output_options::Publish<ffmpeg_pipeline_msgs::msg::Frame>>
   on_generate(const rclcpp::Time &time, const rclcpp::Duration & /*period*/,
               const ffmpeg_cpp::Frame &input_frame) override {

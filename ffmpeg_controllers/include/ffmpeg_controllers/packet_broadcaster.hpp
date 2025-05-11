@@ -13,24 +13,7 @@ class PacketBroadcaster
     : public ControllerBase<std::tuple<input_options::Read<ffmpeg_cpp::Packet>,
                                        input_options::Read<ffmpeg_cpp::CodecParameters>>,
                             output_options::Publish<ffmpeg_pipeline_msgs::msg::Packet>> {
-private:
-  using Base = ControllerBase<std::tuple<input_options::Read<ffmpeg_cpp::Packet>,
-                                         input_options::Read<ffmpeg_cpp::CodecParameters>>,
-                              output_options::Publish<ffmpeg_pipeline_msgs::msg::Packet>>;
-
 protected:
-  NodeReturn on_init() override {
-    // Initialize the base class first
-    if (const NodeReturn base_ret = Base::on_init(); base_ret != NodeReturn::SUCCESS) {
-      return base_ret;
-    }
-
-    // Name of interprocess topic to publish
-    output_topic_ = "~/packet";
-
-    return NodeReturn::SUCCESS;
-  }
-
   OnGenerateReturn<output_options::Publish<ffmpeg_pipeline_msgs::msg::Packet>>
   on_generate(const rclcpp::Time &time, const rclcpp::Duration & /*period*/,
               const ffmpeg_cpp::Packet &input_packet,
