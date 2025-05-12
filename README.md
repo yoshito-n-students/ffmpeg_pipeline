@@ -145,9 +145,9 @@ flowchart LR
    C ==> D2@{ shape: stadium, label: "FrameBroadcaster" }
    D == "Opus packet" ==> E@{ shape: stadium, label: "PacketBroadcaster" }
    end
-   C2 -. "Packet (format=#quot;pcm_s16#quot;)" .-> F:::hidden
+   C2 -. "Packet (codec=#quot;pcm_s16#quot;)" .-> F:::hidden
    D2 -. "Frame (format=#quot;pcm_s16#quot;)" .-> G:::hidden
-   E -. "Packet (format=#quot;opus#quot;)" .-> H:::hidden
+   E -. "Packet (codec=#quot;opus#quot;)" .-> H:::hidden
    classDef hidden display: none;
 ```
 
@@ -159,7 +159,7 @@ ros2 launch ffmpeg_pipeline_examples pulse_audio_play_pipeline.launch.py
 
 ```mermaid
 flowchart LR
-   A:::hidden -. "Packet (format=#quot;opus#quot;)" .-> B@{ shape: stadium, label: "PacketReceiver" }
+   A:::hidden -. "Packet (codec=#quot;opus#quot;)" .-> B@{ shape: stadium, label: "PacketReceiver" }
    subgraph ros2_control_node
    B == "Opus packet" ==> C@{ shape: stadium, label: "DecoderFilter" }
    C == "PCM frame" ==> D@{ shape: stadium, label: "FFmpegOutput" }
