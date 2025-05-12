@@ -57,9 +57,13 @@ Filters read objects from state interfaces owned by other controllers and a hard
 
 * **EncoderFilter**
   * **Description**: Encodes raw frames into compressed formats.
-  * **Inputs**: Raw video/audio frames.
-  * **Outputs**: Compressed packets.
-  * **Parameters**: Codec type, bitrate, resolution, frame rate.
+  * **Inputs**: `ffmpeg_cpp::Frame`
+  * **Outputs**: `ffmpeg_cpp::Packet`, `ffmpeg_cpp::CodecParameters`
+  * **Parameters**:
+    * **input_name** (`string`, required): name of other controller/hardware that exports input frames
+    * **encoder_name** (`string`, default: `""`): name of underlying encoder valid in ffmpeg. If empty, the default encoder for `codec_parameters/codec` will be used.
+    * **codec_parameters** (`string`, required): yaml string that can be recognized as `ffmpeg_cpp::CodecParameters`. It will be used to configure the encoder.
+    * **encoder_options** (`string`, default: `"{}"`): yaml string that can be recognized as `ffmpeg_cpp::Dictionary`. It will be passed to the encoder as private options.
 
 #### Broadcaster controllers
 Broadcasters read objects from state interfaces owned by other controllers and a hardware and publish them as ROS 2 messages
