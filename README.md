@@ -161,7 +161,7 @@ ros2 launch ffmpeg_pipeline_examples pulse_audio_play_pipeline.launch.py
 flowchart LR
    A:::hidden -. "Packet (codec=#quot;opus#quot;)" .-> B@{ shape: stadium, label: "PacketReceiver" }
    subgraph ros2_control_node
-   B == "Opus packet" ==> C@{ shape: stadium, label: "DecoderFilter" }
+   B == "Opus packet" ==> C@{ shape: stadium, label: "DecoderFilter (decoder_name:=#quot;libopus#quot;)" }
    C == "PCM frame" ==> D@{ shape: stadium, label: "FFmpegOutput" }
    end
    D -- "PCM frame" --> H@{ shape: rect, label: "PulseAudio output" }
