@@ -18,7 +18,7 @@ To enable such flexible audio/video processing pipelines, `ffmpeg_pipeline` impl
 * Data is exchanged between hardware and controllers via pointers on `hardware_interface`, enabling efficient processing with minimal overhead.
 * Transmitting processed data through ROS 2 topics enables seamless system integration across multiple processes or machines.
 
-![](https://raw.githubusercontent.com/yoshito-n-students/ffmpeg_pipeline/refs/heads/images/images/example_for_overview.png?token=GHSAT0AAAAAADAFMENRGEGJVTPUGXRDYA5M2BBXKTA)
+![](https://raw.githubusercontent.com/yoshito-n-students/ffmpeg_pipeline/refs/heads/images/images/example_for_overview.png)
 **Fig. example of distributed audio/video pipeline using `ffmpeg_pipeline`** 
 
 ## Packages
