@@ -150,3 +150,20 @@ flowchart LR
    E -. "Packet (format=#quot;opus#quot;)" .-> H:::hidden
    classDef hidden display: none;
 ```
+
+### Audio Play with PulseAudio
+
+```bash
+ros2 launch ffmpeg_pipeline_examples pulse_audio_play_pipeline.launch.py
+```
+
+```mermaid
+flowchart LR
+   A:::hidden -. "Packet (format=#quot;opus#quot;)" .-> B@{ shape: stadium, label: "PacketReceiver" }
+   subgraph ros2_control_node
+   B == "Opus packet" ==> C@{ shape: stadium, label: "DecoderFilter" }
+   C == "PCM frame" ==> D@{ shape: stadium, label: "FFmpegOutput" }
+   end
+   D -- "PCM frame" --> H@{ shape: rect, label: "PulseAudio output" }
+   classDef hidden display: none;
+```
