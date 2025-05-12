@@ -35,7 +35,7 @@ source install/setup.bash
 
 ## Important Packages
 
-### ffmpeg_controllers
+### [ffmpeg_controllers](ffmpeg_controller)
 This package implements various audio/video controllers as `ros2_control` plugins:
 
 * **EncoderFilter**
@@ -44,7 +44,7 @@ This package implements various audio/video controllers as `ros2_control` plugin
   * **Outputs**: Compressed packets.
   * **Parameters**: Codec type, bitrate, resolution, frame rate.
 
-### ffmpeg_hardware
+### [ffmpeg_hardware](ffmpeg_hardware)
 This package provides hardware-accelerated input/output nodes as `ros2_control` plugins:
 
 * **FFmpegInput**
