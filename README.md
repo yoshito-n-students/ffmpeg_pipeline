@@ -35,8 +35,25 @@ source install/setup.bash
 
 ## Important Packages
 
+### [ffmpeg_hardware](ffmpeg_hardware)
+This package provides hardware-accelerated input/output nodes as `ros2_control` plugins:
+
+#### Input hardwares - read audio/video packets from hardware
+* **FFmpegInput**
+  * **Description**: Captures audio/video input using FFmpeg with hardware acceleration.
+  * **Outputs**: Raw or compressed video/audio streams.
+  * **Parameters**: Device type, hardware acceleration options.
+
+#### Output hardwares - write audio/video packets/frames to hardware
+* **FFmpegOutput**
+
+* **DumpInfoOutput**
+
 ### [ffmpeg_controllers](ffmpeg_controller)
 This package implements various audio/video controllers as `ros2_control` plugins:
+
+#### Filter controllers
+Filters read objects from state interfaces owned by other controllers and a hardware and export results via self-owned state interface
 
 * **EncoderFilter**
   * **Description**: Encodes raw frames into compressed formats.
@@ -44,13 +61,23 @@ This package implements various audio/video controllers as `ros2_control` plugin
   * **Outputs**: Compressed packets.
   * **Parameters**: Codec type, bitrate, resolution, frame rate.
 
-### [ffmpeg_hardware](ffmpeg_hardware)
-This package provides hardware-accelerated input/output nodes as `ros2_control` plugins:
+#### Broadcaster controllers
+Broadcasters read objects from state interfaces owned by other controllers and a hardware and publish them as ROS 2 messages
 
-* **FFmpegInput**
-  * **Description**: Captures audio/video input using FFmpeg with hardware acceleration.
-  * **Outputs**: Raw or compressed video/audio streams.
-  * **Parameters**: Device type, hardware acceleration options.
+* **PacketBroadcaster**
+
+* **FrameBroadcaster**
+
+* **ImageBroadcaster**
+
+* **CompressedImageBroadcaster**
+
+#### Receiver controllers
+Receivers subscribe ROS 2 messages and export them via self-owned state interfaces
+
+* **PacketReceiver**
+
+* **FrameReceiver**
 
 ## Running Examples
 Below are examples of launching sample pipelines.
