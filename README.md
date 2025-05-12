@@ -2,7 +2,24 @@
 
 A flexible pipeline for video/audio acquisition, encoding, decoding, and output using FFmpeg on ROS 2
 
-## Packages Overview
+## Overview
+
+`ffmpeg_pipeline` is a collection of ROS 2 packages designed to efficiently and flexibly integrate the powerful and stable multimedia capabilities of FFmpeg into robotic systems. Using `ffmpeg_pipeline`, the following types of applications can be constructed solely through configuration files, without writing custom ROS 2 nodes:
+
+* Read an H.264 stream from a USB camera on a robot and transmit it to the operator’s PC via a ROS 2 topic, without CPU-intensive re-encoding by the camera driver or `image_transport`. The operator PC decodes and displays the video with low latency using hardware acceleration.
+* Read an audio stream from a microphone on the operator's PC, compress it using the high-quality Opus codec, and transmit it to the robot via a ROS 2 topic. The robot decodes it with low-latency settings and plays it through a speaker.
+* Apply desired resolution/sample rate/format conversions to various input sources supported by FFmpeg (e.g., video/audio files, network cameras, desktop screens), compress them using the desired codec, and distribute them using the desired protocol.
+
+To enable such flexible audio/video processing pipelines, `ffmpeg_pipeline` implements FFmpeg components—such as input, output, encoder, decoder, scaler, and resampler—as `ros2_control` hardware and controller plugins. This architecture provides users with the following benefits:
+
+* Access to almost all FFmpeg functionalities using standard ROS 2 launch and parameter frameworks.
+* Flexible composition of input/output and pre/post-processing (encoding/decoding/conversion) by combining desired hardware and controller plugins.
+* Controllers are **chainable**, allowing complex pipelines with multiple processing stages to be built from modular, single-function controllers.
+* Data is exchanged between hardware and controllers via pointers on `hardware_interface`, enabling efficient processing with minimal overhead.
+* Transmitting processed data through ROS 2 topics enables seamless system integration across multiple processes or machines.
+
+## Packages
+
 This repository contains the following packages:
 
 * [`ffmpeg_controllers`](ffmpeg_controller): Chainable `ros2_control`-compatible controllers for encoding, decoding, and filtering audio/video streams.
