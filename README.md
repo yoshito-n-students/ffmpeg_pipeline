@@ -35,7 +35,7 @@ This repository contains the following packages:
 
 ## Verified Environments
 
-* ROS 2 Jazzy on Ubuntu 24.04 LTS
+ROS 2 Jazzy on Ubuntu 24.04 LTS
 
 ## Installation
 
@@ -55,11 +55,11 @@ See [ffmpeg_hardware](ffmpeg_hardware) for details.
 
 ### Input Hardware
 
-* **FFmpegInput**: Reads audio/video packets from various devices supported by `libavformat` and `libavdevice`.
+* **FFmpegInput**: Reads audio/video packets from various devices supported by `libavformat` and `libavdevice` (e.g., V4L2 or network cameras, PulseAudio inputs, local files, screen capture, etc.).
 
 ### Output Hardware
 
-* **FFmpegOutput**: Writes audio/video packets and frames to various devices supported by `libavformat` and `libavdevice`.
+* **FFmpegOutput**: Writes audio/video packets and frames to various devices supported by `libavformat` and `libavdevice` (e.g., PulseAudio outputs, local files, etc.).
 
 * **DumpInfoOutput**: Dumps packet and frame information from controllers for debugging and visualization.
 
@@ -71,7 +71,7 @@ See [ffmpeg_controllers](ffmpeg_controller) for details.
 
 Filters retrieve data from hardware or other controllers and export processed results via their own state interfaces.
 
-* **EncoderFilter**: Compresses frames into various formats using `libavcodec`.
+* **EncoderFilter**: Compresses frames into various formats using `libavcodec` (e.g., H.264, MJPEG, Opus, and over 100 other codecs).
 
 * **DecoderFilter**: Decompresses packets in various formats using `libavcodec`.
 
