@@ -26,55 +26,55 @@ colcon build
 source install/setup.bash
 ```
 
-## Important Packages
+## Hardware Plugins
+See [ffmpeg_hardware](ffmpeg_hardware) for details.
 
-### [ffmpeg_hardware](ffmpeg_hardware)
-This package provides hardware-accelerated input/output nodes as `ros2_control` plugins:
+### Input hardwares
+* **FFmpegInput**: reads audio/video packets from various devices supported by libavformat and libavdevices
 
-#### Input hardwares - read audio/video packets from hardware
-* **FFmpegInput**
-  * **Description**: Captures audio/video input using FFmpeg with hardware acceleration.
-  * **Outputs**: Raw or compressed video/audio streams.
-  * **Parameters**: Device type, hardware acceleration options.
+### Output hardwares
+* **FFmpegOutput**: writes audio/video packets and frames to various devices supported by libavformat and libavdevices
 
-#### Output hardwares - write audio/video packets/frames to hardware
-* **FFmpegOutput**
+* **DumpInfoOutput**: dump information of packets and frames from controllers for debug and visualization purposes
 
-* **DumpInfoOutput**
+## Controller Plugins
+See [ffmpeg_controllers](ffmpeg_controller) for details.
 
-### [ffmpeg_controllers](ffmpeg_controller)
-This package implements various audio/video controllers as `ros2_control` plugins:
+### Filter controllers
+Filters read objects from other controllers and a hardware, and export processed results via self-owned state interface
 
-#### Filter controllers
-Filters read objects from state interfaces owned by other controllers and a hardware and export results via self-owned state interface
+* **EncoderFilter**: compresses frames to various formats based on libavcodec
 
-* **EncoderFilter**
-  * **Description**: Encodes raw frames into compressed formats.
-  * **Inputs**: `ffmpeg_cpp::Frame`
-  * **Outputs**: `ffmpeg_cpp::Packet`, `ffmpeg_cpp::CodecParameters`
-  * **Parameters**:
-    * **input_name** (`string`, required): name of other controller/hardware that exports input frames
-    * **encoder_name** (`string`, default: `""`): name of underlying encoder valid in ffmpeg. If empty, the default encoder for `codec_parameters/codec` will be used.
-    * **codec_parameters** (`string`, required): yaml string that can be recognized as `ffmpeg_cpp::CodecParameters`. It will be used to configure the encoder.
-    * **encoder_options** (`string`, default: `"{}"`): yaml string that can be recognized as `ffmpeg_cpp::Dictionary`. It will be passed to the encoder as private options.
+* **DecoderFilter**: decompress packets in various formats based on libavcodec
 
-#### Broadcaster controllers
-Broadcasters read objects from state interfaces owned by other controllers and a hardware and publish them as ROS 2 messages
+* **VideoConterterFilter**: changes resolutions and pixel formats based on libswscale
 
-* **PacketBroadcaster**
+* **AudioConverterFilter**: changes sample rates, channel layouts and sample formats based on libswresample
 
-* **FrameBroadcaster**
+* **AudioFifoFilter**: changes number of samples in single audio frame based on libavutil
 
-* **ImageBroadcaster**
+### Broadcaster controllers
+Broadcasters read objects from other controllers and a hardware, and publish them as ROS 2 messages
 
-* **CompressedImageBroadcaster**
+* **PacketBroadcaster**: publishes compressed audio/video packets
 
-#### Receiver controllers
+* **FrameBroadcaster**: publishes uncompressed audio/video frames
+
+* **ImageBroadcaster**: publishes video frames as sensor_msgs::msg::Image
+
+* **CompressedImageBroadcaster**: publishes video packets as sensor_msgs::msg::CompressedImage
+
+### Receiver controllers
 Receivers subscribe ROS 2 messages and export them via self-owned state interfaces
 
-* **PacketReceiver**
+* **PacketReceiver**: subscribes compressed packets and imports them into the pipeline
 
-* **FrameReceiver**
+* **FrameReceiver**: subscribes uncompressed frames and imports them into the pipeline
+
+## image_transport Plugins
+See [ffmpeg_image_transport](ffmpeg_image_transport) for details.
+
+* **ffmpeg_sub**: subscribes sensor_msgs::msg::CompressedImage on image/ffmpeg topic and decompresses messages using libavcodec
 
 ## Running Examples
 Below are examples of launching sample pipelines.
