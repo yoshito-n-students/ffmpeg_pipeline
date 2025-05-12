@@ -140,3 +140,19 @@ ros2 launch ffmpeg_pipeline_examples wav_file_pipeline.launch.py
 ```bash
 ros2 launch ffmpeg_pipeline_examples pulse_audio_capture_pipeline.launch.py
 ```
+
+```mermaid
+flowchart LR
+   A@{ shape: rect, label: "PulseAudio input" } -- "PCM packet" --> B@{ shape: stadium, label: "FFmpegInput" }
+   subgraph ros2_control_node
+   B == "PCM packet" ==> C@{ shape: stadium, label: "DecoderFilter" }
+   B ==> C2@{ shape: stadium, label: "PacketBroadcaster" }
+   C == "PCM frame" ==> D@{ shape: stadium, label: "EncoderFilter (encoder_name:=#quot;libopus#quot;)" }
+   C ==> D2@{ shape: stadium, label: "FrameBroadcaster" }
+   D == "Opus packet" ==> E@{ shape: stadium, label: "PacketBroadcaster" }
+   end
+   C2 -. "Packet (format=#quot;pcm_s16#quot;)" .-> F:::hidden
+   D2 -. "Frame (format=#quot;pcm_s16#quot;)" .-> G:::hidden
+   E -. "Packet (format=#quot;opus#quot;)" .-> H:::hidden
+   classDef hidden display: none;
+```
