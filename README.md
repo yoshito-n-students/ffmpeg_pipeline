@@ -4,23 +4,16 @@ A flexible pipeline for video/audio acquisition, encoding, decoding, and output 
 ## Packages Overview
 This repository contains the following packages:
 
-* [`ffmpeg_controllers`](ffmpeg_controller): Controllers for encoding, decoding, and filtering audio/video streams.
+* [`ffmpeg_controllers`](ffmpeg_controller): Chainable `ros2_control`-compatible controllers for encoding, decoding, and filtering audio/video streams.
 * [`ffmpeg_cpp`](ffmpeg_cpp): C++ wrapper for the FFmpeg library.
-* [`ffmpeg_hardware`](ffmpeg_hardware): FFmpeg input/output nodes utilizing hardware acceleration.
-* [`ffmpeg_image_transport`](ffmpeg_image_transport): ROS2 image transport plugin for compressed images.
+* [`ffmpeg_hardware`](ffmpeg_hardware): `ros2_control`-compatible hardware drivers backed by FFmpeg input/output.
+* [`ffmpeg_image_transport`](ffmpeg_image_transport): image_transport plugin powered by FFmpeg decoder for compressed images.
 * [`ffmpeg_pipeline`](ffmpeg_pipeline): Core package for constructing FFmpeg-based pipelines.
 * [`ffmpeg_pipeline_examples`](ffmpeg_pipeline_examples): Provides practical examples of various pipelines.
-* [`ffmpeg_pipeline_msgs`](ffmpeg_pipeline_msgs): ROS2 message definitions for transferring audio and video data.
-
-## Main Features
-* Real-time audio and video processing.
-* Flexible pipeline construction.
-* Hardware acceleration support.
-* ROS2-native messaging for data communication.
-* Utilizes the `ros2_control` framework for controller management.
+* [`ffmpeg_pipeline_msgs`](ffmpeg_pipeline_msgs): Message definitions for transferring audio and video data.
 
 ## Verified Environments
-* ROS2 Jazzy on Ubuntu 24.04
+* ROS 2 Jazzy on Ubuntu 24.04 LTS
 
 ## Installation
 ```bash
