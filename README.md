@@ -119,9 +119,9 @@ ros2 launch ffmpeg_pipeline_examples h264_camera_pipeline.launch.py
 
 ```mermaid
 flowchart LR
-   V4L2 camera -- H.264 packet --> FFmpegInput
+   "V4L2 camera" -- "H.264 packet" --> FFmpegInput
    subgraph ros2_control_node
-   FFmpegInput -- H.264 packet --> PacketBroadcaster
+   FFmpegInput -- "H.264 packet" --> PacketBroadcaster
    end
    PacketBroadcaster -- CompressedImage --> ffmpeg_sub
    subgraph image_view
