@@ -129,12 +129,6 @@ flowchart LR
    end
 ```
 
-### Playing a WAV File
-
-```bash
-ros2 launch ffmpeg_pipeline_examples wav_file_pipeline.launch.py
-```
-
 ### Audio Capture with PulseAudio
 
 ```bash
