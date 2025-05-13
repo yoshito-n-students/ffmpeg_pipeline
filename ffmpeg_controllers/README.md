@@ -60,15 +60,31 @@ Filters retrieve data from state interfaces owned by hardware or other controlle
 
 ## Broadcaster Plugins
 
-Broadcasters retrieve data from hardware or other controllers and publish it as ROS 2 messages.
+Broadcasters retrieve data from state interfaces owned by hardware or other controllers and publish it as ROS 2 messages.
 
 * **PacketBroadcaster**: Publishes compressed audio/video packets.
+  * **Input states**: `AVPacket`
+  * **Output topics**: `~/packet` (`ffmpeg_pipeline_msgs::msg::Packet`)
+  * **Parameters**:
+    * **input_name** (string, required): Name of the hardware or controller that owns the input states.
 
 * **FrameBroadcaster**: Publishes uncompressed audio/video frames.
+  * **Input states**: `AVFrame`
+  * **Output topics**: `~/frame` (`ffmpeg_pipeline_msgs::msg::Frame`)
+  * **Parameters**:
+    * **input_name** (string, required): Name of the hardware or controller that owns the input states.
 
 * **ImageBroadcaster**: Publishes video frames as `sensor_msgs::msg::Image`.
+  * **Input states**: `AVFrame`
+  * **Output topics**: `~/image` (`sensor_msgs::msg::Image`)
+  * **Parameters**:
+    * **input_name** (string, required): Name of the hardware or controller that owns the input states.
 
 * **CompressedImageBroadcaster**: Publishes video packets as `sensor_msgs::msg::CompressedImage`.
+  * **Input states**: `AVPacket`
+  * **Output topics**: `~/image/ffmpeg` (`sensor_msgs::msg::CompressedImage`)
+  * **Parameters**:
+    * **input_name** (string, required): Name of the hardware or controller that owns the input states.
 
 ## Receiver Plugins
 
