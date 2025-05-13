@@ -19,9 +19,11 @@ protected:
       const auto format = get_parameter_as<std::string>("format", "pulse"),
                  url = get_parameter_as<std::string>("url", "default");
       const auto codec_params = get_parameter_as<ffmpeg_cpp::CodecParameters>(
-          "codec_parameters", ffmpeg_cpp::CodecParameters::null());
+          "codec_parameters",
+          ffmpeg_cpp::CodecParameters::create(
+              "{codec: pcm_s16, format: s16, ch_layout: stereo, sample_rate: 48000}"));
       const auto options =
-          get_parameter_as<ffmpeg_cpp::Dictionary>("options", ffmpeg_cpp::Dictionary::null());
+          get_parameter_as<ffmpeg_cpp::Dictionary>("options", ffmpeg_cpp::Dictionary::create("{}"));
 
       // [EXPERIMENTAL] Try to complete the codec parameters (extradata, etc)
       try {

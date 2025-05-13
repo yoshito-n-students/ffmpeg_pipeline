@@ -23,7 +23,7 @@ Output hardware retrieves data from its own command interfaces and sends it to e
   * **Parameters**:
     * **url** (string, default:`"default"`): URL of the external output device.
     * **format** (string, default: `"pulse"`): Name of the output device format (category) supported by FFmpeg. If left empty, FFmpeg will try to infer it from the `url` value.
-    * **codec_parameters** (string, default: `"{}"`): A YAML string that can be parsed into an `AVCodecParameters` structure. It defines general codec parameters and will be used to configure the output device.
+    * **codec_parameters** (string, default: `"{codec: pcm_s16, format: s16, ch_layout: stereo, sample_rate: 48000}"`): A YAML string that can be parsed into an `AVCodecParameters` structure. It defines general codec parameters and will be used to configure the output device.
     * **options** (string, default: `"{}"`): A YAML string that can be parsed into an `AVDictionary`. It defines device-specific options and will be used to configure the output device.
     
 * **DumpInfoOutput**: Dumps packet and frame information from controllers for debugging and visualization.
