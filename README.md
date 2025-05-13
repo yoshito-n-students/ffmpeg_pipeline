@@ -6,7 +6,7 @@ A flexible pipeline for video/audio acquisition, encoding, decoding, and output 
 
 `ffmpeg_pipeline` is a collection of ROS 2 packages designed to efficiently and flexibly integrate the powerful and stable multimedia capabilities of FFmpeg into robotic systems. Using `ffmpeg_pipeline`, the following types of applications can be constructed solely through configuration files, without writing custom ROS 2 nodes:
 
-* Read an H.264 stream from a USB camera on a robot and transmit it to the operator’s PC via a ROS 2 topic, without CPU-intensive re-encoding by the camera driver or `image_transport`. The operator PC decodes and displays the video with low latency using hardware acceleration.
+* Read an H.264 stream from a USB camera on a robot and transmit it to the operator’s PC via a ROS 2 topic, without CPU-intensive and time-consuming re-encoding by the camera driver or `image_transport`. The operator PC decodes and displays the video with low latency using hardware acceleration.
 * Read an audio stream from a microphone on the operator's PC, compress it using the high-quality Opus codec, and transmit it to the robot via a ROS 2 topic. The robot decodes it with low-latency settings and plays it through a speaker.
 * Apply desired resolution/sample rate/format conversions to various input sources supported by FFmpeg (e.g., video/audio files, network cameras, desktop screens), compress them using the desired codec, and distribute them using the desired protocol.
 
