@@ -91,8 +91,12 @@ Broadcasters retrieve data from state interfaces owned by hardware or other cont
 Receivers subscribe to ROS 2 messages and export them via their own state interfaces.
 
 * **PacketReceiver**: Subscribes to compressed packets and injects them into the pipeline.
+  * **Output states**: `AVPacket`
+  * **Subscribed topics**: `~/packet` (`ffmpeg_pipeline_msgs::msg::Packet`)
 
 * **FrameReceiver**: Subscribes to uncompressed frames and injects them into the pipeline.
+  * **Output states**: `AVFrame`
+  * **Subscribed topics**: `~/frame` (`ffmpeg_pipeline_msgs::msg::Frame`)
 
 ## Writer Plugins
 
