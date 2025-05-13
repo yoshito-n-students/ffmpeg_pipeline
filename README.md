@@ -105,8 +105,6 @@ Receivers subscribe to ROS 2 messages and export them via their own state interf
 
 ## `image_transport` Plugins
 
-See [ffmpeg_image_transport](ffmpeg_image_transport) for details.
-
 * **ffmpeg_sub**: Subscribes to `sensor_msgs::msg::CompressedImage` on the `~/image/ffmpeg` topic and decompresses messages using `libavcodec`.
 
 ## Running Examples
