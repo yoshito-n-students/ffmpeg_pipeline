@@ -65,7 +65,7 @@ See [ffmpeg_hardware](ffmpeg_hardware) for details.
 
 ## Controller Plugins
 
-See [ffmpeg_controllers](ffmpeg_controller) for details.
+See [ffmpeg_controllers](ffmpeg_controllers) for details.
 
 ### Filter Controllers
 
