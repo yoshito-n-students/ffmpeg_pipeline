@@ -8,7 +8,7 @@
         <hardware>
             <plugin>ffmpeg_hardware/FFmpegInput</plugin>
             <param name="url">/dev/v4l/by-id/usb-Insta360_Insta360_Link_2C-video-index0</param>
-            <param name="input_format">v4l2</param>
+            <param name="format">v4l2</param>
             <param name="options">
                 input_format: h264
                 video_size: 1280x720

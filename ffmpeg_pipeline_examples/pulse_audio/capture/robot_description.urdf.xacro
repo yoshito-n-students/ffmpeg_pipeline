@@ -8,7 +8,7 @@
         <hardware>
             <plugin>ffmpeg_hardware/FFmpegInput</plugin>
             <param name="url">default</param>
-            <param name="input_format">pulse</param>
+            <param name="format">pulse</param>
             <!--
                 Because the sample format of pulse audio is PCM_S16, 
                 single sample will be 4 bytes (= 16 bits * 2 channels).

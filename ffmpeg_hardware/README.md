@@ -10,7 +10,7 @@ Input hardware receives data from external devices and exports it via its own st
   * **Output states**: `AVPacket`
   * **Parameters**:
     * **url** (string, default:`"/dev/video0"`): URL of the external input device.
-    * **input_format** (string, default: `"v4l2"`): Name of the input device format (category) supported by FFmpeg. If left empty, FFmpeg will try to infer it from the `url` value.
+    * **format** (string, default: `"v4l2"`): Name of the input device format (category) supported by FFmpeg. If left empty, FFmpeg will try to infer it from the `url` value.
     * **media_type** (string, default: `"video"`): Media type of the input stream. Typically `"video"` or `"audio"`.
     * **options** (string, default: `"{timestamps: abs}"`): A YAML string that can be parsed into an `AVDictionary`. It defines device-specific options and will be used to configure the input device.
 
