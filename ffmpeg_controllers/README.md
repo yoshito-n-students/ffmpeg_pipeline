@@ -100,8 +100,18 @@ Receivers subscribe to ROS 2 messages and export them via their own state interf
 
 ## Writer Plugins
 
-Writers copy data from a state interface owned by other controller to a command interface owned by a hardware.
+Writers forward data from a state interface owned by another controller to a command interface owned by a hardware.
 
-* **PacketWriter**: Copies packets from the other controller to the hardware.
+* **PacketWriter**: Forwards packets from another controller to the hardware.
+  * **Input states**: `AVPacket`
+  * **Output commands**: `AVPacket`
+  * **Parameters**:
+    * **input_name** (string, required): Name of the controller that owns the input states.
+    * **output_name** (string, required): Name of the hardware that owns the output commands.
 
-* **FrameWriter**: Copies frames from the other controller to the hardware.
+* **FrameWriter**: Forwards frames from another controller to the hardware.
+  * **Input states**: `AVFrame`
+  * **Output commands**: `AVFrame`
+  * **Parameters**:
+    * **input_name** (string, required): Name of the controller that owns the input states.
+    * **output_name** (string, required): Name of the hardware that owns the output commands.
