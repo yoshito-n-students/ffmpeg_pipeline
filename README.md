@@ -25,7 +25,7 @@ To enable such flexible audio/video processing pipelines, `ffmpeg_pipeline` impl
 
 This repository contains the following packages:
 
-* [`ffmpeg_controllers`](ffmpeg_controller): Chainable `ros2_control`-compatible controllers for encoding, decoding, and filtering audio/video streams.
+* [`ffmpeg_controllers`](ffmpeg_controllers): Chainable `ros2_control`-compatible controllers for encoding, decoding, and filtering audio/video streams.
 * [`ffmpeg_cpp`](ffmpeg_cpp): C++ wrapper for the FFmpeg library.
 * [`ffmpeg_hardware`](ffmpeg_hardware): `ros2_control`-compatible hardware drivers backed by FFmpeg input/output.
 * [`ffmpeg_image_transport`](ffmpeg_image_transport): `image_transport` plugin powered by FFmpeg decoder for compressed images.
