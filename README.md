@@ -109,7 +109,7 @@ Receivers subscribe to ROS 2 messages and export them via their own state interf
 
 ## Running Examples
 
-Below are examples of launching sample pipelines.
+Below are some example pipelines you can launch. For additional examples, see [ffmpeg_pipeline_examples](ffmpeg_pipeline_examples).
 
 ### Streaming H.264 Camera Video
 
