@@ -73,6 +73,8 @@ Filters retrieve data from hardware or other controllers and export processed re
 
 * **EncoderFilter**: Compresses frames into various formats using `libavcodec` (e.g., H.264, MJPEG, Opus, and over 100 other codecs).
 
+* **ParserFilter**: Parses packets using `libavcodec` to extract codec parameters for downstream controllers.
+
 * **DecoderFilter**: Decompresses packets in various formats using `libavcodec`.
 
 * **VideoConverterFilter**: Converts resolutions and pixel formats using `libswscale`.

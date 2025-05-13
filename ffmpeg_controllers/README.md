@@ -15,6 +15,13 @@ Filters retrieve data from state interfaces owned by hardware or other controlle
     * **codec_parameters** (string, required): A YAML string that can be parsed into an `AVCodecParameters` structure. It defines general codec parameters and will be used to configure the encoder.
     * **encoder_options** (string, default: `"{}"`): A YAML string that can be parsed into an `AVDictionary`. It defines encoder-specific options and will be used to configure the encoder.
 
+* **ParserFilter**: Parses packets using `libavcodec` to extract codec parameters for downstream controllers.
+  * **Input states**: `AVPacket`
+  * **Output states**: `AVPacket`, `AVCodecParameters`
+  * **Parameters**:
+    * **input_name** (string, required): Name of the hardware or controller that owns the input states.
+    * **codec_name** (string, required): Name of the codec supported by FFmpeg and used to configure the underlying parser.
+
 * **DecoderFilter**: Decompresses packets in various formats using `libavcodec`.
   * **Input states**: `AVPacket`, `AVCodecParameters`
   * **Output states**: `AVFrame`
@@ -50,7 +57,7 @@ Filters retrieve data from state interfaces owned by hardware or other controlle
     * **input_name** (string, required): Name of the hardware or controller that owns the input states.
     * **channel_layout** (string, default: `""`): Channel layout for the underlying sample FIFO and the output `AVFrame` (e.g., `mono`, `stereo`, etc.). This will be parsed by `av_channel_layout_from_string()`. If left empty, the input channel layout will be used.
     * **nb_samples** (int, required): Desired number of samples in the output `AVFrame`. A larger number than that of the input is recommended; otherwise, some samples may be missing in the output `AVFrame`.
-    
+
 ## Broadcaster Plugins
 
 Broadcasters retrieve data from hardware or other controllers and publish it as ROS 2 messages.
