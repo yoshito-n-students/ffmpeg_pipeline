@@ -64,27 +64,31 @@ protected:
       // Extract as many frames as possible from the decoder and keep only the latest frame.
       // According to the ffmpeg's reference, there should be only one frame per video packet
       // so no frames should be dropped.
-      ffmpeg_cpp::Frame frame = ffmpeg_cpp::Frame::null();
+      ffmpeg_cpp::Frame output_frame = ffmpeg_cpp::Frame::null();
       while (true) {
         if (ffmpeg_cpp::Frame incoming_frame = decoder_.receive_frame(); !incoming_frame.empty()) {
-          frame = std::move(incoming_frame); // Keep the latest frame
+          if (!output_frame.empty()) {
+            RCLCPP_WARN(get_logger(),
+                        "Multiple frames decoded from a single packet. Will keep the latest one.");
+          }
+          output_frame = std::move(incoming_frame); // Keep the latest frame
         } else {
           break; // No more frames available
         }
       }
-      if (frame.empty()) {
+      if (output_frame.empty()) {
         RCLCPP_WARN(get_logger(), "No frames available although packet was processed");
         return {ControllerReturn::OK, std::nullopt};
       }
 
       // If the frame data is in a hardware device,
       // transfer the data to the CPU-accessible memory before conversion
-      if (frame.is_hw_frame()) {
-        frame = frame.transfer_data();
+      if (output_frame.is_hw_frame()) {
+        output_frame = output_frame.transfer_data();
       }
 
       // Move the decoded frame to the exported state interface
-      return {ControllerReturn::OK, std::move(frame)};
+      return {ControllerReturn::OK, std::move(output_frame)};
     } catch (const std::runtime_error &error) {
       RCLCPP_ERROR(get_logger(), "Error while decoding packet: %s", error.what());
       return {ControllerReturn::ERROR, std::nullopt};

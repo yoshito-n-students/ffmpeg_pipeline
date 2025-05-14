@@ -76,23 +76,27 @@ protected:
       // Extract as many packets as possible from the encoder and keep only the latest packet.
       // According to the ffmpeg's reference, there should be only one packet per frame
       // so no packets should be dropped.
-      ffmpeg_cpp::Packet packet = ffmpeg_cpp::Packet::null();
+      ffmpeg_cpp::Packet output_packet = ffmpeg_cpp::Packet::null();
       while (true) {
         if (ffmpeg_cpp::Packet incoming_packet = encoder_.receive_packet();
             !incoming_packet.empty()) {
-          packet = std::move(incoming_packet); // Keep the latest packet
+          if (!output_packet.empty()) {
+            RCLCPP_WARN(get_logger(),
+                        "Multiple packets encoded from a single frame. Will keep the latest one.");
+          }
+          output_packet = std::move(incoming_packet); // Keep the latest packet
         } else {
           break; // No more packets available
         }
       }
-      if (packet.empty()) {
+      if (output_packet.empty()) {
         RCLCPP_WARN(get_logger(), "No packets available although frame was processed");
         return {ControllerReturn::OK, std::nullopt};
       }
 
       // Move the encoded packet to the exported state interface
-      return {ControllerReturn::OK,
-              std::make_tuple(std::move(packet), ffmpeg_cpp::CodecParameters(codec_params_))};
+      return {ControllerReturn::OK, std::make_tuple(std::move(output_packet),
+                                                    ffmpeg_cpp::CodecParameters(codec_params_))};
     } catch (const std::runtime_error &error) {
       RCLCPP_ERROR(get_logger(), "Error while encoding frame: %s", error.what());
       return {ControllerReturn::ERROR, std::nullopt};
