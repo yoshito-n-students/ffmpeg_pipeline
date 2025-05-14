@@ -141,8 +141,10 @@ protected:
   typename Base::NodeReturn
   on_configure(const rclcpp_lifecycle::State & /*previous_state*/) override {
     try {
+      rclcpp::PublisherOptions options;
+      options.qos_overriding_options = rclcpp::QosOverridingOptions::with_default_policies();
       underlying_publisher_ = Base::get_node()->template create_publisher<OutputMessage>(
-          output_topic_, rclcpp::SystemDefaultsQoS());
+          output_topic_, rclcpp::SystemDefaultsQoS(), options);
       async_publisher_ =
           std::make_unique<realtime_tools::RealtimePublisher<OutputMessage>>(underlying_publisher_);
       RCLCPP_INFO(Base::get_logger(), "Created publisher on %s",

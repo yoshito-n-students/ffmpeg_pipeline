@@ -220,11 +220,14 @@ protected:
   typename Base::NodeReturn
   on_configure(const rclcpp_lifecycle::State & /*previous_state*/) override {
     try {
+      rclcpp::SubscriptionOptions options;
+      options.qos_overriding_options = rclcpp::QosOverridingOptions::with_default_policies();
       subscription_ = Base::get_node()->template create_subscription<InputMessage>(
           input_topic_, rclcpp::SystemDefaultsQoS(),
           [this](const typename InputMessage::ConstSharedPtr msg) {
             msg_buffer_.writeFromNonRT(StampedMessage(msg, Base::get_node()->now()));
-          });
+          },
+          options);
       RCLCPP_INFO(Base::get_logger(), "Created subscription to %s",
                   subscription_->get_topic_name());
       return Base::NodeReturn::SUCCESS;
