@@ -29,7 +29,7 @@ This repository contains the following packages:
 * [`ffmpeg_cpp`](ffmpeg_cpp): C++17 wrapper for the FFmpeg C library.
 * [`ffmpeg_hardware`](ffmpeg_hardware): `ros2_control`-compatible hardware drivers backed by FFmpeg input/output.
 * [`ffmpeg_image_transport`](ffmpeg_image_transport): `image_transport` plugin powered by FFmpeg decoder for compressed images.
-* [`ffmpeg_pipeline`](ffmpeg_pipeline): Core package for constructing FFmpeg-based pipelines.
+* [`ffmpeg_pipeline`](ffmpeg_pipeline): A metapackage that groups related packages for building FFmpeg-based pipelines.
 * [`ffmpeg_pipeline_examples`](ffmpeg_pipeline_examples): Practical examples of various pipeline configurations.
 * [`ffmpeg_pipeline_msgs`](ffmpeg_pipeline_msgs): Message definitions for transferring audio and video data.
 
