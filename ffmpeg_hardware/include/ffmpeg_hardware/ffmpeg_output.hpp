@@ -21,7 +21,7 @@ protected:
       const auto codec_params = get_parameter_as<ffmpeg_cpp::CodecParameters>(
           "codec_parameters",
           ffmpeg_cpp::CodecParameters::create(
-              "{codec: pcm_s16, format: s16, ch_layout: stereo, sample_rate: 48000}"));
+              "{codec: pcm_s16le, format: s16, ch_layout: stereo, sample_rate: 48000}"));
       const auto options =
           get_parameter_as<ffmpeg_cpp::Dictionary>("options", ffmpeg_cpp::Dictionary::create("{}"));
 
