@@ -66,8 +66,8 @@ protected:
       // so no frames should be dropped.
       ffmpeg_cpp::Frame frame = ffmpeg_cpp::Frame::null();
       while (true) {
-        if (ffmpeg_cpp::Frame tmp_frame = decoder_.receive_frame(); !tmp_frame.empty()) {
-          frame = std::move(tmp_frame); // Keep the latest frame
+        if (ffmpeg_cpp::Frame incoming_frame = decoder_.receive_frame(); !incoming_frame.empty()) {
+          frame = std::move(incoming_frame); // Keep the latest frame
         } else {
           break; // No more frames available
         }

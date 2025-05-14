@@ -55,12 +55,12 @@ protected:
       // Take the latest frame from the FIFO
       ffmpeg_cpp::Frame output_frame = ffmpeg_cpp::Frame::null();
       while (true) {
-        if (ffmpeg_cpp::Frame tmp_frame = fifo_.read(nb_samples_); !tmp_frame.empty()) {
+        if (ffmpeg_cpp::Frame incoming_frame = fifo_.read(nb_samples_); !incoming_frame.empty()) {
           if (!output_frame.empty()) {
             RCLCPP_WARN(get_logger(),
                         "Multiple frames available in the FIFO, discarding the previous one");
           }
-          output_frame = std::move(tmp_frame); // Keep the latest frame
+          output_frame = std::move(incoming_frame); // Keep the latest frame
         } else {
           break; // No more frames available
         }
