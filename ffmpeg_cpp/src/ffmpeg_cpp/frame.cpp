@@ -96,17 +96,28 @@ ffmpeg_pipeline_msgs::msg::Frame Frame::to_msg(const rclcpp::Time &stamp) const 
   ffmpeg_pipeline_msgs::msg::Frame msg;
   msg.header.stamp = stamp;
   // Common fields for video and audio frames
-  msg.format = format_name();
-  {
+  if (get()->width > 0 && get()->height > 0) {
+    // Video frame
+    msg.format = to_string(static_cast<AVPixelFormat>(get()->format));
+    const int data_size =
+        av_image_get_buffer_size(static_cast<AVPixelFormat>(get()->format), get()->width,
+                                 get()->height, 1 /* 1: no_alignment */);
+    if (data_size < 0) {
+      throw Error("Frame::to_msg(): Failed to get image buffer size", data_size);
+    }
+    msg.data.assign(get()->data[0], get()->data[0] + data_size);
+  } else if (get()->nb_samples > 0) {
+    // Audio frame
+    msg.format = to_string(static_cast<AVSampleFormat>(get()->format));
     const int data_size = av_samples_get_buffer_size(
         nullptr, get()->ch_layout.nb_channels, get()->nb_samples,
         static_cast<AVSampleFormat>(get()->format), 1 /* 1: no_alignment */);
     if (data_size < 0) {
-      throw Error("Frame::to_msg(): Failed to get buffer size", data_size);
+      throw Error("Frame::to_msg(): Failed to get audio buffer size", data_size);
     }
-    // TODO: Warn or throw if data[1] is not null
     msg.data.assign(get()->data[0], get()->data[0] + data_size);
   }
+  // TODO: Warn or throw if data[1] is not null
   msg.pts = get()->pts;
   msg.pkt_dts = get()->pkt_dts;
   msg.time_base.num = get()->time_base.num;
