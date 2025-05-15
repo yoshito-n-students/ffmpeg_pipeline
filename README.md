@@ -119,7 +119,7 @@ ros2 launch ffmpeg_pipeline_examples h264_camera_pipeline.launch.py
 
 ```mermaid
 flowchart LR
-   A@{ shape: rect, label: "V4L2 camera" } -- "H.264 packet" --> B@{ shape: hex, label: "FFmpegInput" }
+   A@{ shape: rect, label: "V4L2 camera" } -- "H.264 packet" --> B@{ shape: hex, label: "FFmpegInput (format:=#quot;v4l2#quot;)" }
    subgraph ros2_control_node
    B == "H.264 packet" ==> C@{ shape: stadium, label: "PacketBroadcaster" }
    end
@@ -137,7 +137,7 @@ ros2 launch ffmpeg_pipeline_examples pulse_audio_capture_pipeline.launch.py
 
 ```mermaid
 flowchart LR
-   A@{ shape: rect, label: "PulseAudio input" } -- "PCM packet" --> B@{ shape: hex, label: "FFmpegInput" }
+   A@{ shape: rect, label: "PulseAudio input" } -- "PCM packet" --> B@{ shape: hex, label: "FFmpegInput (format:=#quot;pulse#quot;)" }
    subgraph ros2_control_node
    B == "PCM packet" ==> C@{ shape: stadium, label: "DecoderFilter" }
    B ==> C2@{ shape: stadium, label: "PacketBroadcaster" }
@@ -162,7 +162,7 @@ flowchart LR
    A:::hidden -. "Packet (codec=#quot;opus#quot;)" .-> B@{ shape: stadium, label: "PacketReceiver" }
    subgraph ros2_control_node
    B == "Opus packet" ==> C@{ shape: stadium, label: "DecoderFilter (decoder_name:=#quot;libopus#quot;)" }
-   C == "PCM frame" ==> D@{ shape: hex, label: "FFmpegOutput" }
+   C == "PCM frame" ==> D@{ shape: hex, label: "FFmpegOutput (format:=#quot;pulse#quot;)" }
    end
    D -- "PCM frame" --> H@{ shape: rect, label: "PulseAudio output" }
    classDef hidden display: none;
