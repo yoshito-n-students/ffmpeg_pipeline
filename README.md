@@ -119,7 +119,7 @@ ros2 launch ffmpeg_pipeline_examples h264_camera_pipeline.launch.py
 
 ```mermaid
 flowchart LR
-   A@{ shape: rect, label: "V4L2 camera" } -- "H.264 packet" --> B@{ shape: stadium, label: "FFmpegInput" }
+   A@{ shape: rect, label: "V4L2 camera" } -- "H.264 packet" --> B@{ shape: hex, label: "FFmpegInput" }
    subgraph ros2_control_node
    B == "H.264 packet" ==> C@{ shape: stadium, label: "PacketBroadcaster" }
    end
