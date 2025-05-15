@@ -83,9 +83,9 @@ Frame Frame::transfer_data() const {
 std::string Frame::format_name() const {
   // There is no field in AVFrame to indicate the data type, so we use heuristics to determine it
   if (get()->width > 0 && get()->height > 0) {
-    return av_get_pix_fmt_name(static_cast<AVPixelFormat>(get()->format));
+    return to_string(static_cast<AVPixelFormat>(get()->format));
   } else if (get()->nb_samples > 0) {
-    return av_get_sample_fmt_name(static_cast<AVSampleFormat>(get()->format));
+    return to_string(static_cast<AVSampleFormat>(get()->format));
   }
   return "";
 }
