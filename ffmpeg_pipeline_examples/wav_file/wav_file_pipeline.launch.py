@@ -83,6 +83,7 @@ def generate_launch_description():
             'encoder_filter',
             'packet_broadcaster',
         ],
+        output='both',
     )
 
     return LaunchDescription(

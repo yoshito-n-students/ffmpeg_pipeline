@@ -43,9 +43,9 @@ def generate_launch_description():
         package='robot_state_publisher',
         executable='robot_state_publisher',
         name='hardware_description_publisher',
-        output='both',
         parameters=[{'robot_description': ParameterValue(hw_description_content, value_type=str)}],
         remappings=[('robot_description', 'hardware_description')],
+        output='both',
     )
 
     # The ros2_control_node.
@@ -74,10 +74,13 @@ def generate_launch_description():
         executable='spawner',
         name='controller_spawner',
         arguments=[
+            '--controller-manager',
+            'ros2_control_node',
             '--param-file',
             ffmpeg_controllers,
             'compressed_image_broadcaster',
             ],
+        output='both',
     )
 
     ####################
