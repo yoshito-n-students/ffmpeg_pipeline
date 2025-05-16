@@ -1,14 +1,31 @@
 from launch import LaunchDescription
-from launch.substitutions import Command, FindExecutable, PathJoinSubstitution
+from launch.actions import DeclareLaunchArgument, GroupAction
+from launch.substitutions import Command, FindExecutable, LaunchConfiguration, PathJoinSubstitution
 
-from launch_ros.actions import Node
+from launch_ros.actions import Node, PushRosNamespace
 from launch_ros.descriptions import ParameterValue
 from launch_ros.substitutions import FindPackageShare
 
 
 def generate_launch_description():
-    # Get URDF via xacro
-    robot_description_content = Command(
+    ##################
+    # Launch Arguments
+    ##################
+
+    # namespace
+    declare_namespace = DeclareLaunchArgument(
+        'namespace',
+        default_value='',
+        description='Namespace for the nodes, topics, and parameters'
+    )
+    namespace = LaunchConfiguration('namespace')
+
+    #######
+    # Nodes
+    #######
+
+    # Publisher for the hardware_description topic (required by the ros2_control_node)
+    hw_description_content = Command(
         [
             PathJoinSubstitution([FindExecutable(name='xacro')]),
             ' ',
@@ -16,60 +33,72 @@ def generate_launch_description():
                 [
                     FindPackageShare('ffmpeg_pipeline_examples'),
                     'webp_file',
-                    'robot_description.urdf.xacro',
+                    'hardware_description.urdf.xacro',
                 ]
             ),
         ]
     )
-    robot_description = {
-        'robot_description': ParameterValue(robot_description_content, value_type=str)
-    }
+    hw_description_publisher = Node(
+        package='robot_state_publisher',
+        executable='robot_state_publisher',
+        name='hardware_description_publisher',
+        parameters=[{'robot_description': ParameterValue(hw_description_content, value_type=str)}],
+        remappings=[('robot_description', 'hardware_description')],
+        output='both',
+    )
 
-    robot_controllers = PathJoinSubstitution(
+    # The ros2_control_node
+    ffmpeg_controllers = PathJoinSubstitution(
         [
             FindPackageShare('ffmpeg_pipeline_examples'),
             'webp_file',
             'controllers.yaml',
         ]
     )
-
-    control_node = Node(
+    ros2_control_node = Node(
         package='controller_manager',
         executable='ros2_control_node',
-        parameters=[robot_controllers],
+        name='ros2_control_node',
+        parameters=[ffmpeg_controllers],
+        remappings=[('robot_description', 'hardware_description')],
         output='both',
     )
 
-    robot_description_pub_node = Node(
-        package='robot_state_publisher',
-        executable='robot_state_publisher',
-        output='both',
-        parameters=[robot_description],
-    )
-
-    compressed_image_broadcaster_spawner = Node(
+    # Controller spawner
+    controller_spawner = Node(
         package='controller_manager',
         executable='spawner',
-        arguments=['compressed_image_broadcaster', '--param-file', robot_controllers],
+        name='controller_spawner',
+        arguments=[
+            '--controller-manager',
+            'ros2_control_node',
+            '--param-file',
+            ffmpeg_controllers,
+            'compressed_image_broadcaster',
+        ],
+        output='both',
     )
 
+    # Image viewer
     image_view_node = Node(
         package='image_view',
         executable='image_view',
+        remappings=[('image', 'compressed_image_broadcaster/image')],
+        parameters=[{'image_transport': 'ffmpeg'}],
         output='both',
-        remappings=[
-            ('image', 'compressed_image_broadcaster/image'),
-        ],
-        parameters=[
-            {'image_transport': 'ffmpeg'},
-        ],
     )
 
-    nodes = [
-        control_node,
-        robot_description_pub_node,
-        compressed_image_broadcaster_spawner,
-        image_view_node,
-    ]
-
-    return LaunchDescription(nodes)
+    return LaunchDescription(
+        [
+            declare_namespace,
+            GroupAction(
+                [
+                    PushRosNamespace(namespace),
+                    hw_description_publisher,
+                    ros2_control_node,
+                    controller_spawner,
+                    image_view_node,
+                ]
+            ),
+        ]
+    )

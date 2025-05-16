@@ -1,10 +1,12 @@
-controller_manager:
-  ros__parameters:
-    # In this example, the input device reads example.webp repeatedly as defined in robot_description.urdf.xacro.
-    # Therefore, the update_rate of the controller can be arbitrary. We set it to a low frequency considering CPU load.
-    update_rate: 2 # Hz
+/**: # Wildcard to match any namespace
 
-compressed_image_broadcaster:
-  ros__parameters:
-    type: ffmpeg_controllers/CompressedImageBroadcaster
-    input_name: image_reader
+  ros2_control_node:
+    ros__parameters:
+      # In this example, the input device reads example.webp repeatedly as defined in robot_description.urdf.xacro.
+      # Therefore, the update_rate of the controller can be arbitrary. We set it to a low frequency considering CPU load.
+      update_rate: 2 # Hz
+
+  compressed_image_broadcaster:
+    ros__parameters:
+      type: ffmpeg_controllers/CompressedImageBroadcaster
+      input_name: image_reader
