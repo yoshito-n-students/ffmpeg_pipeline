@@ -1,18 +1,20 @@
-controller_manager:
-  ros__parameters:
-    # If this example is used with the capture_raw example,
-    # we receive 25 packets per second from the input topic.
-    # The update rate of the controllers must be greater than this value not to miss any packets.
-    update_rate: 30  # must be integer
+/**: # Wildcard to match any namespace
 
-# Write the received packets to the output device
-packet_writer:
-  ros__parameters:
-    type: ffmpeg_controllers/PacketWriter
-    input_name: packet_receiver
-    output_name: pulse_audio
+  ros2_control_node:
+    ros__parameters:
+      # If this example is used with the capture_raw example,
+      # we receive 25 packets per second from the input topic.
+      # The update rate of the controllers must be greater than this value not to miss any packets.
+      update_rate: 30  # must be integer
 
-# Receive the packets from the network
-packet_receiver:
-  ros__parameters:
-    type: ffmpeg_controllers/PacketReceiver
+  # Write the received packets to the output device
+  packet_writer:
+    ros__parameters:
+      type: ffmpeg_controllers/PacketWriter
+      input_name: packet_receiver
+      output_name: pulse_audio
+
+  # Receive the packets from the network
+  packet_receiver:
+    ros__parameters:
+      type: ffmpeg_controllers/PacketReceiver

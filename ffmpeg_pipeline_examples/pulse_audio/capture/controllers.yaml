@@ -1,51 +1,53 @@
-controller_manager:
-  ros__parameters:
-    # As noted in robot_description.urdf.xacro, we expect 25 packets per sec from the input device.
-    # The update rate of the controller must be greater than this value not to miss any packets.
-    update_rate: 30 # must be integer
+/**: # Wildcard to match any namespace
 
-# Send raw packets from the input device to network
-raw_packet_broadcaster:
-  ros__parameters:
-    type: ffmpeg_controllers/PacketBroadcaster
-    input_name: pulse_audio
+  ros2_control_node:
+    ros__parameters:
+      # As noted in robot_description.urdf.xacro, we expect 25 packets per sec from the input device.
+      # The update rate of the controller must be greater than this value not to miss any packets.
+      update_rate: 30 # must be integer
 
-# Decompress the packets from the input device
-decoder_filter:
-  ros__parameters:
-    type: ffmpeg_controllers/DecoderFilter
-    input_name: pulse_audio
+  # Send raw packets from the input device to network
+  raw_packet_broadcaster:
+    ros__parameters:
+      type: ffmpeg_controllers/PacketBroadcaster
+      input_name: pulse_audio
 
-# Send decompressed frames from the decoder to network
-frame_broadcaster:
-  ros__parameters:
-    type: ffmpeg_controllers/FrameBroadcaster
-    input_name: decoder_filter
+  # Decompress the packets from the input device
+  decoder_filter:
+    ros__parameters:
+      type: ffmpeg_controllers/DecoderFilter
+      input_name: pulse_audio
 
-# Compress the frames to a format suitable for network transmission
-encoder_filter:
-  ros__parameters:
-    type: ffmpeg_controllers/EncoderFilter
-    input_name: decoder_filter
-    encoder_name: libopus
-    codec_parameters: |
-      codec: opus
-      bit_rate: 64000
-      format: s16
-      ch_layout: stereo
-      framerate: [25, 1]
-    encoder_options: |
-      application: lowdelay
-      frame_duration: 40
+  # Send decompressed frames from the decoder to network
+  frame_broadcaster:
+    ros__parameters:
+      type: ffmpeg_controllers/FrameBroadcaster
+      input_name: decoder_filter
 
-# Send the compressed packets to the network
-packet_broadcaster:
-  ros__parameters:
-    type: ffmpeg_controllers/PacketBroadcaster
-    input_name: encoder_filter
-    # QoS settings can be customized to reduce transmission latency
-    # qos_overrides:
-    #   /packet_broadcaster/packet:
-    #     publisher:
-    #       reliability: best_effort
-    #       depth: 5
+  # Compress the frames to a format suitable for network transmission
+  encoder_filter:
+    ros__parameters:
+      type: ffmpeg_controllers/EncoderFilter
+      input_name: decoder_filter
+      encoder_name: libopus
+      codec_parameters: |
+        codec: opus
+        bit_rate: 64000
+        format: s16
+        ch_layout: stereo
+        framerate: [25, 1]
+      encoder_options: |
+        application: lowdelay
+        frame_duration: 40
+
+  # Send the compressed packets to the network
+  packet_broadcaster:
+    ros__parameters:
+      type: ffmpeg_controllers/PacketBroadcaster
+      input_name: encoder_filter
+      # QoS settings can be customized to reduce transmission latency
+      # qos_overrides:
+      #   /packet_broadcaster/packet:
+      #     publisher:
+      #       reliability: best_effort
+      #       depth: 5

@@ -1,38 +1,40 @@
-controller_manager:
-  ros__parameters:
-    # If this example is used with the capture example,
-    # we receive 25 packets per second from the input topic.
-    # The update rate of the controllers must be greater than this value not to miss any packets.
-    update_rate: 30  # must be integer
+/**: # Wildcard to match any namespace
 
-# Write the decompressed frames to the output device
-frame_writer:
-  ros__parameters:
-    type: ffmpeg_controllers/FrameWriter
-    input_name: decoder_filter
-    output_name: pulse_audio
+  ros2_control_node:
+    ros__parameters:
+      # If this example is used with the capture example,
+      # we receive 25 packets per second from the input topic.
+      # The update rate of the controllers must be greater than this value not to miss any packets.
+      update_rate: 30  # must be integer
 
-# Decompress the packets with the codec parameters
-decoder_filter:
-  ros__parameters:
-    type: ffmpeg_controllers/DecoderFilter
-    input_name: parser_filter
-    decoder_name: libopus
+  # Write the decompressed frames to the output device
+  frame_writer:
+    ros__parameters:
+      type: ffmpeg_controllers/FrameWriter
+      input_name: decoder_filter
+      output_name: pulse_audio
 
-# Parse the packets and provide the codec parameters to the decoder
-parser_filter:
-  ros__parameters:
-    type: ffmpeg_controllers/ParserFilter
-    input_name: packet_receiver
-    codec_name: opus
+  # Decompress the packets with the codec parameters
+  decoder_filter:
+    ros__parameters:
+      type: ffmpeg_controllers/DecoderFilter
+      input_name: parser_filter
+      decoder_name: libopus
 
-# Receive the packets from the network
-packet_receiver:
-  ros__parameters:
-    type: ffmpeg_controllers/PacketReceiver
-    # QoS settings can be customized to reduce reception latency
-    # qos_overrides:
-    #   /packet_receiver/packet:
-    #     subscription:
-    #       reliability: best_effort
-    #       depth: 5
+  # Parse the packets and provide the codec parameters to the decoder
+  parser_filter:
+    ros__parameters:
+      type: ffmpeg_controllers/ParserFilter
+      input_name: packet_receiver
+      codec_name: opus
+
+  # Receive the packets from the network
+  packet_receiver:
+    ros__parameters:
+      type: ffmpeg_controllers/PacketReceiver
+      # QoS settings can be customized to reduce reception latency
+      # qos_overrides:
+      #   /packet_receiver/packet:
+      #     subscription:
+      #       reliability: best_effort
+      #       depth: 5
