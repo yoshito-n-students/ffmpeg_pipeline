@@ -38,7 +38,7 @@ def generate_launch_description():
             ),
         ]
     )
-    hw_state_publisher_node = Node(
+    hw_description_publisher = Node(
         package='robot_state_publisher',
         executable='robot_state_publisher',
         name='hardware_description_publisher',
@@ -92,7 +92,7 @@ def generate_launch_description():
             GroupAction(
                 [
                     PushRosNamespace(namespace),
-                    hw_state_publisher_node,
+                    hw_description_publisher,
                     ros2_control_node,
                     controller_spawner,
                 ]
