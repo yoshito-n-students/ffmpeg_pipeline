@@ -167,3 +167,10 @@ flowchart LR
    D -- "PCM frame" --> H@{ shape: rect, label: "PulseAudio output" }
    classDef hidden display: none;
 ```
+
+### End-to-End Audio Streaming with PulseAudio
+
+```bash
+ros2 launch ffmpeg_pipeline_examples pulse_audio_capture_pipeline.launch.py namespace:=capture
+ros2 launch ffmpeg_pipeline_examples pulse_audio_play_pipeline.launch.py namespace:=play input_topic:=/play/packet_broadcaster/packet
+```
