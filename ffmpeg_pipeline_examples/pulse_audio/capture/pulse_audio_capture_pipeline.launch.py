@@ -89,7 +89,6 @@ def generate_launch_description():
     return LaunchDescription(
         [
             declare_namespace,
-            declare_input_topic,
             GroupAction(
                 [
                     PushRosNamespace(namespace),
