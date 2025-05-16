@@ -1,6 +1,6 @@
 /**: # Wildcard to match any namespace
 
-  controller_manager:
+  ros2_control_node:
     ros__parameters:
       # The sample rate of example.wav is 44100 Hz, and the number of samples per frame is 1024.
       # To play it at normal speed, we need to process frames at a rate of 44100 / 1024 = 43.066... Hz.
