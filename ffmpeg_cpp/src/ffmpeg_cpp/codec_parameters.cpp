@@ -56,22 +56,28 @@ CodecParameters::CodecParameters(const CodecParameters &other)
   }
 }
 
-std::string CodecParameters::codec_type_name() const { return to_string(get()->codec_type); }
-
-std::string CodecParameters::codec_name() const { return avcodec_get_name(get()->codec_id); }
-
-std::string CodecParameters::format_name() const {
-  switch (get()->codec_type) {
-  case AVMEDIA_TYPE_VIDEO:
-    return to_string(static_cast<AVPixelFormat>(get()->format));
-  case AVMEDIA_TYPE_AUDIO:
-    return to_string(static_cast<AVSampleFormat>(get()->format));
-  default:
-    return "";
-  }
+std::string CodecParameters::codec_type_name() const {
+  return get() ? to_string(get()->codec_type) : "";
 }
 
-std::string CodecParameters::ch_layout_str() const { return to_string(get()->ch_layout); }
+std::string CodecParameters::codec_name() const {
+  return get() ? avcodec_get_name(get()->codec_id) : "";
+}
+
+std::string CodecParameters::format_name() const {
+  if (get()) {
+    if (get()->codec_type == AVMEDIA_TYPE_VIDEO) {
+      return to_string(static_cast<AVPixelFormat>(get()->format));
+    } else if (get()->codec_type == AVMEDIA_TYPE_AUDIO) {
+      return to_string(static_cast<AVSampleFormat>(get()->format));
+    }
+  }
+  return "";
+}
+
+std::string CodecParameters::ch_layout_str() const {
+  return get() ? to_string(get()->ch_layout) : "";
+}
 
 } // namespace ffmpeg_cpp
 

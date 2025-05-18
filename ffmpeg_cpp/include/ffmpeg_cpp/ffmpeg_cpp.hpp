@@ -125,6 +125,8 @@ public:
   // True if the packet data is empty or invalid
   bool empty() const { return !get() || !get()->data[0]; }
 
+  // Convert this->{format, ch_layout} using FFmpeg's utility functions.
+  // If error or this is null, return an empty string.
   std::string format_name() const;
   std::string ch_layout_str() const;
 
@@ -200,6 +202,8 @@ public:
   CodecParameters(CodecParameters &&other) = default;
   CodecParameters &operator=(CodecParameters &&other) = default;
 
+  // Convert this->{codec_type, codec_id, format, ch_layout} using FFmpeg's utility functions.
+  // If error or this is null, return an empty string.
   std::string codec_type_name() const;
   std::string codec_name() const;
   std::string format_name() const;

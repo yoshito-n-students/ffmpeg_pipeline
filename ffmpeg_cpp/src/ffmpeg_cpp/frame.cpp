@@ -81,16 +81,18 @@ Frame Frame::transfer_data() const {
 }
 
 std::string Frame::format_name() const {
-  // There is no field in AVFrame to indicate the data type, so we use heuristics to determine it
-  if (get()->width > 0 && get()->height > 0) {
-    return to_string(static_cast<AVPixelFormat>(get()->format));
-  } else if (get()->nb_samples > 0) {
-    return to_string(static_cast<AVSampleFormat>(get()->format));
+  if (get()) {
+    // There is no field in AVFrame to indicate the data type, so we use heuristics to determine it
+    if (get()->width > 0 && get()->height > 0) {
+      return to_string(static_cast<AVPixelFormat>(get()->format));
+    } else if (get()->nb_samples > 0) {
+      return to_string(static_cast<AVSampleFormat>(get()->format));
+    }
   }
   return "";
 }
 
-std::string Frame::ch_layout_str() const { return to_string(get()->ch_layout); }
+std::string Frame::ch_layout_str() const { return get() ? to_string(get()->ch_layout) : ""; }
 
 ffmpeg_pipeline_msgs::msg::Frame Frame::to_msg(const rclcpp::Time &stamp) const {
   ffmpeg_pipeline_msgs::msg::Frame msg;
