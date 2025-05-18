@@ -51,21 +51,21 @@ static AVChannelLayout to_swr_channel_layout(const AVChannelLayout &ch_layout) {
 }
 
 std::string AudioConverter::in_ch_layout_str() const {
-  return to_string(to_swr_channel_layout(get_channel_layout(get(), "in_chlayout")));
+  return get() ? to_string(to_swr_channel_layout(get_channel_layout(get(), "in_chlayout"))) : "";
 }
 
 std::string AudioConverter::in_format_name() const {
-  return to_string(get_sample_format(get(), "in_sample_fmt"));
+  return get() ? to_string(get_sample_format(get(), "in_sample_fmt")) : "";
 }
 
 int AudioConverter::in_sample_rate() const { return get_int64(get(), "in_sample_rate", 0); }
 
 std::string AudioConverter::out_ch_layout_str() const {
-  return to_string(to_swr_channel_layout(get_channel_layout(get(), "out_chlayout")));
+  return get() ? to_string(to_swr_channel_layout(get_channel_layout(get(), "out_chlayout"))) : "";
 }
 
 std::string AudioConverter::out_format_name() const {
-  return to_string(get_sample_format(get(), "out_sample_fmt"));
+  return get() ? to_string(get_sample_format(get(), "out_sample_fmt")) : "";
 }
 
 int AudioConverter::out_sample_rate() const { return get_int64(get(), "out_sample_rate", 0); }

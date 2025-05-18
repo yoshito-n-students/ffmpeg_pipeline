@@ -88,7 +88,7 @@ int VideoConverter::src_width() const { return get_int64(get(), "srcw", 0); }
 int VideoConverter::src_height() const { return get_int64(get(), "srch", 0); }
 
 std::string VideoConverter::src_format_name() const {
-  return to_string(get_pixel_format(get(), "src_format"));
+  return get() ? to_string(get_pixel_format(get(), "src_format")) : "";
 }
 
 int VideoConverter::dst_width() const { return get_int64(get(), "dstw", 0); }
@@ -96,7 +96,7 @@ int VideoConverter::dst_width() const { return get_int64(get(), "dstw", 0); }
 int VideoConverter::dst_height() const { return get_int64(get(), "dsth", 0); }
 
 std::string VideoConverter::dst_format_name() const {
-  return to_string(get_pixel_format(get(), "dst_format"));
+  return get() ? to_string(get_pixel_format(get(), "dst_format")) : "";
 }
 
 } // namespace ffmpeg_cpp

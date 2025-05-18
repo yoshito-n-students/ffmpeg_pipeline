@@ -393,6 +393,8 @@ public:
                                const std::string &src_format_name, const int dst_width,
                                const int dst_height, const std::string &dst_format_name);
 
+  // Return properties of the underlying SwsContext.
+  // If it has not been created, return empty strings or 0.
   int src_width() const;
   int src_height() const;
   std::string src_format_name() const;
@@ -421,6 +423,8 @@ public:
                                const std::string &out_ch_layout_str,
                                const std::string &out_format_name, const int out_sample_rate);
 
+  // Return properties of the underlying SwrContext.
+  // If it has not been created, return empty strings or 0.
   std::string in_ch_layout_str() const;
   std::string in_format_name() const;
   int in_sample_rate() const;
