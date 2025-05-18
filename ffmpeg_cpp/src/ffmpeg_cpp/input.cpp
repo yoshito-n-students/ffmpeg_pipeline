@@ -92,11 +92,17 @@ Packet Input::read_frame() {
   while (true) {
     Packet packet = Packet::create();
     if (const int ret = av_read_frame(get(), packet.get());
-        (ret >= 0 || ret == AVERROR(EAGAIN)) && packet->stream_index == istream_->index) {
+        ret >= 0 && packet->stream_index == istream_->index) {
+      // Successfully read a frame from the stream of interest
       return packet;
+    } else if (ret == AVERROR(EAGAIN) && packet->stream_index == istream_->index) {
+      // No frame is temporarily available for the stream of interest
+      return Packet::null();
     } else if (ret < 0) {
+      // Error during reading
       throw Error("Input::read_frame(): Failed to read frame", ret);
     }
+    // Otherwise, continue reading until we find a frame from the stream of interest
   }
 }
 
