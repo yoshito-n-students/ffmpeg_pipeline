@@ -303,7 +303,7 @@ public:
   void send_packet(const Packet &packet);
 
   // Receive a decoded frame from the decoder.
-  // The frame may be empty if no frame is available.
+  // The frame may be null if no frame is available.
   Frame receive_frame();
 };
 
@@ -336,7 +336,7 @@ public:
   void send_frame(const Frame &frame);
 
   // Receive a encoded packet from the encoder.
-  // The packet may be empty if no packet is available.
+  // The packet may be null if no packet is available.
   Packet receive_packet();
 };
 
