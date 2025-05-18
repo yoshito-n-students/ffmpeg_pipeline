@@ -54,6 +54,14 @@ static inline std::string to_string(const AVChannelLayout &ch_layout) {
   }
 }
 
+static inline std::string to_string(const AVHWDeviceType type) {
+  if (const char *name = av_hwdevice_get_type_name(type); name) {
+    return name;
+  } else {
+    return "";
+  }
+}
+
 // ================
 // from std::string
 // ================
