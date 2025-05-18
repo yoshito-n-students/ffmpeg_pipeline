@@ -254,6 +254,8 @@ public:
   // Allocate the parser context for the given codec name
   static Parser create(const std::string &codec_name);
 
+  // Convert this->parser->codec_ids[] to a vector of codec names.
+  // If this is null, return an empty vector.
   std::vector<std::string> codec_names() const;
 
   // Parse the given buffer and return the found packet and parameters.

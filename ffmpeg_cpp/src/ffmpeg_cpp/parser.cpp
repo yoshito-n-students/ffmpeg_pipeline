@@ -98,9 +98,11 @@ Packet Parser::parse_next_packet(const Packet &buffer, std::int64_t *const pos) 
 
 std::vector<std::string> Parser::codec_names() const {
   std::vector<std::string> names;
-  for (const auto id : get()->parser->codec_ids) {
-    if (id != AV_CODEC_ID_NONE) {
-      names.push_back(avcodec_get_name(static_cast<AVCodecID>(id)));
+  if (get() && get()->parser) {
+    for (const auto id : get()->parser->codec_ids) {
+      if (id != AV_CODEC_ID_NONE) {
+        names.push_back(avcodec_get_name(static_cast<AVCodecID>(id)));
+      }
     }
   }
   return names;
