@@ -33,13 +33,15 @@ AudioFifo AudioFifo::create(const std::string &ch_layout_str, const std::string 
   return fifo;
 }
 
-std::string AudioFifo::ch_layout_str() const { return to_string(template_frame_->ch_layout); }
-
-std::string AudioFifo::format_name() const {
-  return to_string(static_cast<AVSampleFormat>(template_frame_->format));
+std::string AudioFifo::ch_layout_str() const {
+  return template_frame_ ? to_string(template_frame_->ch_layout) : "";
 }
 
-int AudioFifo::sample_rate() const { return template_frame_->sample_rate; }
+std::string AudioFifo::format_name() const {
+  return template_frame_ ? to_string(static_cast<AVSampleFormat>(template_frame_->format)) : "";
+}
+
+int AudioFifo::sample_rate() const { return template_frame_ ? template_frame_->sample_rate : 0; }
 
 void AudioFifo::write(const Frame &frame) {
   if (const int ret = av_audio_fifo_write(get(), reinterpret_cast<void *const *>(frame->data),
@@ -60,7 +62,7 @@ Frame AudioFifo::read(const int nb_samples) {
 
   // Return the empty frame if the number of samples in the FIFO is less than required
   if (av_audio_fifo_size(get()) < nb_samples) {
-    return frame;
+    return Frame::null();
   }
 
   // Allocate the frame data for nb_samples samples

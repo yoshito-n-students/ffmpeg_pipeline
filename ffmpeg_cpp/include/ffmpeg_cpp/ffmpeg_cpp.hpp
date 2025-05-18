@@ -354,6 +354,8 @@ public:
   static AudioFifo create(const std::string &ch_layout_str, const std::string &format_name,
                           const int sample_rate);
 
+  // Return properties of the underlying AVAudioFifo.
+  // If it has not been created, return empty strings or 0.
   std::string ch_layout_str() const;
   std::string format_name() const;
   int sample_rate() const;
@@ -361,7 +363,7 @@ public:
   // Push a frame to the FIFO
   void write(const Frame &frame);
 
-  // Pop nb_samples samples if available in the FIFO, or return an empty frame
+  // Pop nb_samples samples if available in the FIFO, or return a null frame
   Frame read(const int nb_samples);
 
 private:
