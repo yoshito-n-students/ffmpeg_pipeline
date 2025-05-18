@@ -232,7 +232,7 @@ public:
   CodecParameters codec_parameters() const;
 
   // Get a frame from the stream of interest in a NON-BLOCKING way.
-  // If the next frame is not available for some temporary reason, return an empty frame.
+  // If the next frame is not available for some temporary reason, return a null frame.
   Packet read_frame();
 
 private:
