@@ -67,29 +67,32 @@ Input Input::create(const std::string &url, const std::string &format_name,
   }
 
   // Find the best stream of the given media type
-  input.istream_id_ = av_find_best_stream(input.get(), media_type, -1, -1, nullptr, 0);
-  if (input.istream_id_ < 0) {
+  const int istream_id = av_find_best_stream(input.get(), media_type, -1, -1, nullptr, 0);
+  if (istream_id < 0) {
     throw Error("Input::Input(): Failed to find the best stream of media type " + media_type_name,
-                input.istream_id_);
+                istream_id);
   }
+  input.istream_ = input->streams[istream_id];
 
   return input;
 }
 
 CodecParameters Input::codec_parameters() const {
-  CodecParameters params = CodecParameters::create();
-  if (const int ret = avcodec_parameters_copy(params.get(), get()->streams[istream_id_]->codecpar);
-      ret < 0) {
-    throw Error("Input::codec_parameters(): Failed to copy codec parameters", ret);
+  if (istream_ && istream_->codecpar) {
+    CodecParameters params = CodecParameters::create();
+    if (const int ret = avcodec_parameters_copy(params.get(), istream_->codecpar); ret < 0) {
+      throw Error("Input::codec_parameters(): Failed to copy codec parameters", ret);
+    }
+    return params;
   }
-  return params;
+  return CodecParameters::null();
 }
 
 Packet Input::read_frame() {
   while (true) {
     Packet packet = Packet::create();
     if (const int ret = av_read_frame(get(), packet.get());
-        (ret >= 0 || ret == AVERROR(EAGAIN)) && packet->stream_index == istream_id_) {
+        (ret >= 0 || ret == AVERROR(EAGAIN)) && packet->stream_index == istream_->index) {
       return packet;
     } else if (ret < 0) {
       throw Error("Input::read_frame(): Failed to read frame", ret);

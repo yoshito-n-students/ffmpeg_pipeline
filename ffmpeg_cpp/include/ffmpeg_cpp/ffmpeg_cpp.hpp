@@ -227,6 +227,8 @@ public:
   static Input create(const std::string &url, const std::string &format_name,
                       const Dictionary &options, const std::string &media_type_name);
 
+  // Return a copy of istream_->codecpar.
+  // If istream_ or istream_->codecpar is null, return CodecParameters::null().
   CodecParameters codec_parameters() const;
 
   // Get a frame from the stream of interest in a NON-BLOCKING way.
@@ -234,7 +236,7 @@ public:
   Packet read_frame();
 
 private:
-  int istream_id_ = -1;
+  AVStream *istream_ = nullptr;
 };
 
 // ================================
