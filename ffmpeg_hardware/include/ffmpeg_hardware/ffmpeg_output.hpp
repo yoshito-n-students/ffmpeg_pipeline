@@ -37,8 +37,8 @@ protected:
 
       // Open the input with the parameters
       output_ = ffmpeg_cpp::Output::create(format, url, codec_params, options);
-      RCLCPP_INFO(get_logger(), "Configured the output ([%s] %s)", output_.format_name().c_str(),
-                  output_.url().c_str());
+      RCLCPP_INFO(get_logger(), "Configured the output ([%s] %s)", output_->oformat->name,
+                  output_->url);
 
       // Initialize the command variables
       packet_ = ffmpeg_cpp::Packet::create();

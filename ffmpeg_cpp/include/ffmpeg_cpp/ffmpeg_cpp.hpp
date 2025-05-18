@@ -227,8 +227,6 @@ public:
   static Input create(const std::string &url, const std::string &format_name,
                       const Dictionary &options, const std::string &media_type_name);
 
-  std::string format_name() const;
-  std::string url() const;
   CodecParameters codec_parameters() const;
 
   // Get a frame from the stream of interest in a NON-BLOCKING way.
@@ -440,9 +438,6 @@ public:
   // and set the codec parameters and options to the stream
   static Output create(const std::string &format_name, const std::string &url,
                        const CodecParameters &codec_params, const Dictionary &options);
-
-  std::string format_name() const;
-  std::string url() const;
 
   // Write a frame to the stream of interest in a NON-BLOCKING way.
   // False if the output stream is not ready to accept the data for some temporary reason.

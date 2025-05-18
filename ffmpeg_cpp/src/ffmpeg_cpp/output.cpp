@@ -76,12 +76,6 @@ Output Output::create(const std::string &format_name, const std::string &url,
   return output;
 }
 
-std::string Output::format_name() const {
-  return (get() && get()->oformat && get()->oformat->name) ? get()->oformat->name : "";
-}
-
-std::string Output::url() const { return (get() && get()->url) ? get()->url : ""; }
-
 bool Output::write_frame(const Packet &packet) {
   // Create a copy (shallow copy if possible) of the packet
   // and modify the properties for the output stream

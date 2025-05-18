@@ -76,12 +76,6 @@ Input Input::create(const std::string &url, const std::string &format_name,
   return input;
 }
 
-std::string Input::format_name() const {
-  return (get() && get()->iformat && get()->iformat->name) ? get()->iformat->name : "";
-}
-
-std::string Input::url() const { return (get() && get()->url) ? get()->url : ""; }
-
 CodecParameters Input::codec_parameters() const {
   CodecParameters params = CodecParameters::create();
   if (const int ret = avcodec_parameters_copy(params.get(), get()->streams[istream_id_]->codecpar);
