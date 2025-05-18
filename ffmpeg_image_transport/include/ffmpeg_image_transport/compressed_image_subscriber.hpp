@@ -65,7 +65,7 @@ protected:
           // TODO: get options from the node parameter
           decoder_ = ffmpeg_cpp::Decoder::create(
               "" /* empty decoder name. params->codec_id is used instead. */, params);
-          if (const std::string hw_type_name = decoder_.hw_type_name(); hw_type_name == "none") {
+          if (const std::string hw_type_name = decoder_.hw_type_name(); hw_type_name.empty()) {
             RCLCPP_INFO(node_->get_logger(), "Configured decoder (%s)", decoder_->codec->name);
           } else {
             RCLCPP_INFO(node_->get_logger(), "Configured decoder (%s|%s)", decoder_->codec->name,

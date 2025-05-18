@@ -294,6 +294,8 @@ public:
                         const std::string &request_format_name = "",
                         const Dictionary &decoder_options = Dictionary::null());
 
+  // Convert this->{codec_id, hw_device_ctx->data->type} using FFmpeg's utility functions.
+  // If error or this is null, return an empty string.
   std::string codec_name() const;
   std::string hw_type_name() const;
 
@@ -325,6 +327,8 @@ public:
                         const CodecParameters &codec_params = CodecParameters::null(),
                         const Dictionary &encoder_options = Dictionary::null());
 
+  // Convert this->{codec_id, hw_device_ctx->data->type} using FFmpeg's utility functions.
+  // If error or this is null, return an empty string.
   std::string codec_name() const;
   std::string hw_type_name() const;
 

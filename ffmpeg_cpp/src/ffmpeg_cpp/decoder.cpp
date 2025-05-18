@@ -153,16 +153,12 @@ Frame Decoder::receive_frame() {
   }
 }
 
-std::string Decoder::codec_name() const { return avcodec_get_name(get()->codec_id); }
+std::string Decoder::codec_name() const { return get() ? avcodec_get_name(get()->codec_id) : ""; }
 
 std::string Decoder::hw_type_name() const {
-  // av_hwdevice_get_type_name(AV_HWDEVICE_TYPE_NONE) returns nullptr,
-  // so std::string CANNOT be constructed and std::logic_error is thrown.
-  // To avoid this, return "none" in the case of no hardware.
-  return get()->hw_device_ctx
-             ? av_hwdevice_get_type_name(
-                   reinterpret_cast<AVHWDeviceContext *>(get()->hw_device_ctx->data)->type)
-             : "none";
+  return (get() && get()->hw_device_ctx)
+             ? to_string(reinterpret_cast<AVHWDeviceContext *>(get()->hw_device_ctx->data)->type)
+             : "";
 }
 
 } // namespace ffmpeg_cpp
