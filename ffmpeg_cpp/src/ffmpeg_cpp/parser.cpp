@@ -14,24 +14,25 @@ namespace ffmpeg_cpp {
 
 Parser Parser::null() { return Parser(nullptr); }
 
-Parser Parser::create(const std::string &codec_name) {
-  // Find the codec by name
-  const AVCodec *const codec = find_codec(codec_name);
-  if (!codec) {
-    throw Error("Parser::create(): " + codec_name + " was not recognized as a codec name");
+Parser Parser::create(const std::string &decoder_name) {
+  // Find the decoder this parser is associated with
+  const AVCodec *const decoder = avcodec_find_decoder_by_name(decoder_name.c_str());
+  if (!decoder) {
+    throw Error("Parser::create(): " + decoder_name + " was not recognized as a decoder name");
   }
 
-  // Initialize the parser with the codec
-  Parser parser(av_parser_init(codec->id));
+  // Initialize the parser with the decoder's codec
+  Parser parser(av_parser_init(decoder->id));
   if (!parser) {
-    throw Error("Parser::create(): Failed to initialize parser for codec (" + codec_name + ")");
+    throw Error("Parser::create(): Failed to initialize parser for the decoder (" + decoder_name +
+                ")");
   }
 
   // Initialize the codec context to accumulate the codec parameters
-  parser.codec_ctx_.reset(avcodec_alloc_context3(codec));
-  if (!parser.codec_ctx_) {
-    throw Error("Parser::create(): Failed to allocate codec context for codec (" + codec_name +
-                ")");
+  parser.decoder_ctx_.reset(avcodec_alloc_context3(decoder));
+  if (!parser.decoder_ctx_) {
+    throw Error("Parser::create(): Failed to allocate decoder context for the decoder (" +
+                decoder_name + ")");
   }
 
   return parser;
@@ -58,7 +59,7 @@ std::pair<Packet, CodecParameters> Parser::parse_initial_packet(const Packet &bu
   // Parse and advance the input buffer
   std::uint8_t *packet_data;
   int packet_size;
-  *pos += av_parser_parse2(get(), codec_ctx_.get(), &packet_data, &packet_size, //
+  *pos += av_parser_parse2(get(), decoder_ctx_.get(), &packet_data, &packet_size, //
                            buffer->data, buffer->size, buffer->pts, buffer->dts, *pos);
 
   // Return an empty packet and the default parameters
@@ -72,9 +73,10 @@ std::pair<Packet, CodecParameters> Parser::parse_initial_packet(const Packet &bu
 
   // Copy the codec parameters from the codec context
   CodecParameters params = CodecParameters::create();
-  if (const int ret = avcodec_parameters_from_context(params.get(), codec_ctx_.get()); ret < 0) {
-    throw Error("Parser::parse_initial_packet(): Failed to copy codec parameters from context",
-                ret);
+  if (const int ret = avcodec_parameters_from_context(params.get(), decoder_ctx_.get()); ret < 0) {
+    throw Error(
+        "Parser::parse_initial_packet(): Failed to copy codec parameters from the decoder context",
+        ret);
   }
 
   return {packet, params};
@@ -84,7 +86,7 @@ Packet Parser::parse_next_packet(const Packet &buffer, std::int64_t *const pos) 
   // Parse and advance the input buffer
   std::uint8_t *packet_data;
   int packet_size;
-  *pos += av_parser_parse2(get(), codec_ctx_.get(), &packet_data, &packet_size, //
+  *pos += av_parser_parse2(get(), decoder_ctx_.get(), &packet_data, &packet_size, //
                            buffer->data, buffer->size, buffer->pts, buffer->dts, *pos);
 
   // Return an empty packet if no packet data is found

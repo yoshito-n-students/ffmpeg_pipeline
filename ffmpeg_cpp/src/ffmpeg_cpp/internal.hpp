@@ -92,18 +92,6 @@ static inline AVChannelLayout to_channel_layout(const std::string &str) {
   return ch_layout;
 }
 
-static inline const AVCodec *find_codec(const std::string &name) {
-  void *iterate_ctx = nullptr;
-  while (true) {
-    if (const AVCodec *const codec = av_codec_iterate(&iterate_ctx);
-        codec && avcodec_get_name(codec->id) == name) {
-      return codec;
-    } else if (!codec) {
-      return nullptr;
-    }
-  }
-}
-
 // ===========
 // get options
 // ===========

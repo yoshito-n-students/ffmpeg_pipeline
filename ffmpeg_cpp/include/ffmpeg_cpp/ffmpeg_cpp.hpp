@@ -251,8 +251,8 @@ private:
 public:
   // Construct without underlying AVCodecParserContext
   static Parser null();
-  // Allocate the parser context for the given codec name
-  static Parser create(const std::string &codec_name);
+  // Allocate the parser context for the given decoder name
+  static Parser create(const std::string &decoder_name);
 
   // Convert this->parser->codec_ids[] to a vector of codec names.
   // If this is null, return an empty vector.
@@ -270,7 +270,7 @@ public:
   Packet parse_next_packet(const Packet &buffer, std::int64_t *const pos);
 
 private:
-  std::unique_ptr<AVCodecContext, Deleter<AVCodecContext>> codec_ctx_ = nullptr;
+  std::unique_ptr<AVCodecContext, Deleter<AVCodecContext>> decoder_ctx_ = nullptr;
 };
 
 // ===============================================
