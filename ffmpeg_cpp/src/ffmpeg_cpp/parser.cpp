@@ -96,6 +96,22 @@ Packet Parser::parse_next_packet(const Packet &buffer, std::int64_t *const pos) 
   return make_packet(buffer, packet_data, packet_size);
 }
 
+Packet Parser::parse(const Packet &buffer, std::int64_t *const pos, Decoder *const decoder) {
+  // Parse and advance the input buffer
+  std::uint8_t *packet_data;
+  int packet_size;
+  *pos += av_parser_parse2(get(), decoder->get(), &packet_data, &packet_size, //
+                           buffer->data, buffer->size, buffer->pts, buffer->dts, *pos);
+
+  // Return an empty packet if no packet data is found
+  if (!packet_data) {
+    return Packet::null();
+  }
+
+  // Construct the packet based on the parsed data
+  return make_packet(buffer, packet_data, packet_size);
+}
+
 std::vector<std::string> Parser::codec_names() const {
   std::vector<std::string> names;
   if (get() && get()->parser) {

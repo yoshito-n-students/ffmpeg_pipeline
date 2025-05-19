@@ -53,7 +53,7 @@ public:
 template <class T> struct Deleter {
   void operator()(T *ptr) const;
 };
-template<class T> using UniquePtr = std::unique_ptr<T, Deleter<T>>;
+template <class T> using UniquePtr = std::unique_ptr<T, Deleter<T>>;
 
 // =========================
 // RAII wrapper for AVPacket
@@ -240,40 +240,6 @@ private:
   AVStream *istream_ = nullptr;
 };
 
-// ================================
-// RAII wrapper for AVParserContext
-// ================================
-
-class Parser : public UniquePtr<AVCodecParserContext> {
-private:
-  using UniquePtr<AVCodecParserContext>::UniquePtr;
-  Parser() = delete;
-
-public:
-  // Construct without underlying AVCodecParserContext
-  static Parser null();
-  // Allocate the parser context for the given decoder name
-  static Parser create(const std::string &decoder_name);
-
-  // Convert this->parser->codec_ids[] to a vector of codec names.
-  // If this is null, return an empty vector.
-  std::vector<std::string> codec_names() const;
-
-  // Parse the given buffer and return the found packet and parameters.
-  // The parameters contain enough information to decode the packet.
-  // If no packet is found or the found packet is not a keyframe,
-  // return an empty packet and default parameters.
-  std::pair<Packet, CodecParameters> parse_initial_packet(const Packet &buffer,
-                                                          std::int64_t *const pos);
-
-  // Parse the given buffer and return the found packet.
-  // If no packet is found, return an empty packet.
-  Packet parse_next_packet(const Packet &buffer, std::int64_t *const pos);
-
-private:
-  UniquePtr<AVCodecContext> decoder_ctx_ = nullptr;
-};
-
 // ===============================================
 // RAII wrapper for decoder (a.k.a AVCodecContext)
 // ===============================================
@@ -306,6 +272,42 @@ public:
   // Receive a decoded frame from the decoder.
   // The frame may be null if no frame is available.
   Frame receive_frame();
+};
+
+// ================================
+// RAII wrapper for AVParserContext
+// ================================
+
+class Parser : public UniquePtr<AVCodecParserContext> {
+private:
+  using UniquePtr<AVCodecParserContext>::UniquePtr;
+  Parser() = delete;
+
+public:
+  // Construct without underlying AVCodecParserContext
+  static Parser null();
+  // Allocate the parser context for the given decoder name
+  static Parser create(const std::string &decoder_name);
+
+  // Convert this->parser->codec_ids[] to a vector of codec names.
+  // If this is null, return an empty vector.
+  std::vector<std::string> codec_names() const;
+
+  Packet parse(const Packet &buffer, std::int64_t *const pos, Decoder *const decoder);
+
+  // Parse the given buffer and return the found packet and parameters.
+  // The parameters contain enough information to decode the packet.
+  // If no packet is found or the found packet is not a keyframe,
+  // return an empty packet and default parameters.
+  std::pair<Packet, CodecParameters> parse_initial_packet(const Packet &buffer,
+                                                          std::int64_t *const pos);
+
+  // Parse the given buffer and return the found packet.
+  // If no packet is found, return an empty packet.
+  Packet parse_next_packet(const Packet &buffer, std::int64_t *const pos);
+
+private:
+  UniquePtr<AVCodecContext> decoder_ctx_ = nullptr;
 };
 
 // ===============================================
