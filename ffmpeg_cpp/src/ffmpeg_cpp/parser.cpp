@@ -79,7 +79,7 @@ std::pair<Packet, CodecParameters> Parser::parse_initial_packet(const Packet &bu
         ret);
   }
 
-  return {packet, params};
+  return {std::move(packet), std::move(params)};
 }
 
 Packet Parser::parse_next_packet(const Packet &buffer, std::int64_t *const pos) {
