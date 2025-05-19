@@ -44,8 +44,7 @@ CodecParameters CodecParameters::create(const std::string &yaml) {
   }
 }
 
-CodecParameters::CodecParameters(const CodecParameters &other)
-    : std::unique_ptr<AVCodecParameters, Deleter<AVCodecParameters>>() {
+CodecParameters::CodecParameters(const CodecParameters &other) : UniquePtr<AVCodecParameters>() {
   if (other) {
     *this = create();
     if (const int ret = avcodec_parameters_copy(get(), other.get()); ret < 0) {

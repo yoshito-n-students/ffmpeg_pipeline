@@ -46,21 +46,22 @@ public:
       : std::runtime_error(msg + ": " + err2str(errnum)) {}
 };
 
-// ===============================
-// Deleter for RAII wrappers below
-// ===============================
+// =====================================
+// Smart pointer for RAII wrappers below
+// =====================================
 
-template <typename T> struct Deleter {
+template <class T> struct Deleter {
   void operator()(T *ptr) const;
 };
+template<class T> using UniquePtr = std::unique_ptr<T, Deleter<T>>;
 
 // =========================
 // RAII wrapper for AVPacket
 // =========================
 
-class Packet : public std::unique_ptr<AVPacket, Deleter<AVPacket>> {
+class Packet : public UniquePtr<AVPacket> {
 private:
-  using std::unique_ptr<AVPacket, Deleter<AVPacket>>::unique_ptr;
+  using UniquePtr<AVPacket>::UniquePtr;
   Packet() = delete;
 
 public:
@@ -96,9 +97,9 @@ public:
 // RAII wrapper for AVFrame
 // ========================
 
-class Frame : public std::unique_ptr<AVFrame, Deleter<AVFrame>> {
+class Frame : public UniquePtr<AVFrame> {
 private:
-  using std::unique_ptr<AVFrame, Deleter<AVFrame>>::unique_ptr;
+  using UniquePtr<AVFrame>::UniquePtr;
   Frame() = delete;
 
 public:
@@ -144,9 +145,9 @@ public:
 // RAII wrapper for AVDictionary
 // =============================
 
-class Dictionary : public std::unique_ptr<AVDictionary, Deleter<AVDictionary>> {
+class Dictionary : public UniquePtr<AVDictionary> {
 private:
-  using std::unique_ptr<AVDictionary, Deleter<AVDictionary>>::unique_ptr;
+  using UniquePtr<AVDictionary>::UniquePtr;
   // yaml-cpp needs a default constructor to create the object
   Dictionary() = default;
   friend struct YAML::as_if<Dictionary, void>;
@@ -176,9 +177,9 @@ public:
 // RAII wrapper for AVCodecParameters
 // ==================================
 
-class CodecParameters : public std::unique_ptr<AVCodecParameters, Deleter<AVCodecParameters>> {
+class CodecParameters : public UniquePtr<AVCodecParameters> {
 private:
-  using std::unique_ptr<AVCodecParameters, Deleter<AVCodecParameters>>::unique_ptr;
+  using UniquePtr<AVCodecParameters>::UniquePtr;
   // yaml-cpp needs a default constructor to create the object
   CodecParameters() = default;
   friend struct YAML::as_if<CodecParameters, void>;
@@ -214,9 +215,9 @@ public:
 // RAII wrapper for input device (a.k.a. AVFormatContext)
 // ======================================================
 
-class Input : public std::unique_ptr<AVFormatContext, Deleter<AVFormatContext>> {
+class Input : public UniquePtr<AVFormatContext> {
 private:
-  using std::unique_ptr<AVFormatContext, Deleter<AVFormatContext>>::unique_ptr;
+  using UniquePtr<AVFormatContext>::UniquePtr;
   Input() = delete;
 
 public:
@@ -243,9 +244,9 @@ private:
 // RAII wrapper for AVParserContext
 // ================================
 
-class Parser : public std::unique_ptr<AVCodecParserContext, Deleter<AVCodecParserContext>> {
+class Parser : public UniquePtr<AVCodecParserContext> {
 private:
-  using std::unique_ptr<AVCodecParserContext, Deleter<AVCodecParserContext>>::unique_ptr;
+  using UniquePtr<AVCodecParserContext>::UniquePtr;
   Parser() = delete;
 
 public:
@@ -270,16 +271,16 @@ public:
   Packet parse_next_packet(const Packet &buffer, std::int64_t *const pos);
 
 private:
-  std::unique_ptr<AVCodecContext, Deleter<AVCodecContext>> decoder_ctx_ = nullptr;
+  UniquePtr<AVCodecContext> decoder_ctx_ = nullptr;
 };
 
 // ===============================================
 // RAII wrapper for decoder (a.k.a AVCodecContext)
 // ===============================================
 
-class Decoder : public std::unique_ptr<AVCodecContext, Deleter<AVCodecContext>> {
+class Decoder : public UniquePtr<AVCodecContext> {
 private:
-  using std::unique_ptr<AVCodecContext, Deleter<AVCodecContext>>::unique_ptr;
+  using UniquePtr<AVCodecContext>::UniquePtr;
   Decoder() = delete;
 
 public:
@@ -311,9 +312,9 @@ public:
 // RAII wrapper for encoder (a.k.a AVCodecContext)
 // ===============================================
 
-class Encoder : public std::unique_ptr<AVCodecContext, Deleter<AVCodecContext>> {
+class Encoder : public UniquePtr<AVCodecContext> {
 private:
-  using std::unique_ptr<AVCodecContext, Deleter<AVCodecContext>>::unique_ptr;
+  using UniquePtr<AVCodecContext>::UniquePtr;
   Encoder() = delete;
 
 public:
@@ -344,9 +345,9 @@ public:
 // RAII wrapper for AVAudioFifo
 // ============================
 
-class AudioFifo : public std::unique_ptr<AVAudioFifo, Deleter<AVAudioFifo>> {
+class AudioFifo : public UniquePtr<AVAudioFifo> {
 private:
-  using std::unique_ptr<AVAudioFifo, Deleter<AVAudioFifo>>::unique_ptr;
+  using UniquePtr<AVAudioFifo>::UniquePtr;
   AudioFifo() = delete;
 
 public:
@@ -374,9 +375,9 @@ private:
 // RAII wrapper for SwsContext
 // ===========================
 
-class VideoConverter : public std::unique_ptr<SwsContext, Deleter<SwsContext>> {
+class VideoConverter : public UniquePtr<SwsContext> {
 private:
-  using std::unique_ptr<SwsContext, Deleter<SwsContext>>::unique_ptr;
+  using UniquePtr<SwsContext>::UniquePtr;
   VideoConverter() = delete;
 
 public:
@@ -411,9 +412,9 @@ public:
 // RAII wrapper for SwrContext
 // ===========================
 
-class AudioConverter : public std::unique_ptr<SwrContext, Deleter<SwrContext>> {
+class AudioConverter : public UniquePtr<SwrContext> {
 private:
-  using std::unique_ptr<SwrContext, Deleter<SwrContext>>::unique_ptr;
+  using UniquePtr<SwrContext>::UniquePtr;
   AudioConverter() = delete;
 
 public:
@@ -440,9 +441,9 @@ public:
 // RAII wrapper for output device (a.k.a. AVFormatContext)
 // =======================================================
 
-class Output : public std::unique_ptr<AVFormatContext, Deleter<AVFormatContext>> {
+class Output : public UniquePtr<AVFormatContext> {
 private:
-  using std::unique_ptr<AVFormatContext, Deleter<AVFormatContext>>::unique_ptr;
+  using UniquePtr<AVFormatContext>::UniquePtr;
   Output() = delete;
 
 public:

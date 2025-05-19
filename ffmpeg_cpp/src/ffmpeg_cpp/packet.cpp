@@ -52,7 +52,7 @@ Packet Packet::create(const ffmpeg_pipeline_msgs::msg::Packet &msg) {
   return packet;
 }
 
-Packet::Packet(const Packet &other) : std::unique_ptr<AVPacket, Deleter<AVPacket>>() {
+Packet::Packet(const Packet &other) : UniquePtr<AVPacket>() {
   if (other) {
     reset(av_packet_clone(other.get()));
     if (!get()) {

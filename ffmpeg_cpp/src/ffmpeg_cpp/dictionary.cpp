@@ -17,8 +17,7 @@ Dictionary Dictionary::create(const std::string &yaml) {
   }
 }
 
-Dictionary::Dictionary(const Dictionary &other)
-    : std::unique_ptr<AVDictionary, Deleter<AVDictionary>>() {
+Dictionary::Dictionary(const Dictionary &other) : UniquePtr<AVDictionary>() {
   if (other) {
     AVDictionary *dict = nullptr;
     if (const int ret = av_dict_copy(&dict, other.get(), 0); ret < 0) {

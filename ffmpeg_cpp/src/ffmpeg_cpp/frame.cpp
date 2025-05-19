@@ -61,7 +61,7 @@ Frame Frame::create(const ffmpeg_pipeline_msgs::msg::Frame &msg) {
   return frame;
 }
 
-Frame::Frame(const Frame &other) : std::unique_ptr<AVFrame, Deleter<AVFrame>>() {
+Frame::Frame(const Frame &other) : UniquePtr<AVFrame>() {
   if (other) {
     reset(av_frame_clone(other.get()));
     if (!get()) {
