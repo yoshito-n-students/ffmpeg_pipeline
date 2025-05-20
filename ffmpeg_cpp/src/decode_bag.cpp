@@ -93,9 +93,9 @@ int main(int argc, char **argv) {
         // Initialize the decoder with the parameters if not already done
         if (!decoder) {
           decoder = av::Decoder::create(
-              "" /* empty decoder name. codec_params->codec_id is used instead. */, codec_params);
-          RCLCPP_INFO(node->get_logger(), "Configured decoder (%s|%s)", decoder->codec->name,
-                      decoder.hw_type_name().c_str());
+              "" /* empty decoder name. codec_params->codec_id is used instead. */, codec_params,
+              "auto" /* auto select the hardware acceleration type */);
+          RCLCPP_INFO(node->get_logger(), "Configured decoder (%s)", decoder->codec->name);
         }
 
         // Send the packet to the decoder

@@ -290,8 +290,11 @@ public:
   // The underlying decoder is determined by decoder_name if not empty,
   // otherwise by codec_params->codec_id. If multiple decoders support the codec_id,
   // ffmpeg selects the default one.
+  // The hardware acceleration is enabled if hw_type_name is not empty.
+  // It can be a valid hardware type name or "auto" to select the default one.
   static Decoder create(const std::string &decoder_name,
                         const CodecParameters &codec_params = CodecParameters::null(),
+                        const std::string &hw_type_name = "",
                         const std::string &request_format_name = "",
                         const Dictionary &decoder_options = Dictionary::null());
 

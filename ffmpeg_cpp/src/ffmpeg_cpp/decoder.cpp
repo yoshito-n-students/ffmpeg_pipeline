@@ -1,6 +1,3 @@
-#include <algorithm>
-#include <iterator> // for std::begin(), std::end()
-
 extern "C" {
 #include <libavcodec/avcodec.h>
 #include <libavutil/hwcontext.h>
@@ -19,7 +16,8 @@ namespace ffmpeg_cpp {
 Decoder Decoder::null() { return Decoder(nullptr); }
 
 Decoder Decoder::create(const std::string &decoder_name, const CodecParameters &codec_params,
-                        const std::string &request_format_name, const Dictionary &decoder_options) {
+                        const std::string &hw_type_name, const std::string &request_format_name,
+                        const Dictionary &decoder_options) {
   // Find the decoder by the given name or codec id
   const AVCodec *codec = nullptr;
   if (!decoder_name.empty()) {
@@ -43,23 +41,6 @@ Decoder Decoder::create(const std::string &decoder_name, const CodecParameters &
   decoder->err_recognition = AV_EF_CRCCHECK;
   decoder->error_concealment = FF_EC_GUESS_MVS | FF_EC_DEBLOCK;
 
-  // Create a hardware acceleration context supported by the decoder.
-  // If multiple hardware devices are supported, the first one is used.
-  if (!decoder->hw_device_ctx) {
-    for (int i = 0;; ++i) {
-      const AVCodecHWConfig *const hw_config = avcodec_get_hw_config(decoder->codec, i);
-      if (hw_config                                                         // HW config exists
-          && (hw_config->methods & AV_CODEC_HW_CONFIG_METHOD_HW_DEVICE_CTX) // HW context supported
-          && av_hwdevice_ctx_create(&decoder->hw_device_ctx, hw_config->device_type, nullptr,
-                                    nullptr, 0) == 0 // HW context created
-      ) {
-        break; // exit the loop if the HW context is created successfully
-      } else if (!hw_config) {
-        break; // exit the loop if no more HW config is available
-      }
-    }
-  }
-
   // Import the codec parameters to the decoder context except for codec_{type, id}
   // because they suppose to be already set by avcodec_alloc_context3()
   // and are ommitted from the codec parameters.
@@ -71,6 +52,37 @@ Decoder Decoder::create(const std::string &decoder_name, const CodecParameters &
     }
     decoder->codec_type = codec_type;
     decoder->codec_id = codec_id;
+  }
+
+  // Enable a hardware acceleration
+  if (!hw_type_name.empty()) {
+    if (hw_type_name == "auto") {
+      // Use the first available hardware device type
+      for (int i = 0;; ++i) {
+        const AVCodecHWConfig *const hw_config = avcodec_get_hw_config(decoder->codec, i);
+        if (hw_config // HW config exists
+            &&
+            (hw_config->methods & AV_CODEC_HW_CONFIG_METHOD_HW_DEVICE_CTX) // HW context supported
+            && av_hwdevice_ctx_create(&decoder->hw_device_ctx, hw_config->device_type, nullptr,
+                                      nullptr, 0) == 0 // HW context created
+        ) {
+          break; // exit the loop if the HW context is created successfully
+        } else if (!hw_config) {
+          break; // exit the loop if no more HW config is available
+        }
+      }
+    } else {
+      // USe the specified hardware device type
+      const AVHWDeviceType hw_type = av_hwdevice_find_type_by_name(hw_type_name.c_str());
+      if (hw_type == AV_HWDEVICE_TYPE_NONE) {
+        throw Error("Decoder::create(): " + hw_type_name + " is not a valid hardware type name");
+      }
+      if (const int ret =
+              av_hwdevice_ctx_create(&decoder->hw_device_ctx, hw_type, nullptr, nullptr, 0);
+          ret < 0) {
+        throw Error("Decoder::create(): Failed to create the hardware device context", ret);
+      }
+    }
   }
 
   // Set pixel or sample format preference
