@@ -17,6 +17,30 @@ namespace ffmpeg_cpp {
 // Utility
 // =======
 
+void set_log_level(const std::string &log_level) {
+  if (log_level == "quiet") {
+    av_log_set_level(AV_LOG_QUIET);
+  } else if (log_level == "panic") {
+    av_log_set_level(AV_LOG_PANIC);
+  } else if (log_level == "fatal") {
+    av_log_set_level(AV_LOG_FATAL);
+  } else if (log_level == "error") {
+    av_log_set_level(AV_LOG_ERROR);
+  } else if (log_level == "warning") {
+    av_log_set_level(AV_LOG_WARNING);
+  } else if (log_level == "info") {
+    av_log_set_level(AV_LOG_INFO);
+  } else if (log_level == "verbose") {
+    av_log_set_level(AV_LOG_VERBOSE);
+  } else if (log_level == "debug") {
+    av_log_set_level(AV_LOG_DEBUG);
+  } else if (log_level == "trace") {
+    av_log_set_level(AV_LOG_TRACE);
+  } else {
+    throw Error("set_log_level(): " + log_level + " is not a valid log level");
+  }
+}
+
 std::string err2str(const int errnum) {
   char buf[AV_ERROR_MAX_STRING_SIZE];
   av_strerror(errnum, buf, sizeof(buf));
