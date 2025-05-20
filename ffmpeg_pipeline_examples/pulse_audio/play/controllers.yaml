@@ -26,7 +26,7 @@
     ros__parameters:
       type: ffmpeg_controllers/ParserFilter
       input_name: packet_receiver
-      codec_name: opus
+      decoder_name: libopus
 
   # Receive the packets from the network
   packet_receiver:

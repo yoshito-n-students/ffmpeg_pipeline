@@ -29,7 +29,7 @@ protected:
     }
 
     try {
-      parser_ = ffmpeg_cpp::Parser::create(get_user_parameter<std::string>("codec_name"));
+      parser_ = ffmpeg_cpp::Parser::create(get_user_parameter<std::string>("decoder_name"));
       RCLCPP_INFO(get_logger(), "Configured parser (%s)", parser_.codec_names().front().c_str());
     } catch (const std::runtime_error &error) {
       RCLCPP_ERROR(get_logger(), "Error while initializing parser: %s", error.what());

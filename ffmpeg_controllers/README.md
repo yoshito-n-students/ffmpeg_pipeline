@@ -21,7 +21,7 @@ Filters retrieve data from state interfaces owned by hardware or other controlle
   * **Output states**: `AVPacket`, `AVCodecParameters`
   * **Parameters**:
     * **input_name** (string, required): Name of the hardware or controller that owns the input states.
-    * **codec_name** (string, required): Name of the codec supported by FFmpeg and used to configure the underlying parser.
+    * **decoder_name** (string, required): Name of the decoder supported by FFmpeg for which the underlying parser is configured.
 
 * **DecoderFilter**: Decompresses packets in various formats using `libavcodec`.
   * **Input states**: `AVPacket`, `AVCodecParameters`
