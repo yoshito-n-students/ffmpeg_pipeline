@@ -327,8 +327,11 @@ public:
   // The underlying encoder is determined by encoder_name if not empty,
   // otherwise by codec_params->codec_id. If multiple encoders support the codec_id,
   // ffmpeg selects the default one.
+  // The hardware acceleration is enabled if hw_type_name is not empty.
+  // It can be a valid hardware type name or "auto" to select the first available one.
   static Encoder create(const std::string &encoder_name,
                         const CodecParameters &codec_params = CodecParameters::null(),
+                        const std::string &hw_type_name = "",
                         const Dictionary &encoder_options = Dictionary::null());
 
   // Convert this->{codec_id, hw_device_ctx->data->type} using FFmpeg's utility functions.

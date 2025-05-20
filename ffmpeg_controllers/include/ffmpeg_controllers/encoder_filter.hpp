@@ -32,6 +32,7 @@ protected:
       encoder_name_ = get_user_parameter<std::string>("encoder_name", "");
       codec_params_ =
           ffmpeg_cpp::CodecParameters::create(get_user_parameter<std::string>("codec_parameters"));
+      hw_type_name_ = get_user_parameter<std::string>("hw_type_name", "auto");
       encoder_options_ =
           ffmpeg_cpp::Dictionary::create(get_user_parameter<std::string>("encoder_options", "{}"));
     } catch (const std::runtime_error &error) {
@@ -61,7 +62,8 @@ protected:
         }
 
         // Configure the encoder with the codec parameters and options
-        encoder_ = ffmpeg_cpp::Encoder::create(encoder_name_, codec_params_, encoder_options_);
+        encoder_ = ffmpeg_cpp::Encoder::create(encoder_name_, codec_params_, hw_type_name_,
+                                               encoder_options_);
         if (const std::string hw_type_name = encoder_.hw_type_name(); hw_type_name.empty()) {
           RCLCPP_INFO(get_logger(), "Configured encoder (%s)", encoder_->codec->name);
         } else {
@@ -104,7 +106,7 @@ protected:
   }
 
 protected:
-  std::string encoder_name_;
+  std::string encoder_name_, hw_type_name_;
   ffmpeg_cpp::CodecParameters codec_params_ = ffmpeg_cpp::CodecParameters::null();
   ffmpeg_cpp::Dictionary encoder_options_ = ffmpeg_cpp::Dictionary::null();
   ffmpeg_cpp::Encoder encoder_ = ffmpeg_cpp::Encoder::null();
