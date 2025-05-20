@@ -28,11 +28,16 @@ protected:
   CallbackReturn on_activate(const rclcpp_lifecycle::State & /*previous_state*/) override {
     try {
       // Try to get the parameters for the input from the hardware_info, or use default values
-      const auto url = get_parameter_as<std::string>("url", "/dev/video0"),
+      const auto ffmpeg_log_level = get_parameter_as<std::string>("ffmpeg_log_level", ""),
+                 url = get_parameter_as<std::string>("url", "/dev/video0"),
                  format = get_parameter_as<std::string>("format", "v4l2"),
                  media_type = get_parameter_as<std::string>("media_type", "video");
       const auto options = get_parameter_as<ffmpeg_cpp::Dictionary>(
           "options", ffmpeg_cpp::Dictionary::create("{timestamps: abs}"));
+
+      if (!ffmpeg_log_level.empty()) {
+        ffmpeg_cpp::set_log_level(ffmpeg_log_level);
+      }
 
       // Open the input with the parameters
       input_ = ffmpeg_cpp::Input::create(url, format, options, media_type);

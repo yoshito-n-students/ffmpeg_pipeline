@@ -9,6 +9,7 @@ Input hardware receives data from external devices and exports it via its own st
 * **FFmpegInput**: Reads audio/video packets from various devices supported by `libavformat` and `libavdevice` (e.g., V4L2 or network cameras, PulseAudio inputs, local files, screen capture, etc.).
   * **Output states**: `AVPacket`
   * **Parameters**:
+    * **ffmpeg_log_level** (string, default: `""`): Log level for the FFmpeg library (e.g., `"quiet"`, `"fatal"`, `"error"`, ..., `"debug"`, `"trace"`). If left empty, the current log level will be retained.
     * **url** (string, default:`"/dev/video0"`): URL of the external input device.
     * **format** (string, default: `"v4l2"`): Name of the input device format (category) supported by FFmpeg. If left empty, FFmpeg will try to infer it from the `url` value.
     * **media_type** (string, default: `"video"`): Media type of the input stream. Typically `"video"` or `"audio"`.
@@ -21,6 +22,7 @@ Output hardware retrieves data from its own command interfaces and sends it to e
 * **FFmpegOutput**: Writes audio/video packets and frames to various devices supported by `libavformat` and `libavdevice` (e.g., PulseAudio outputs, local files, etc.).
   * **Input commands**: `AVFrame`, `AVPacket`
   * **Parameters**:
+    * **ffmpeg_log_level** (string, default: `""`): Log level for the FFmpeg library (e.g., `"quiet"`, `"fatal"`, `"error"`, ..., `"debug"`, `"trace"`). If left empty, the current log level will be retained.
     * **url** (string, default:`"default"`): URL of the external output device.
     * **format** (string, default: `"pulse"`): Name of the output device format (category) supported by FFmpeg. If left empty, FFmpeg will try to infer it from the `url` value.
     * **codec_parameters** (string, default: `"{codec: pcm_s16, format: s16, ch_layout: stereo, sample_rate: 48000}"`): A YAML string that can be parsed into an `AVCodecParameters` structure. It defines general codec parameters and will be used to configure the output device.
@@ -28,3 +30,5 @@ Output hardware retrieves data from its own command interfaces and sends it to e
     
 * **DumpInfoOutput**: Dumps packet and frame information from controllers for debugging and visualization.
   * **Input commands**: `AVFrame`, `AVPacket`
+  * **Parameters**:
+    * **ffmpeg_log_level** (string, default: `""`): Log level for the FFmpeg library (e.g., `"quiet"`, `"fatal"`, `"error"`, ..., `"debug"`, `"trace"`). If left empty, the current log level will be retained.

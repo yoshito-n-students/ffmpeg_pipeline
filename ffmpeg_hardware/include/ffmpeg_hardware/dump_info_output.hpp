@@ -15,6 +15,12 @@ protected:
 
   CallbackReturn on_activate(const rclcpp_lifecycle::State & /*previous_state*/) override {
     try {
+      const auto ffmpeg_log_level = get_parameter_as<std::string>("ffmpeg_log_level", "");
+
+      if (!ffmpeg_log_level.empty()) {
+        ffmpeg_cpp::set_log_level(ffmpeg_log_level);
+      }
+
       // TODO: Print available parameters for debugging purposes
 
       // Initialize the command variables and register them to the interface
