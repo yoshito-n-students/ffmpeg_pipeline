@@ -7,6 +7,7 @@
     <ros2_control name="image_reader" type="sensor">
         <hardware>
             <plugin>ffmpeg_hardware/FFmpegInput</plugin>
+            <!-- <param name="ffmpeg_log_level">verbose</param> -->
             <param name="url">$(find ffmpeg_pipeline_examples)/webp_file/example_image.webp</param>
             <param name="format">image2</param>
             <param name="options">

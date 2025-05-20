@@ -7,6 +7,7 @@
     <ros2_control name="pulse_audio" type="actuator">
         <hardware>
             <plugin>ffmpeg_hardware/FFmpegOutput</plugin>
+            <!-- <param name="ffmpeg_log_level">verbose</param> -->
             <param name="url">default</param>
             <param name="format">pulse</param>
             <param name="codec_parameters">

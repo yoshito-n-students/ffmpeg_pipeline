@@ -7,6 +7,7 @@
     <ros2_control name="h264_camera" type="sensor">
         <hardware>
             <plugin>ffmpeg_hardware/FFmpegInput</plugin>
+            <!-- <param name="ffmpeg_log_level">verbose</param> -->
             <param name="url">/dev/v4l/by-id/usb-Insta360_Insta360_Link_2C-video-index0</param>
             <param name="format">v4l2</param>
             <param name="options">
