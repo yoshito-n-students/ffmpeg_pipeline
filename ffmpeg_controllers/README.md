@@ -13,6 +13,7 @@ Filters retrieve data from state interfaces owned by hardware or other controlle
     * **input_name** (string, required): Name of the hardware or controller that owns the input states.
     * **encoder_name** (string, default: `""`): Name of the underlying encoder supported by FFmpeg. If empty, the default encoder for the `codec_parameters/codec` will be used.
     * **codec_parameters** (string, required): A YAML string that can be parsed into an `AVCodecParameters` structure. It defines general codec parameters and will be used to configure the encoder.
+    * **hw_type_name** (string, default: `"auto"`): Type of hardware acceleration to use. Can be a specific device name (e.g., `"cuda"`, `"vaapi"`), `"auto"` to automatically select the first available device, or `""` to disable hardware acceleration.
     * **encoder_options** (string, default: `"{}"`): A YAML string that can be parsed into an `AVDictionary`. It defines encoder-specific options and will be used to configure the encoder.
 
 * **ParserFilter**: Parses packets using `libavcodec` to extract codec parameters for downstream controllers.
@@ -28,6 +29,7 @@ Filters retrieve data from state interfaces owned by hardware or other controlle
   * **Parameters**:
     * **input_name** (string, required): Name of the hardware or controller that owns the input states.
     * **decoder_name** (string, default: `""`): Name of the underlying decoder supported by FFmpeg. If empty, the default decoder for the value of `AVCodecParameters::codec_id` will be used.
+    * **hw_type_name** (string, default: `"auto"`): Type of hardware acceleration to use. Can be a specific device name (e.g., `"cuda"`, `"vaapi"`), `"auto"` to automatically select the first available device, or `""` to disable hardware acceleration.
     * **request_format_name** (string, default: `""`): Name of the preferred output format of `AVFrame`. If left empty or unsupported by the decoder, the decoder's default format will be used.
     * **decoder_options** (string, default: `"{}"`): A YAML string that can be parsed into an `AVDictionary`. It defines decoder-specific options and will be used to configure the decoder.
 
