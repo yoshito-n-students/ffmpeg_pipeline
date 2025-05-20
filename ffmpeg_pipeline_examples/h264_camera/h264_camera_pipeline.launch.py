@@ -83,6 +83,19 @@ def generate_launch_description():
         output='both',
     )
 
+    # Image viewer
+    image_view_node = Node(
+        package='image_view',
+        executable='image_view',
+        name='image_view',
+        parameters=[{
+            'image_transport': 'ffmpeg',
+            'hw_type_name': 'cuda',
+        }],
+        remappings=[('image', 'compressed_image_broadcaster/image')],
+        output='both',
+    )
+
     ####################
     # Launch Description
     ####################
@@ -97,6 +110,7 @@ def generate_launch_description():
                     hw_description_publisher,
                     ros2_control_node,
                     controller_spawner,
+                    image_view_node,
                 ]
             ),
         ]
