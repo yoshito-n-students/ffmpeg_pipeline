@@ -33,21 +33,11 @@ protected:
   void internalCallback(const sensor_msgs::msg::CompressedImage::ConstSharedPtr &fragment,
                         const Callback &image_cb) override {
     try {
-      // Configure the parser and decoder for this fragment if needed
+      // Configure the parser for this fragment if needed
       if (!parser_) {
         parser_ = ffmpeg_cpp::Parser::create(fragment->format);
         RCLCPP_INFO(node_->get_logger(), "Configured parser (%s)",
                     parser_.codec_names().front().c_str());
-      }
-      if (!decoder_) {
-        // TODO: get options from the node parameter
-        decoder_ = ffmpeg_cpp::Decoder::create(fragment->format);
-        if (const std::string hw_type_name = decoder_.hw_type_name(); hw_type_name.empty()) {
-          RCLCPP_INFO(node_->get_logger(), "Configured decoder (%s)", decoder_->codec->name);
-        } else {
-          RCLCPP_INFO(node_->get_logger(), "Configured decoder (%s|%s)", decoder_->codec->name,
-                      hw_type_name.c_str());
-        }
       }
 
       // Copy the data fragment to the reference-counted buffer with padding
@@ -58,10 +48,29 @@ protected:
       std::int64_t pos = 0;
       while (pos < buffer->size) {
         // Parse the buffer and get the packet.
-        // Additionally update the decoder context with the parsing result.
-        const ffmpeg_cpp::Packet packet = parser_.parse(buffer, &pos, &decoder_);
+        // Additionally accumulate the codec parameters if the decoder is not configured yet.
+        ffmpeg_cpp::Packet packet = ffmpeg_cpp::Packet::null();
+        ffmpeg_cpp::CodecParameters params = ffmpeg_cpp::CodecParameters::null();
+        if (!decoder_) {
+          std::tie(packet, params) = parser_.parse_initial_packet(buffer, &pos);
+        } else {
+          packet = parser_.parse_next_packet(buffer, &pos);
+        }
         if (packet.empty()) {
           continue;
+        }
+
+        // Configure the decoder for this fragment if needed
+        if (!decoder_) {
+          // TODO: get options from the node parameter
+          decoder_ = ffmpeg_cpp::Decoder::create(
+              "" /* empty decoder name. params->codec_id is used instead. */, params);
+          if (const std::string hw_type_name = decoder_.hw_type_name(); hw_type_name.empty()) {
+            RCLCPP_INFO(node_->get_logger(), "Configured decoder (%s)", decoder_->codec->name);
+          } else {
+            RCLCPP_INFO(node_->get_logger(), "Configured decoder (%s|%s)", decoder_->codec->name,
+                        hw_type_name.c_str());
+          }
         }
 
         // Send the packet to the decoder
