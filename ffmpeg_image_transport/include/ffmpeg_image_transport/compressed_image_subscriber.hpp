@@ -28,14 +28,19 @@ protected:
                      rmw_qos_profile_t custom_qos, rclcpp::SubscriptionOptions options) override {
     Base::subscribeImpl(node, base_topic, callback, custom_qos, options);
     node_ = node;
+    decoder_name_ = node_->declare_parameter<std::string>("decoder_name", "");
+    hw_type_name_ = node_->declare_parameter<std::string>("hw_type_name", "auto");
   }
 
   void internalCallback(const sensor_msgs::msg::CompressedImage::ConstSharedPtr &fragment,
                         const Callback &image_cb) override {
     try {
-      // Configure the parser for this fragment if needed
+      // Configure the parser if needed.
+      // The decoder that the parser is configured for is determined
+      // by the decoder_name parameter if given, otherwise by the fragment format.
       if (!parser_) {
-        parser_ = ffmpeg_cpp::Parser::create(fragment->format);
+        parser_ =
+            ffmpeg_cpp::Parser::create(!decoder_name_.empty() ? decoder_name_ : fragment->format);
         RCLCPP_INFO(node_->get_logger(), "Configured parser (%s)",
                     parser_.codec_names().front().c_str());
       }
@@ -64,8 +69,8 @@ protected:
         if (!decoder_) {
           // TODO: get options from the node parameter
           decoder_ = ffmpeg_cpp::Decoder::create(
-              "" /* empty decoder name. params->codec_id is used instead. */, params,
-              "auto" /* auto select the hardware acceleration type */);
+              decoder_name_ /* if empty, params->codec_id is used instead. */, params,
+              hw_type_name_);
           if (const std::string hw_type_name = decoder_.hw_type_name(); hw_type_name.empty()) {
             RCLCPP_INFO(node_->get_logger(), "Configured decoder (%s)", decoder_->codec->name);
           } else {
@@ -138,6 +143,7 @@ protected:
 
 private:
   rclcpp::Node *node_;
+  std::string decoder_name_, hw_type_name_;
   ffmpeg_cpp::Parser parser_ = ffmpeg_cpp::Parser::null();
   ffmpeg_cpp::Decoder decoder_ = ffmpeg_cpp::Decoder::null();
   ffmpeg_cpp::VideoConverter converter_ = ffmpeg_cpp::VideoConverter::null();
