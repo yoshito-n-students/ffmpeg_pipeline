@@ -86,7 +86,11 @@ public:
   Packet &operator=(Packet &&other) = default;
 
   // True if the packet data is empty or invalid
-  bool empty() const { return !(get() && get()->data && get()->size > 0); }
+  bool empty() const {
+    return !get()               // no AVPacket instance
+           || !get()->data      // OR no data
+           || get()->size <= 0; // OR no size
+  }
 
   // Convert the packet to a message
   ffmpeg_pipeline_msgs::msg::Packet to_msg(const rclcpp::Time &stamp,
@@ -123,8 +127,13 @@ public:
   Frame(Frame &&other) = default;
   Frame &operator=(Frame &&other) = default;
 
-  // True if the packet data is empty or invalid
-  bool empty() const { return !(get() && (get()->data[0] || get()->hw_frames_ctx)); }
+  // True if the frame data is empty or invalid
+  bool empty() const {
+    return !get()                                        // no AVFrame instance
+           || (!get()->data[0] && !get()->hw_frames_ctx) // OR no data on CPU nor GPU
+           || ((get()->width <= 0 || get()->height <= 0) // OR no pixels and audio samples
+               && get()->nb_samples <= 0);
+  }
 
   // Convert this->{format, ch_layout} using FFmpeg's utility functions.
   // If error or this is null, return an empty string.
