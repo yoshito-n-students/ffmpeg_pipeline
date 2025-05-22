@@ -1,8 +1,6 @@
 #ifndef FFMPEG_CONTROLLERS_PACKET_BROADCASTER_HPP
 #define FFMPEG_CONTROLLERS_PACKET_BROADCASTER_HPP
 
-#include <optional>
-
 #include <ffmpeg_controllers/controller_base.hpp>
 #include <ffmpeg_cpp/ffmpeg_cpp.hpp>
 #include <ffmpeg_pipeline_msgs/msg/packet.hpp>
@@ -19,7 +17,7 @@ protected:
               const ffmpeg_cpp::Packet &input_packet,
               const ffmpeg_cpp::CodecParameters &codec_params) override {
     // Generate the message with the new packet
-    return {ControllerReturn::OK, input_packet.to_msg(time, codec_params.codec_name())};
+    return {ControllerReturn::OK, input_packet.to_packet_msg(time, codec_params.codec_name())};
   }
 };
 

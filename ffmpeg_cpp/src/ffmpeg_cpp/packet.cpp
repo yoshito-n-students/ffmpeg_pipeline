@@ -6,6 +6,8 @@ extern "C" {
 }
 
 #include <ffmpeg_cpp/ffmpeg_cpp.hpp>
+#include <ffmpeg_pipeline_msgs/msg/packet.hpp>
+#include <sensor_msgs/msg/compressed_image.hpp>
 
 #include "internal.hpp"
 
@@ -63,8 +65,8 @@ Packet::Packet(const Packet &other) : UniquePtr<AVPacket>() {
   }
 }
 
-ffmpeg_pipeline_msgs::msg::Packet Packet::to_msg(const rclcpp::Time &stamp,
-                                                 const std::string &codec_name) const {
+ffmpeg_pipeline_msgs::msg::Packet Packet::to_packet_msg(const rclcpp::Time &stamp,
+                                                        const std::string &codec_name) const {
   ffmpeg_pipeline_msgs::msg::Packet msg;
   msg.header.stamp = stamp;
   msg.codec = codec_name;
@@ -77,4 +79,12 @@ ffmpeg_pipeline_msgs::msg::Packet Packet::to_msg(const rclcpp::Time &stamp,
   return msg;
 }
 
+sensor_msgs::msg::CompressedImage
+Packet::to_compressed_image_msg(const rclcpp::Time &stamp, const std::string &format) const {
+  sensor_msgs::msg::CompressedImage msg;
+  msg.header.stamp = stamp;
+  msg.format = format;
+  msg.data.assign(get()->data, get()->data + get()->size);
+  return msg;
+}
 } // namespace ffmpeg_cpp

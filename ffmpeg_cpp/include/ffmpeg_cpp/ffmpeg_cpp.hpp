@@ -10,6 +10,8 @@
 #include <ffmpeg_pipeline_msgs/msg/frame.hpp>
 #include <ffmpeg_pipeline_msgs/msg/packet.hpp>
 #include <rclcpp/time.hpp>
+#include <sensor_msgs/msg/compressed_image.hpp>
+#include <sensor_msgs/msg/image.hpp>
 
 extern "C" {
 #include <libavcodec/avcodec.h>
@@ -95,8 +97,10 @@ public:
   }
 
   // Convert the packet to a message
-  ffmpeg_pipeline_msgs::msg::Packet to_msg(const rclcpp::Time &stamp,
-                                           const std::string &codec_name) const;
+  ffmpeg_pipeline_msgs::msg::Packet to_packet_msg(const rclcpp::Time &stamp,
+                                                  const std::string &codec_name) const;
+  sensor_msgs::msg::CompressedImage to_compressed_image_msg(const rclcpp::Time &stamp,
+                                                            const std::string &format) const;
 };
 
 // ========================

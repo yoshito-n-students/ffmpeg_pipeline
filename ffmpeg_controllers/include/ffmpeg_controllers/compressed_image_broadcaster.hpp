@@ -1,9 +1,6 @@
 #ifndef FFMPEG_CONTROLLERS_COMPRESSED_IMAGE_BROADCASTER_HPP
 #define FFMPEG_CONTROLLERS_COMPRESSED_IMAGE_BROADCASTER_HPP
 
-#include <optional>
-#include <utility> // for std::move()
-
 #include <ffmpeg_controllers/controller_base.hpp>
 #include <ffmpeg_cpp/ffmpeg_cpp.hpp>
 #include <sensor_msgs/msg/compressed_image.hpp>
@@ -19,11 +16,8 @@ protected:
   on_generate(const rclcpp::Time &time, const rclcpp::Duration & /*period*/,
               const ffmpeg_cpp::Packet &input_packet,
               const ffmpeg_cpp::CodecParameters &codec_params) override {
-    OutputMessage msg;
-    msg.header.stamp = time;
-    msg.format = codec_params.codec_name();
-    msg.data.assign(input_packet->data, input_packet->data + input_packet->size);
-    return {ControllerReturn::OK, std::move(msg)};
+    return {ControllerReturn::OK,
+            input_packet.to_compressed_image_msg(time, codec_params.codec_name())};
   }
 };
 
