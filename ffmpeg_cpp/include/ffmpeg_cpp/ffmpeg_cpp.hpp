@@ -77,6 +77,7 @@ public:
   static Packet create(const std::uint8_t *const data, const std::size_t size);
   // Create a packet by copying the given message
   static Packet create(const ffmpeg_pipeline_msgs::msg::Packet &msg);
+  static Packet create(const sensor_msgs::msg::CompressedImage &msg);
   // Create a packet by referencing the data of the given packet.
   // If the data is not reference-counted, copy the data to a new packet.
   Packet(const Packet &other);

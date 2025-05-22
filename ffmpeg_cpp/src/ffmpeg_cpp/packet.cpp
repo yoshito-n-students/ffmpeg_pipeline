@@ -54,6 +54,10 @@ Packet Packet::create(const ffmpeg_pipeline_msgs::msg::Packet &msg) {
   return packet;
 }
 
+Packet Packet::create(const sensor_msgs::msg::CompressedImage &msg) {
+  return Packet::create(msg.data.data(), msg.data.size());
+}
+
 Packet::Packet(const Packet &other) : UniquePtr<AVPacket>() {
   if (other) {
     reset(av_packet_clone(other.get()));
@@ -79,8 +83,8 @@ ffmpeg_pipeline_msgs::msg::Packet Packet::to_packet_msg(const rclcpp::Time &stam
   return msg;
 }
 
-sensor_msgs::msg::CompressedImage
-Packet::to_compressed_image_msg(const rclcpp::Time &stamp, const std::string &format) const {
+sensor_msgs::msg::CompressedImage Packet::to_compressed_image_msg(const rclcpp::Time &stamp,
+                                                                  const std::string &format) const {
   sensor_msgs::msg::CompressedImage msg;
   msg.header.stamp = stamp;
   msg.format = format;

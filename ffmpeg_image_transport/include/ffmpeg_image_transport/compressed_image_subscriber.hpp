@@ -46,8 +46,7 @@ protected:
       }
 
       // Copy the data fragment to the reference-counted buffer with padding
-      const ffmpeg_cpp::Packet buffer =
-          ffmpeg_cpp::Packet::create(fragment->data.data(), fragment->data.size());
+      const ffmpeg_cpp::Packet buffer = ffmpeg_cpp::Packet::create(*fragment);
 
       // Parse the buffer and decode the compressed data
       std::int64_t pos = 0;
