@@ -17,7 +17,7 @@ protected:
   on_generate(const rclcpp::Time &time, const rclcpp::Duration & /*period*/,
               const ffmpeg_cpp::Frame &input_frame) override {
     // Generate the message with the new packet
-    return {ControllerReturn::OK, input_frame.to_msg(time)};
+    return {ControllerReturn::OK, input_frame.to_frame_msg(time)};
   }
 };
 

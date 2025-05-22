@@ -1,9 +1,6 @@
 #ifndef FFMPEG_CONTROLLERS_IMAGE_BROADCASTER_HPP
 #define FFMPEG_CONTROLLERS_IMAGE_BROADCASTER_HPP
 
-#include <optional>
-#include <utility>
-
 #include <ffmpeg_controllers/controller_base.hpp>
 #include <ffmpeg_cpp/ffmpeg_cpp.hpp>
 #include <rclcpp/duration.hpp>
@@ -18,15 +15,12 @@ protected:
   OnGenerateReturn<output_options::Publish<sensor_msgs::msg::Image>>
   on_generate(const rclcpp::Time &time, const rclcpp::Duration & /*period*/,
               const ffmpeg_cpp::Frame &input_frame) override {
-    OutputMessage msg;
-    msg.header.stamp = time;
-    msg.height = input_frame->height;
-    msg.width = input_frame->width;
-    msg.encoding = ffmpeg_cpp::to_ros_image_encoding(input_frame.format_name());
-    msg.data.assign(input_frame->data[0],
-                    input_frame->data[0] + input_frame->linesize[0] * input_frame->height);
-    msg.step = input_frame->linesize[0];
-    return {ControllerReturn::OK, std::move(msg)};
+                // TODO: Make it possible to specify the value of encoding by the parameter
+                // 1. ROS format: to_ros_image_encoding(frame.format_name())
+                // 2. ffmpeg format: frame.format_name()
+                // 3. User specified?
+    return {ControllerReturn::OK, input_frame.to_image_msg(time, ffmpeg_cpp::to_ros_image_encoding(
+                                                                     input_frame.format_name()))};
   }
 };
 

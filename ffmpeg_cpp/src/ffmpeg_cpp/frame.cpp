@@ -9,6 +9,8 @@ extern "C" {
 }
 
 #include <ffmpeg_cpp/ffmpeg_cpp.hpp>
+#include <ffmpeg_pipeline_msgs/msg/frame.hpp>
+#include <sensor_msgs/msg/image.hpp>
 
 #include "internal.hpp"
 
@@ -94,7 +96,7 @@ std::string Frame::format_name() const {
 
 std::string Frame::ch_layout_str() const { return get() ? to_string(get()->ch_layout) : ""; }
 
-ffmpeg_pipeline_msgs::msg::Frame Frame::to_msg(const rclcpp::Time &stamp) const {
+ffmpeg_pipeline_msgs::msg::Frame Frame::to_frame_msg(const rclcpp::Time &stamp) const {
   ffmpeg_pipeline_msgs::msg::Frame msg;
   msg.header.stamp = stamp;
   // Common fields for video and audio frames
@@ -132,6 +134,18 @@ ffmpeg_pipeline_msgs::msg::Frame Frame::to_msg(const rclcpp::Time &stamp) const 
   // Video-specific fields
   msg.width = get()->width;
   msg.height = get()->height;
+  return msg;
+}
+
+sensor_msgs::msg::Image Frame::to_image_msg(const rclcpp::Time &stamp,
+                                            const std::string &encoding) const {
+  sensor_msgs::msg::Image msg;
+  msg.header.stamp = stamp;
+  msg.height = get()->height;
+  msg.width = get()->width;
+  msg.encoding = encoding;
+  msg.data.assign(get()->data[0], get()->data[0] + get()->linesize[0] * get()->height);
+  msg.step = get()->linesize[0];
   return msg;
 }
 

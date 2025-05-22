@@ -153,7 +153,9 @@ public:
   Frame transfer_data() const;
 
   // Convert the frame to a message
-  ffmpeg_pipeline_msgs::msg::Frame to_msg(const rclcpp::Time &stamp) const;
+  ffmpeg_pipeline_msgs::msg::Frame to_frame_msg(const rclcpp::Time &stamp) const;
+  sensor_msgs::msg::Image to_image_msg(const rclcpp::Time &stamp,
+                                       const std::string &encoding) const;
 };
 
 // =============================
