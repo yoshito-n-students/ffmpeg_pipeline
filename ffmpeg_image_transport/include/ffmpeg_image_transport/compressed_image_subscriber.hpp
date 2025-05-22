@@ -94,21 +94,14 @@ protected:
             frame = frame.transfer_data();
           }
 
-          // Allocate a new image message and fill properties excluding pixel data
+          // Allocate a new image message
           const auto image = std::make_shared<sensor_msgs::msg::Image>();
-          image->header.stamp = fragment->header.stamp;
-          image->height = frame->height;
-          image->width = frame->width;
 
           // Fill the pixel data, maybe converting it to a ROS-compatible format
           if (const auto ros_encoding = ffmpeg_cpp::to_ros_image_encoding(frame.format_name());
               !ros_encoding.empty()) {
             // If the frame format is supported in ROS, just copy the pixel data
-            image->encoding = ros_encoding;
-            image->step = frame->linesize[0];
-            const std::size_t data_size = frame->linesize[0] * frame->height;
-            image->data.resize(data_size);
-            std::memcpy(image->data.data(), frame->data[0], data_size);
+            *image = frame.to_image_msg(fragment->header.stamp, ros_encoding);
           } else {
             // If the frame format is not supported in ROS, convert it to BGR
             static const std::string dst_encoding = sensor_msgs::image_encodings::BGR8;
@@ -124,11 +117,9 @@ protected:
                           converter_.src_height(), converter_.dst_format_name().c_str());
             }
 
-            // Make the destination image
-            // by copying the frame properties and converting the pixel data
-            image->encoding = dst_encoding;
-            image->data = converter_.convert_to_vector(frame);
-            image->step = image->data.size() / image->height;
+            // Make the destination image by converting the pixel data
+            frame = converter_.convert(frame);
+            *image = frame.to_image_msg(fragment->header.stamp, dst_encoding);
           }
 
           // Invoke the callback with the converted image
