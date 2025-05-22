@@ -73,6 +73,7 @@ Frame Frame::create(const sensor_msgs::msg::Image &msg) {
   }
   frame->width = msg.width;
   frame->height = msg.height;
+  frame->linesize[0] = msg.step;
   return frame;
 }
 
