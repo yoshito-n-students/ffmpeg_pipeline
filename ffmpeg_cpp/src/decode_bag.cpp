@@ -126,14 +126,12 @@ int main(int argc, char **argv) {
                         converter.src_width(), converter.src_height());
           }
 
-          // Copy the frame properties to the destination image
-          auto image = std::make_unique<sensor_msgs::msg::Image>();
-          image->header.stamp = comp_img->header.stamp;
-          image->height = frame->height;
-          image->width = frame->width;
-          image->encoding = sensor_msgs::image_encodings::BGR8;
-          image->step = 3 * frame->width;
-          image->data = converter.convert_to_vector(frame);
+          // Convert the frame to a BGR24 image
+          frame = converter.convert(frame);
+
+          // Make the destination image message by copying the frame data
+          auto image = std::make_unique<sensor_msgs::msg::Image>(
+              frame.to_image_msg(comp_img->header.stamp, sensor_msgs::image_encodings::BGR8));
 
           // Publish the destination image
           publisher->publish(std::move(image));
