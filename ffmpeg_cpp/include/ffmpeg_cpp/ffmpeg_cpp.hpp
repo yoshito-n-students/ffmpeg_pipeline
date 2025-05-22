@@ -122,6 +122,7 @@ public:
   static Frame create(const std::uint8_t *const data, const std::size_t size);
   // Create a frame by copying the given message
   static Frame create(const ffmpeg_pipeline_msgs::msg::Frame &msg);
+  static Frame create(const sensor_msgs::msg::Image &msg);
   // Create a frame by referencing the data of the given frame.
   // If the data is not reference-counted, copy the data to a new frame.
   Frame(const Frame &other);

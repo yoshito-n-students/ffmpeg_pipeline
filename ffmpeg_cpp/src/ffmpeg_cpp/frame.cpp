@@ -63,6 +63,19 @@ Frame Frame::create(const ffmpeg_pipeline_msgs::msg::Frame &msg) {
   return frame;
 }
 
+Frame Frame::create(const sensor_msgs::msg::Image &msg) {
+  Frame frame = Frame::create(msg.data.data(), msg.data.size());
+  // Assume msg.encoding is a ROS encoding name and convert it to FFmpeg pixel format.
+  // If conversion fails, use msg.encoding directly as FFmpeg pixel format name.
+  frame->format = av_get_pix_fmt(to_ffmpeg_format_name(msg.encoding).c_str());
+  if (frame->format == AV_PIX_FMT_NONE) {
+    frame->format = av_get_pix_fmt(msg.encoding.c_str());
+  }
+  frame->width = msg.width;
+  frame->height = msg.height;
+  return frame;
+}
+
 Frame::Frame(const Frame &other) : UniquePtr<AVFrame>() {
   if (other) {
     reset(av_frame_clone(other.get()));
