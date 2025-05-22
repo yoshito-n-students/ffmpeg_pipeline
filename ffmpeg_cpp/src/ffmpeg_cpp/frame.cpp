@@ -107,7 +107,7 @@ ffmpeg_pipeline_msgs::msg::Frame Frame::to_frame_msg(const rclcpp::Time &stamp) 
         av_image_get_buffer_size(static_cast<AVPixelFormat>(get()->format), get()->width,
                                  get()->height, 1 /* 1: no_alignment */);
     if (data_size < 0) {
-      throw Error("Frame::to_msg(): Failed to get image buffer size", data_size);
+      throw Error("Frame::to_frame_msg(): Failed to get image buffer size", data_size);
     }
     msg.data.assign(get()->data[0], get()->data[0] + data_size);
   } else if (get()->nb_samples > 0) {
@@ -117,7 +117,7 @@ ffmpeg_pipeline_msgs::msg::Frame Frame::to_frame_msg(const rclcpp::Time &stamp) 
         nullptr, get()->ch_layout.nb_channels, get()->nb_samples,
         static_cast<AVSampleFormat>(get()->format), 1 /* 1: no_alignment */);
     if (data_size < 0) {
-      throw Error("Frame::to_msg(): Failed to get audio buffer size", data_size);
+      throw Error("Frame::to_frame_msg(): Failed to get audio buffer size", data_size);
     }
     msg.data.assign(get()->data[0], get()->data[0] + data_size);
   }
@@ -141,11 +141,26 @@ sensor_msgs::msg::Image Frame::to_image_msg(const rclcpp::Time &stamp,
                                             const std::string &encoding) const {
   sensor_msgs::msg::Image msg;
   msg.header.stamp = stamp;
-  msg.height = get()->height;
-  msg.width = get()->width;
   msg.encoding = encoding;
-  msg.data.assign(get()->data[0], get()->data[0] + get()->linesize[0] * get()->height);
-  msg.step = get()->linesize[0];
+  if (get()->width > 0 && get()->height > 0) {
+    msg.height = get()->height;
+    msg.width = get()->width;
+    const int data_size =
+        av_image_get_buffer_size(static_cast<AVPixelFormat>(get()->format), get()->width,
+                                 get()->height, 1 /* 1: no_alignment */);
+    if (data_size < 0) {
+      throw Error("Frame::to_image_msg(): Failed to get image buffer size", data_size);
+    }
+    msg.data.assign(get()->data[0], get()->data[0] + data_size);
+    const int step = av_image_get_linesize(static_cast<AVPixelFormat>(get()->format), get()->width,
+                                           0 /* 0: first plane */);
+    if (step < 0) {
+      throw Error("Frame::to_image_msg(): Failed to get image linesize", step);
+    }
+    msg.step = step;
+  } else {
+    // throw?
+  }
   return msg;
 }
 
