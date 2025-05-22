@@ -125,7 +125,7 @@ flowchart LR
    subgraph ros2_control_node
    B == "H.264 packet" ==> C@{ shape: stadium, label: "PacketBroadcaster" }
    end
-   C -. "CompressedImage (format=#quot;h264#quot;)" .-> D@{ shape: stadium, label: "ffmpeg_sub" }
+   C -. "CompressedImage (format=#quot;h264#quot;)" .-> D@{ shape: stadium, label: "ffmpeg_sub (hw_type_name=#quot;cuda#quot;)" }
    subgraph image_view
    D
    end
