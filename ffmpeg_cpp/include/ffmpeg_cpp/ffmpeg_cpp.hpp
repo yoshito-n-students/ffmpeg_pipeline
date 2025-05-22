@@ -430,7 +430,6 @@ public:
 
   // Convert the source frame to the destination format
   Frame convert(const Frame &src_frame);
-  std::vector<std::uint8_t> convert_to_vector(const Frame &src_frame);
 };
 
 // ===========================

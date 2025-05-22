@@ -43,46 +43,6 @@ Frame VideoConverter::convert(const Frame &src_frame) {
   return dst_frame;
 }
 
-std::vector<std::uint8_t> VideoConverter::convert_to_vector(const Frame &src_frame) {
-  // Get the pixel format of the destination image
-  const AVPixelFormat dst_format = get_pixel_format(get(), "dst_format");
-
-  // Get the layout of the destination image
-  // - linesize: bytes per line for each plane
-  std::array<int, 4> dst_linesize;
-  if (const int ret = av_image_fill_linesizes(dst_linesize.data(), dst_format, dst_width());
-      ret < 0) {
-    throw Error("VideoConverter::convert(): Failed to get destination linesizes", ret);
-  }
-  // - plane size: bytes per plane
-  std::array<std::size_t, 4> dst_plane_size;
-  if (const int ret =
-          av_image_fill_plane_sizes(dst_plane_size.data(), dst_format, dst_height(),
-                                    std::array<std::ptrdiff_t, 4>{dst_linesize[0], dst_linesize[1],
-                                                                  dst_linesize[2], dst_linesize[3]}
-                                        .data());
-      ret < 0) {
-    throw Error("VideoConverter::convert(): Failed to get destination plane sizes", ret);
-  }
-  // - data offset: bytes to the start of each plane
-  std::array<std::ptrdiff_t, 4> dst_data_offset;
-  std::partial_sum(dst_plane_size.begin(), dst_plane_size.end(), dst_data_offset.begin());
-
-  // Convert the pixel data
-  std::vector<std::uint8_t> dst_data(dst_data_offset[3]);
-  sws_scale(get(),
-            // src description
-            src_frame->data, src_frame->linesize, 0, src_frame->height,
-            // dst description
-            std::array<std::uint8_t *const, 4>{
-                dst_data.data(), dst_data.data() + dst_data_offset[0],
-                dst_data.data() + dst_data_offset[1], dst_data.data() + dst_data_offset[2]}
-                .data(),
-            dst_linesize.data());
-
-  return dst_data;
-}
-
 int VideoConverter::src_width() const { return get_int64(get(), "srcw", 0); }
 
 int VideoConverter::src_height() const { return get_int64(get(), "srch", 0); }
