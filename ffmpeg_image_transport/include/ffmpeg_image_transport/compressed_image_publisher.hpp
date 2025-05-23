@@ -31,6 +31,8 @@ protected:
     node_ = node;
 
     // Load the encoder parameters from the node
+    // TODO: Nest the parameters in a unique namespace 
+    //       not to conflict with other plugins loaded in the same node
     const std::string encoder_name = node_->declare_parameter<std::string>("encoder_name", ""),
                       codec_params_yaml =
                           node_->declare_parameter<std::string>("codec_paramaters", ""),

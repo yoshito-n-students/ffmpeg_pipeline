@@ -28,6 +28,8 @@ protected:
                      rmw_qos_profile_t custom_qos, rclcpp::SubscriptionOptions options) override {
     Base::subscribeImpl(node, base_topic, callback, custom_qos, options);
     node_ = node;
+    // TODO: Nest the parameters in a unique namespace
+    //       not to conflict with other plugins loaded in the same node
     decoder_name_ = node_->declare_parameter<std::string>("decoder_name", "");
     hw_type_name_ = node_->declare_parameter<std::string>("hw_type_name", "auto");
   }
