@@ -15,10 +15,10 @@ protected:
   OnGenerateReturn<output_options::Publish<sensor_msgs::msg::Image>>
   on_generate(const rclcpp::Time &time, const rclcpp::Duration & /*period*/,
               const ffmpeg_cpp::Frame &input_frame) override {
-                // TODO: Make it possible to specify the value of encoding by the parameter
-                // 1. ROS format: to_ros_image_encoding(frame.format_name())
-                // 2. ffmpeg format: frame.format_name()
-                // 3. User specified?
+    // TODO: Make it possible to specify the value of encoding by the parameter
+    // 1. ROS format: to_ros_image_encoding(frame.format_name())
+    // 2. ffmpeg format: frame.format_name()
+    // 3. User specified?
     return {ControllerReturn::OK, input_frame.to_image_msg(time, ffmpeg_cpp::to_ros_image_encoding(
                                                                      input_frame.format_name()))};
   }

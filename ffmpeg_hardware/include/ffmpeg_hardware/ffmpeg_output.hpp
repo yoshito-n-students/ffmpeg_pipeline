@@ -26,7 +26,7 @@ protected:
       const auto options =
           get_parameter_as<ffmpeg_cpp::Dictionary>("options", ffmpeg_cpp::Dictionary::create("{}"));
 
-      if(!ffmpeg_log_level.empty()) {
+      if (!ffmpeg_log_level.empty()) {
         ffmpeg_cpp::set_log_level(ffmpeg_log_level);
       }
 
