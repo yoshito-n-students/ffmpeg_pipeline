@@ -1,10 +1,19 @@
 <library path="ffmpeg_image_transport">
-  <class
-    name="image_transport/ffmpeg_sub"
-    type="ffmpeg_image_transport::CompressedImageSubscriber"
-    base_class_type="image_transport::SubscriberPlugin">
-    <description>
-      This plugin decompresses a CompressedImage topic using FFmpeg.
-    </description>
-  </class>
+
+    <class name="image_transport/ffmpeg_sub"
+           type="ffmpeg_image_transport::CompressedImageSubscriber"
+           base_class_type="image_transport::SubscriberPlugin">
+        <description>
+          This plugin decompresses a CompressedImage topic using FFmpeg.
+        </description>
+    </class>
+
+    <class name="image_transport/ffmpeg_pub"
+           type="ffmpeg_image_transport::CompressedImagePublisher"
+           base_class_type="image_transport::PublisherPlugin">
+        <description>
+          This plugin compresses an Image topic using FFmpeg.
+        </description>
+    </class>
+
 </library>
