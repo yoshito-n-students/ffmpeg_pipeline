@@ -26,12 +26,26 @@ public:
 protected:
   void subscribeImpl(rclcpp::Node *node, const std::string &base_topic, const Callback &callback,
                      rmw_qos_profile_t custom_qos, rclcpp::SubscriptionOptions options) override {
+    // Initialize the base class
     Base::subscribeImpl(node, base_topic, callback, custom_qos, options);
     node_ = node;
-    // TODO: Nest the parameters in a unique namespace
-    //       not to conflict with other plugins loaded in the same node
-    decoder_name_ = node_->declare_parameter<std::string>("decoder_name", "");
-    hw_type_name_ = node_->declare_parameter<std::string>("hw_type_name", "auto");
+
+    // Determine the prefix name of the parameters to avoid conflicts
+    // with other plugins loaded in the same node (inspired by compressed_image_transport)
+    const std::string param_prefix = [](const std::string &node_ns, const std::string &base_topic,
+                                        const std::string &transport_name) {
+      // node_ns: /my_group/my_node
+      // base_topic: /my_group/my_node/my_topic/my_subtopic
+      // transport_name: ffmpeg
+      // -> prefix: my_topic.my_subtopic.ffmpeg
+      std::string prefix = base_topic.substr(node_ns.length()) + '.' + transport_name;
+      std::replace(prefix.begin(), prefix.end(), '/', '.');
+      return prefix;
+    }(node->get_effective_namespace(), base_topic, getTransportName());
+
+    // Load the decoder parameters from the node
+    decoder_name_ = node_->declare_parameter<std::string>(param_prefix + ".decoder_name", "");
+    hw_type_name_ = node_->declare_parameter<std::string>(param_prefix + ".hw_type_name", "auto");
   }
 
   void internalCallback(const sensor_msgs::msg::CompressedImage::ConstSharedPtr &fragment,

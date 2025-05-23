@@ -30,15 +30,28 @@ protected:
     Base::advertiseImpl(node, base_topic, custom_qos, options);
     node_ = node;
 
+    // Determine the prefix name of the parameters to avoid conflicts
+    // with other plugins loaded in the same node (inspired by compressed_image_transport)
+    const std::string param_prefix = [](const std::string &node_ns, const std::string &base_topic,
+                                        const std::string &transport_name) {
+      // node_ns: /my_group/my_node
+      // base_topic: /my_group/my_node/my_topic/my_subtopic
+      // transport_name: ffmpeg
+      // -> prefix: my_topic.my_subtopic.ffmpeg
+      std::string prefix = base_topic.substr(node_ns.length()) + '.' + transport_name;
+      std::replace(prefix.begin(), prefix.end(), '/', '.');
+      return prefix;
+    }(node->get_effective_namespace(), base_topic, getTransportName());
+
     // Load the encoder parameters from the node
-    // TODO: Nest the parameters in a unique namespace 
-    //       not to conflict with other plugins loaded in the same node
-    const std::string encoder_name = node_->declare_parameter<std::string>("encoder_name", ""),
-                      codec_params_yaml =
-                          node_->declare_parameter<std::string>("codec_paramaters", ""),
-                      hw_type_name = node_->declare_parameter<std::string>("hw_type_name", "auto"),
-                      encoder_options_yaml =
-                          node_->declare_parameter<std::string>("encoder_options", "");
+    const std::string encoder_name =
+                          node_->declare_parameter<std::string>(param_prefix + ".encoder_name", ""),
+                      codec_params_yaml = node_->declare_parameter<std::string>(
+                          param_prefix + ".codec_paramaters", ""),
+                      hw_type_name = node_->declare_parameter<std::string>(
+                          param_prefix + ".hw_type_name", "auto"),
+                      encoder_options_yaml = node_->declare_parameter<std::string>(
+                          param_prefix + ".encoder_options", "");
 
     // Configure the encoder
     encoder_ = ffmpeg_cpp::Encoder::create(
