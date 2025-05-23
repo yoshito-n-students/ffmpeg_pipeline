@@ -109,6 +109,8 @@ See [ffmpeg_image_transport](ffmpeg_image_transport) for details.
 
 * **ffmpeg_sub**: Subscribes to `sensor_msgs::msg::CompressedImage` on the `~/image/ffmpeg` topic and decompresses messages using `libavcodec`.
 
+* **ffmpeg_pub**: Compresses images using `libavcodec` and publishes them to the `~/image/ffmpeg` topic as a `sensor_msgs::msg::CompressedImage`.
+
 ## Running Examples
 
 Below are some example pipelines you can launch. For additional examples, see [ffmpeg_pipeline_examples](ffmpeg_pipeline_examples).
