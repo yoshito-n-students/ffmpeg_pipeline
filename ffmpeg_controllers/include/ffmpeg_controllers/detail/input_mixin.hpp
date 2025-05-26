@@ -39,8 +39,8 @@ template <typename InputOption> using OnReadReturn = typename GetOnReadReturn<In
 // Definition of InputOutputMixin::on_read()
 template <typename InputOption> class OnReadContract {
 protected:
-  // The final argument is used to change the signature of the function for each InputOption type,
-  // and not supposed to be used. This allows multiple OnReadContract to be inherited.
+  // The third parameter is a dummy InputOption, never used at runtime but required to
+  // alter the signature per InputOption, allowing multiple OnReadContract inheritance.
   virtual OnReadReturn<InputOption> on_read(const rclcpp::Time &time,
                                             const rclcpp::Duration &period, InputOption) = 0;
 };
