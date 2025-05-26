@@ -289,12 +289,13 @@ protected:
   }
 
   static OnReadReturn<std::tuple<InputOptions...>>
-  on_read_impl(const OnReadReturn<InputOptions> &...results) {
+  on_read_impl(OnReadReturn<InputOptions> &&...results) {
     return {// Overall success - OK if all of on_read() returned OK
-            BaseCommon::merge({results.first...}),
+            BaseCommon::merge({std::move(results.first)...}),
             // Overall outputs - not a nullopt if any of on_read() did not return nullopt
-            (results.second && ...) ? std::make_optional(std::make_tuple(*results.second...))
-                                    : std::nullopt};
+            (results.second && ...)
+                ? std::make_optional(std::make_tuple(std::move(*results.second)...))
+                : std::nullopt};
   }
 };
 
