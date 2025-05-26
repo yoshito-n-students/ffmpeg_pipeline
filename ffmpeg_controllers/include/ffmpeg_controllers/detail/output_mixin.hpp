@@ -124,7 +124,9 @@ protected:
       return Base::ControllerReturn::OK;
     } else {
       // It is still OK if the command variable is not available
-      RCLCPP_WARN(Base::get_logger(), "Failed to get output object. Will skip this update.");
+      RCLCPP_WARN(Base::get_logger(),
+                  "Discarding output for the command interface %s/%s because it is not available",
+                  output_name_.c_str(), HardwareInterfaceName<Object>);
       return Base::ControllerReturn::OK;
     }
   }

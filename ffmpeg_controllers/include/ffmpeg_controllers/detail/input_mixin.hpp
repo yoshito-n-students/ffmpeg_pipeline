@@ -90,12 +90,8 @@ protected:
       // Return the input frame if it is new
       prev_dts_ = (*input_frame)->pkt_dts;
       return {Base::ControllerReturn::OK, std::cref(*input_frame)};
-    } else if (input_frame) {
-      // Return OK with no frame if the frame is not new
-      return {Base::ControllerReturn::OK, std::nullopt};
     } else {
-      // It is still OK if the input frame is not available
-      // RCLCPP_WARN(Base::get_logger(), "Failed to get input frame. Will skip this update.");
+      // It is still OK if the input frame is not new or not available
       return {Base::ControllerReturn::OK, std::nullopt};
     }
   }
@@ -144,12 +140,8 @@ protected:
       // Return the input packet if it is new
       prev_dts_ = (*input_packet)->dts;
       return {Base::ControllerReturn::OK, std::cref(*input_packet)};
-    } else if (input_packet) {
-      // Return OK with no packet if the packet is not new
-      return {Base::ControllerReturn::OK, std::nullopt};
     } else {
-      // It is still OK if the input packet is not available
-      // RCLCPP_WARN(Base::get_logger(), "Failed to get input packet. Will skip this update.");
+      // It is still OK if the input packet is not new or not available
       return {Base::ControllerReturn::OK, std::nullopt};
     }
   }
@@ -191,7 +183,6 @@ protected:
         object) {
       return {Base::ControllerReturn::OK, std::cref(*object)};
     } else {
-      // RCLCPP_WARN(Base::get_logger(), "Failed to get input object. Will skip this update.");
       return {Base::ControllerReturn::OK, std::nullopt};
     }
   }
