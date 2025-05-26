@@ -187,39 +187,28 @@ private:
 
 protected:
   typename BaseCommon::NodeReturn on_init() override {
-    const std::array<typename BaseCommon::NodeReturn, sizeof...(OutputOptions)> results = {
-        BaseOutput<OutputOptions>::on_init()...};
-    return BaseCommon::merge(results);
+    return BaseCommon::merge({BaseOutput<OutputOptions>::on_init()...});
   }
 
   typename BaseCommon::NodeReturn
   on_activate(const rclcpp_lifecycle::State &previous_state) override {
-    const std::array<typename BaseCommon::NodeReturn, sizeof...(OutputOptions)> results = {
-        BaseOutput<OutputOptions>::on_activate(previous_state)...};
-    return BaseCommon::merge(results);
+    return BaseCommon::merge({BaseOutput<OutputOptions>::on_activate(previous_state)...});
   }
 
   typename BaseCommon::NodeReturn
   on_deactivate(const rclcpp_lifecycle::State &previous_state) override {
-    const std::array<typename BaseCommon::NodeReturn, sizeof...(OutputOptions)> results = {
-        BaseOutput<OutputOptions>::on_deactivate(previous_state)...};
-    return BaseCommon::merge(results);
+    return BaseCommon::merge({BaseOutput<OutputOptions>::on_deactivate(previous_state)...});
   }
 
   controller_interface::InterfaceConfiguration command_interface_configuration() const override {
-    const std::array<controller_interface::InterfaceConfiguration, sizeof...(OutputOptions)>
-        results = {BaseOutput<OutputOptions>::command_interface_configuration()...};
-    return BaseCommon::merge(results);
+    return BaseCommon::merge({BaseOutput<OutputOptions>::command_interface_configuration()...});
   }
 
   typename BaseCommon::ControllerReturn on_write(const rclcpp::Time &time,
                                                  const rclcpp::Duration &period,
                                                  OutputFor<OutputOptions> &&...outputs) override {
-    // Call on_read() for each input option and collect the results
-    const std::array<typename BaseCommon::ControllerReturn, sizeof...(OutputOptions)> results = {
-        BaseOutput<OutputOptions>::on_write(time, period,
-                                            std::forward<decltype(outputs)>(outputs))...};
-    return BaseCommon::merge(results);
+    return BaseCommon::merge({BaseOutput<OutputOptions>::on_write(
+        time, period, std::forward<decltype(outputs)>(outputs))...});
   }
 };
 

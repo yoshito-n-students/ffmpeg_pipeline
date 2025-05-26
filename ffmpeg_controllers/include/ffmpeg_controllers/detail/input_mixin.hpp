@@ -1,7 +1,6 @@
 #ifndef FFMPEG_CONTROLLERS_DETAIL_INPUT_MIXIN_HPP
 #define FFMPEG_CONTROLLERS_DETAIL_INPUT_MIXIN_HPP
 
-#include <array>
 #include <optional>
 #include <stdexcept>
 #include <string>
@@ -270,65 +269,32 @@ private:
 
 protected:
   typename BaseCommon::NodeReturn on_init() override {
-    const std::array<typename BaseCommon::NodeReturn, sizeof...(InputOptions)> results = {
-        BaseInput<InputOptions>::on_init()...};
-    return BaseCommon::merge(results);
+    return BaseCommon::merge({BaseInput<InputOptions>::on_init()...});
   }
 
   typename BaseCommon::NodeReturn
   on_activate(const rclcpp_lifecycle::State &previous_state) override {
-    const std::array<typename BaseCommon::NodeReturn, sizeof...(InputOptions)> results = {
-        BaseInput<InputOptions>::on_activate(previous_state)...};
-    return BaseCommon::merge(results);
+    return BaseCommon::merge({BaseInput<InputOptions>::on_activate(previous_state)...});
   }
 
   controller_interface::InterfaceConfiguration state_interface_configuration() const override {
-    const std::array<controller_interface::InterfaceConfiguration, sizeof...(InputOptions)>
-        results = {BaseInput<InputOptions>::state_interface_configuration()...};
-    return BaseCommon::merge(results);
+    return BaseCommon::merge({BaseInput<InputOptions>::state_interface_configuration()...});
   }
 
   OnReadReturn<std::tuple<InputOptions...>> on_read(const rclcpp::Time &time,
                                                     const rclcpp::Duration &period,
                                                     std::tuple<InputOptions...>) override {
-    // Call on_read() for each input option and collect the results
-    const auto results =
-        std::make_tuple(BaseInput<InputOptions>::on_read(time, period, InputOptions())...);
+    // Call on_read() for each InputOption and defer to the implementation
+    return on_read_impl(BaseInput<InputOptions>::on_read(time, period, InputOptions())...);
+  }
 
-    // Reshape the results into a list of success and a list of outputs
-    const auto [success, outputs] = transpose(results);
-
-    // Return overall result
+  static OnReadReturn<std::tuple<InputOptions...>>
+  on_read_impl(const OnReadReturn<InputOptions> &...results) {
     return {// Overall success - OK if all of on_read() returned OK
-            BaseCommon::merge(success),
+            BaseCommon::merge({results.first...}),
             // Overall outputs - not a nullopt if any of on_read() did not return nullopt
-            flip(outputs)};
-  }
-
-  // Make pair<array<T, N>, tuple<U0, U1, ...>> by transposing tuple<pair<T, U0>, pair<T, U1>, ...>
-  template <typename First, typename... Second>
-  static std::pair<std::array<First, sizeof...(Second)>, std::tuple<Second...>>
-  transpose(const std::tuple<std::pair<First, Second>...> &src) {
-    return transpose_impl(src, std::index_sequence_for<InputOptions...>());
-  }
-
-  template <typename First, typename... Second, std::size_t... Ids>
-  static std::pair<std::array<First, sizeof...(Second)>, std::tuple<Second...>>
-  transpose_impl(const std::tuple<std::pair<First, Second>...> &src, std::index_sequence<Ids...>) {
-    return {{std::get<Ids>(src).first...}, {std::get<Ids>(src).second...}};
-  }
-
-  // Make optional<tuple<T0, T1, ...>> by flipping tuple<optional<T0>, optional<T1>, ...>
-  template <typename... Ts>
-  static std::optional<std::tuple<Ts...>> flip(const std::tuple<std::optional<Ts>...> &src) {
-    return flip_impl(src, std::index_sequence_for<Ts...>());
-  }
-
-  template <typename... Ts, std::size_t... Ids>
-  static std::optional<std::tuple<Ts...>> flip_impl(const std::tuple<std::optional<Ts>...> &src,
-                                                    std::index_sequence<Ids...>) {
-    return (std::get<Ids>(src) && ...) ? std::make_optional(std::make_tuple(*std::get<Ids>(src)...))
-                                       : std::nullopt;
+            (results.second && ...) ? std::make_optional(std::make_tuple(*results.second...))
+                                    : std::nullopt};
   }
 };
 
