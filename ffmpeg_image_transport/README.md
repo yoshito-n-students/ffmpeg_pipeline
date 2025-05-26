@@ -4,7 +4,7 @@
 
 ## `image_transport` Plugins
 
-All parameters are prefixed with `<prefix>` to avoid conflicts with other plugins loaded in the same node. Run `ros2 param list` to find the actual prefix used.
+All parameters are prefixed to avoid conflicts with other plugins loaded in the same node. Run `ros2 param list` to find the actual prefix used.
 
 * **ffmpeg_sub**: Decompresses compressed image messages using `libavcodec`.
   * **Subscribed topics**: `~/image/ffmpeg` (`sensor_msgs::msg::CompressedImage`)
