@@ -1,5 +1,4 @@
 #include <chrono>
-#include <map>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -22,7 +21,8 @@ int main(int argc, char *argv[]) {
   const std::string
       url = node->declare_parameter("url", "/dev/video0"),
       options_str = node->declare_parameter(
-          "options", "{input_format: h264, video_size: 1920x1080, framerate: 30, timestamps: abs}");
+          "options",
+          "{input_format: mjpeg, video_size: 1920x1080, framerate: 30, timestamps: abs}");
 
   // Setup the destination packet publisher
   const auto publisher =
@@ -43,12 +43,11 @@ int main(int argc, char *argv[]) {
       }
 
       // Copy the packet data to a ROS 2 message
-      auto msg = std::make_unique<sensor_msgs::msg::CompressedImage>();
-      // packet->pts is timestamp in kernel time, in microseconds
-      msg->header.stamp.sec = packet->pts / 1'000'000;
-      msg->header.stamp.nanosec = (packet->pts % 1'000'000) * 1'000;
-      msg->format = codec_name;
-      msg->data.assign(packet->data, packet->data + packet->size);
+      auto msg = std::make_unique<sensor_msgs::msg::CompressedImage>(packet.to_compressed_image_msg(
+          // If "timestamps: abs" is set, packet->pts is timestamp in kernel time, in microseconds
+          rclcpp::Time(packet->pts * 1'000 /* us to ns */),
+          // Use the codec name as msg->format
+          codec_name));
 
       // Publish the message
       publisher->publish(std::move(msg));
