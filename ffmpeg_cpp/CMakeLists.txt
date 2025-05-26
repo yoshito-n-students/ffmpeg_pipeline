@@ -18,19 +18,19 @@ find_package(yaml_cpp_vendor REQUIRED)
 # ffmpeg_cpp as a shared library
 add_library(
   ffmpeg_cpp SHARED
-  src/ffmpeg_cpp/audio_converter.cpp
-  src/ffmpeg_cpp/audio_fifo.cpp
-  src/ffmpeg_cpp/codec_parameters.cpp
-  src/ffmpeg_cpp/decoder.cpp
-  src/ffmpeg_cpp/dictionary.cpp
-  src/ffmpeg_cpp/encoder.cpp
-  src/ffmpeg_cpp/frame.cpp
-  src/ffmpeg_cpp/input.cpp
-  src/ffmpeg_cpp/output.cpp
-  src/ffmpeg_cpp/packet.cpp
-  src/ffmpeg_cpp/parser.cpp
-  src/ffmpeg_cpp/utility.cpp
-  src/ffmpeg_cpp/video_converter.cpp)
+  src/audio_converter.cpp
+  src/audio_fifo.cpp
+  src/codec_parameters.cpp
+  src/decoder.cpp
+  src/dictionary.cpp
+  src/encoder.cpp
+  src/frame.cpp
+  src/input.cpp
+  src/output.cpp
+  src/packet.cpp
+  src/parser.cpp
+  src/utility.cpp
+  src/video_converter.cpp)
 target_include_directories(
   ffmpeg_cpp PUBLIC
   "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
@@ -41,7 +41,7 @@ ament_target_dependencies(ffmpeg_cpp ffmpeg_pipeline_msgs rclcpp sensor_msgs yam
 #
 add_executable(
   decode_bag
-  src/decode_bag.cpp)
+  src/demos/decode_bag.cpp)
 target_include_directories(
   decode_bag PUBLIC
   "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
@@ -51,7 +51,7 @@ ament_target_dependencies(decode_bag rclcpp rosbag2_storage rosbag2_transport se
 
 add_executable(
   decode_topic
-  src/decode_topic.cpp)
+  src/demos/decode_topic.cpp)
 target_include_directories(
   decode_topic PUBLIC
   "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
@@ -61,7 +61,7 @@ ament_target_dependencies(decode_topic rclcpp sensor_msgs)
 
 add_executable(
   play_wav
-  src/play_wav.cpp)
+  src/demos/play_wav.cpp)
 target_include_directories(
   play_wav PUBLIC
   "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
@@ -71,7 +71,7 @@ target_link_libraries(play_wav ffmpeg_cpp)
 
 add_executable(
   stream_camera
-  src/stream_camera.cpp)
+  src/demos/stream_camera.cpp)
 target_include_directories(
   stream_camera PUBLIC
   "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
