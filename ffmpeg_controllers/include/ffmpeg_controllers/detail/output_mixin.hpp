@@ -58,6 +58,16 @@ protected:
   }
 
   typename Base::NodeReturn
+  on_activate(const rclcpp_lifecycle::State & /*previous_state*/) override {
+    // Initialize the value of state interface owned by this controller
+    // This cannot be in on_init() or on_configure()
+    // because the interface is registered after executing them.
+    return Base::set_state_from_pointer(HardwareInterfaceName<Object>, nullptr)
+               ? Base::NodeReturn::SUCCESS
+               : Base::NodeReturn::ERROR;
+  }
+
+  typename Base::NodeReturn
   on_deactivate(const rclcpp_lifecycle::State & /*previous_state*/) override {
     // Unregister the object from state interface owned by this controller
     return Base::set_state_from_pointer(HardwareInterfaceName<Object>, nullptr)
@@ -179,6 +189,13 @@ protected:
   typename BaseCommon::NodeReturn on_init() override {
     const std::array<typename BaseCommon::NodeReturn, sizeof...(OutputOptions)> results = {
         BaseOutput<OutputOptions>::on_init()...};
+    return BaseCommon::merge(results);
+  }
+
+  typename BaseCommon::NodeReturn
+  on_activate(const rclcpp_lifecycle::State &previous_state) override {
+    const std::array<typename BaseCommon::NodeReturn, sizeof...(OutputOptions)> results = {
+        BaseOutput<OutputOptions>::on_activate(previous_state)...};
     return BaseCommon::merge(results);
   }
 

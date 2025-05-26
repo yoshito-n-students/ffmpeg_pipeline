@@ -72,6 +72,14 @@ protected:
                : BaseCommon::NodeReturn::ERROR;
   }
 
+  typename BaseCommon::NodeReturn
+  on_activate(const rclcpp_lifecycle::State &previous_state) override {
+    return (BaseInput::on_activate(previous_state) == BaseCommon::NodeReturn::SUCCESS &&
+            BaseOutput::on_activate(previous_state) == BaseCommon::NodeReturn::SUCCESS)
+               ? BaseCommon::NodeReturn::SUCCESS
+               : BaseCommon::NodeReturn::ERROR;
+  }
+
   typename BaseCommon::ControllerReturn on_update(const rclcpp::Time &time,
                                                   const rclcpp::Duration &period) override {
     const auto [read_ret, generate_args] = this->on_read(time, period, InputOption());
