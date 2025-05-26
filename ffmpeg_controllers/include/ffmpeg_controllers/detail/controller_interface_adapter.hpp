@@ -100,7 +100,7 @@ protected:
     return nullptr;
   }
 
-  // Return SUCCESS if all results in the given range are SUCCESS, otherwise return ERROR
+  // Return SUCCESS if all given results are SUCCESS, otherwise return ERROR
   static NodeReturn merge(std::initializer_list<NodeReturn> results) {
     return std::all_of(results.begin(), results.end(),
                        [](const auto result) { return result == NodeReturn::SUCCESS; })
@@ -108,7 +108,7 @@ protected:
                : NodeReturn::ERROR;
   }
 
-  // Return OK if all results in the given range are OK, otherwise return ERROR
+  // Return OK if all given results are OK, otherwise return ERROR
   static ControllerReturn merge(std::initializer_list<ControllerReturn> results) {
     return std::all_of(results.begin(), results.end(),
                        [](const auto result) { return result == ControllerReturn::OK; })
@@ -116,7 +116,7 @@ protected:
                : ControllerReturn::ERROR;
   }
 
-  // Return interface configuration that covers all configurations in the given range
+  // Return interface configuration that covers all given configurations
   static controller_interface::InterfaceConfiguration
   merge(std::initializer_list<controller_interface::InterfaceConfiguration> configs) {
     using ConfigType = controller_interface::interface_configuration_type;
