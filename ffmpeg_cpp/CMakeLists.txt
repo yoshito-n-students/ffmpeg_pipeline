@@ -50,16 +50,6 @@ target_link_libraries(decode_bag ffmpeg_cpp)
 ament_target_dependencies(decode_bag rclcpp rosbag2_storage rosbag2_transport sensor_msgs)
 
 add_executable(
-  decode_topic
-  src/demos/decode_topic.cpp)
-target_include_directories(
-  decode_topic PUBLIC
-  "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
-  "$<INSTALL_INTERFACE:include>")
-target_link_libraries(decode_topic ffmpeg_cpp)
-ament_target_dependencies(decode_topic rclcpp sensor_msgs)
-
-add_executable(
   play_wav
   src/demos/play_wav.cpp)
 target_include_directories(
@@ -90,7 +80,7 @@ install(
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin)
 install(
-  TARGETS decode_bag decode_topic play_wav stream_camera
+  TARGETS decode_bag play_wav stream_camera
   DESTINATION lib/${PROJECT_NAME})
 
 # export the library for downstream projects
