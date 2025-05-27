@@ -243,9 +243,10 @@ public:
   // Construct without underlying AVFormatContext
   static Input null();
   // Open the input device by avformat_open_input() with the given URL, format name, and options,
-  // and find the best stream of the given media type
+  // and find the best stream of the given media type.
+  // media_type_name can be left empty if all streams have the same media type.
   static Input create(const std::string &url, const std::string &format_name,
-                      const Dictionary &options, const std::string &media_type_name);
+                      const Dictionary &options, const std::string &media_type_name = "");
 
   // Return a copy of istream_->codecpar.
   // If istream_ or istream_->codecpar is null, return CodecParameters::null().

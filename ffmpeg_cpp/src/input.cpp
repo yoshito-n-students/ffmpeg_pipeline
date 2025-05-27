@@ -1,3 +1,5 @@
+#include <set>
+
 extern "C" {
 #include <libavcodec/avcodec.h>
 #include <libavdevice/avdevice.h>
@@ -60,13 +62,30 @@ Input Input::create(const std::string &url, const std::string &format_name,
     throw Error("Input::Input(): Failed to find stream information", ret);
   }
 
-  // Identify the media type from the name
-  const AVMediaType media_type = to_media_type(media_type_name);
-  if (media_type == AVMEDIA_TYPE_UNKNOWN) {
-    throw Error("Input::Input(): " + media_type_name + " was not recognized as a media type");
+  // Determine the media type to pass to av_find_best_stream()
+  AVMediaType media_type;
+  if (!media_type_name.empty()) {
+    // Use the given media type name if provided
+    media_type = to_media_type(media_type_name);
+    if (media_type == AVMEDIA_TYPE_UNKNOWN) {
+      throw Error("Input::Input(): " + media_type_name + " was not recognized as a media type");
+    }
+  } else {
+    // Otherwise, use the common media type of all streams
+    std::set<AVMediaType> media_types;
+    for (unsigned int i = 0; i < input->nb_streams; ++i) {
+      if (input->streams[i]->codecpar) {
+        media_types.insert(input->streams[i]->codecpar->codec_type);
+      }
+    }
+    if (media_types.size() != 1) {
+      throw Error("Input::Input(): No common media type among all streams in the input. "
+                  "media_type_name must be specified to select a stream");
+    }
+    media_type = *media_types.begin();
   }
 
-  // Find the best stream of the given media type
+  // Find the best stream of the determined media type
   const int istream_id = av_find_best_stream(input.get(), media_type, -1, -1, nullptr, 0);
   if (istream_id < 0) {
     throw Error("Input::Input(): Failed to find the best stream of media type " + media_type_name,
