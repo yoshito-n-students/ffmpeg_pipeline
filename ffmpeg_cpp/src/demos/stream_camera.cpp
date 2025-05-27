@@ -38,6 +38,9 @@ int main(int argc, char *argv[]) {
       // Try to read a packet from the input device
       const av::Packet packet = input.read_frame();
       if (packet.empty()) {
+        // No packet can be read when it is not yet captured.
+        // In this case, we wait for a short time before trying again.
+        // If the framerate is set to 30 fps, the new packet will be available in about 33 ms.
         std::this_thread::sleep_for(25ms);
         continue;
       }
