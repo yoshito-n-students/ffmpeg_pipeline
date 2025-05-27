@@ -1,4 +1,5 @@
 #include <memory>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 
@@ -43,6 +44,19 @@ private:
   rclcpp::Serialization<sensor_msgs::msg::CompressedImage> deserializer_;
 };
 
+struct Stats {
+  const rclcpp::Time start_time;
+  std::size_t n_msgs = 0, n_packets = 0, n_images = 0;
+
+  std::string to_string(const rclcpp::Time &current_time) const {
+    const double elapsed = (current_time - start_time).seconds();
+    std::ostringstream str;
+    str << n_msgs << " messages read, " << n_packets << " packets parsed, " << n_images
+        << " images decoded, in " << elapsed << " s (" << n_images / elapsed << " fps)";
+    return str.str();
+  }
+};
+
 int main(int argc, char **argv) {
   if (argc < 2) {
     fprintf(stderr, "Usage: %s <bag_file>\n", argv[0]);
@@ -66,17 +80,17 @@ int main(int argc, char **argv) {
   av::Decoder decoder = av::Decoder::null();
   av::VideoConverter converter = av::VideoConverter::null();
 
-  // Decode and convert each message in the bag
-  const rclcpp::Time start_time = node->now();
-  std::size_t n_decoded = 0, n_error = 0;
-  while (rclcpp::ok()) {
-    // Read the next compressed image message from the bag
-    const auto comp_img = bag_reader.read_next();
-    if (!comp_img) {
-      break; // No more messages available
-    }
+  try {
+    // Decode and convert each message in the bag
+    Stats stats{node->now()};
+    while (rclcpp::ok()) {
+      // Read the next compressed image message from the bag
+      const auto comp_img = bag_reader.read_next();
+      if (!comp_img) {
+        break; // No more messages available
+      }
+      ++stats.n_msgs;
 
-    try {
       // Initialize the parser with the image format if not already done
       if (!parser) {
         parser = av::Parser::create(comp_img->format);
@@ -102,17 +116,22 @@ int main(int argc, char **argv) {
         if (packet.empty()) {
           continue;
         }
+        ++stats.n_packets;
 
         // Initialize the decoder with the parameters if not already done
         if (!decoder) {
           decoder = av::Decoder::create(
               "" /* empty decoder name. codec_params->codec_id is used instead. */, codec_params,
               "auto" /* auto select the hardware acceleration type */);
-          RCLCPP_INFO(node->get_logger(), "Configured decoder (%s)", decoder->codec->name);
+          if (const std::string hw_type_name = decoder.hw_type_name(); hw_type_name.empty()) {
+            RCLCPP_INFO(node->get_logger(), "Configured decoder (%s)", decoder->codec->name);
+          } else {
+            RCLCPP_INFO(node->get_logger(), "Configured decoder (%s|%s)", decoder->codec->name,
+                        hw_type_name.c_str());
+          }
         }
 
         // Send the packet to the decoder
-        RCLCPP_INFO(node->get_logger(), "Start decoding packet (%d bytes)", packet->size);
         decoder.send_packet(packet);
 
         // Receive and publish the decoded frames
@@ -121,8 +140,6 @@ int main(int argc, char **argv) {
           if (frame.empty()) {
             break; // No more frames available
           }
-          RCLCPP_INFO(node->get_logger(), "Got frame ([%s] %dx%d)", frame.format_name().c_str(),
-                      frame->width, frame->height);
 
           // If the frame data is in a hardware device,
           // transfer the data to the CPU-accessible memory before conversion
@@ -134,9 +151,9 @@ int main(int argc, char **argv) {
           if (!converter) {
             converter = av::VideoConverter::create(frame->width, frame->height, frame.format_name(),
                                                    "bgr24");
-            RCLCPP_INFO(node->get_logger(), "Configured converter ([%s -> %s] %dx%d)",
-                        converter.src_format_name().c_str(), converter.dst_format_name().c_str(),
-                        converter.src_width(), converter.src_height());
+            RCLCPP_INFO(node->get_logger(), "Configured converter ([%s] %dx%d -> [%s])",
+                        converter.src_format_name().c_str(), converter.src_width(),
+                        converter.src_height(), converter.dst_format_name().c_str());
           }
 
           // Convert the frame to a BGR24 image
@@ -148,22 +165,22 @@ int main(int argc, char **argv) {
 
           // Publish the destination image
           publisher->publish(std::move(image));
-          ++n_decoded;
+          ++stats.n_images;
+
+          // Print intermediate stats
+          if (stats.n_msgs % 50 == 0) {
+            RCLCPP_INFO(node->get_logger(), "%s", stats.to_string(node->now()).c_str());
+          }
         }
       }
-    } catch (const std::runtime_error &error) {
-      ++n_error;
-      RCLCPP_ERROR(node->get_logger(), "Error while decoding: %s, will try the next message",
-                   error.what());
-      continue;
     }
-  }
 
-  // Print the decoding statistics
-  const rclcpp::Duration elapsed_time = node->now() - start_time;
-  RCLCPP_INFO(node->get_logger(), "Decoded %zu frames, %zu errors, in %f seconds (%f fps)",
-              n_decoded, n_error, elapsed_time.seconds(),
-              (n_decoded + n_error) / elapsed_time.seconds());
+    // Print the final stats
+    RCLCPP_INFO(node->get_logger(), "%s", stats.to_string(node->now()).c_str());
+    RCLCPP_INFO(node->get_logger(), "Processed all messages!");
+  } catch (const std::runtime_error &error) {
+    RCLCPP_ERROR(node->get_logger(), "Error while processing messages: %s", error.what());
+  }
 
   rclcpp::shutdown();
 
