@@ -20,7 +20,6 @@
                 channels: 2
                 fragment_size: 7680
             </param>
-            <param name="media_type">audio</param>
         </hardware>
     </ros2_control>
 

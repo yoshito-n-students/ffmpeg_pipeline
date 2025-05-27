@@ -31,7 +31,7 @@ protected:
       const auto ffmpeg_log_level = get_parameter_as<std::string>("ffmpeg_log_level", ""),
                  url = get_parameter_as<std::string>("url", "/dev/video0"),
                  format = get_parameter_as<std::string>("format", "v4l2"),
-                 media_type = get_parameter_as<std::string>("media_type", "video");
+                 media_type = get_parameter_as<std::string>("media_type", "");
       const auto options = get_parameter_as<ffmpeg_cpp::Dictionary>(
           "options", ffmpeg_cpp::Dictionary::create("{timestamps: abs}"));
 

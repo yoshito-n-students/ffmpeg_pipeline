@@ -13,7 +13,6 @@
             <param name="options">
                 loop: 1
             </param>
-            <param name="media_type">video</param>
         </hardware>
     </ros2_control>
 
