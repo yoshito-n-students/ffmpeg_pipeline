@@ -47,14 +47,16 @@ protected:
       // Try to find the packet and codec parameters until the buffer is fully parsed
       std::int64_t pos = 0;
       while (pos < input_packet->size) {
-        ffmpeg_cpp::Packet output_packet = ffmpeg_cpp::Packet::null();
-        if (!output_params_) {
-          std::tie(output_packet, output_params_) =
-              parser_.parse_initial_packet(input_packet, &pos);
-        } else {
-          output_packet = parser_.parse_next_packet(input_packet, &pos);
+        // Parse the input packet using the parser
+        const ffmpeg_cpp::Packet output_packet = parser_.parse(input_packet, &pos);
+
+        // Get the codec parameters fully filled if never and possible
+        if (!output_params_ && parser_->key_frame != 0) {
+          output_params_ = parser_.codec_parameters();
         }
-        if (!output_packet.empty()) {
+
+        // Return the output packet and codec parameters if available
+        if (!output_packet.empty() && output_params_) {
           return {ControllerReturn::OK, std::make_tuple(std::move(output_packet), output_params_)};
         }
       }

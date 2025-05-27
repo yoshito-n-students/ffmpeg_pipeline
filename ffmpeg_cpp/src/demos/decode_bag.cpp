@@ -105,29 +105,29 @@ int main(int argc, char **argv) {
       std::int64_t pos = 0;
       while (pos < buffer->size) {
         // Parse the buffer to extract the compressed packet.
-        // Additionally, probe the codec parameters for the decoder if it has not been initialized.
-        av::Packet packet = av::Packet::null();
-        av::CodecParameters codec_params = av::CodecParameters::null();
-        if (!decoder) {
-          std::tie(packet, codec_params) = parser.parse_initial_packet(buffer, &pos);
-        } else {
-          packet = parser.parse_next_packet(buffer, &pos);
-        }
+        const av::Packet packet = parser.parse(buffer, &pos);
         if (packet.empty()) {
           continue;
         }
         ++stats.n_packets;
 
-        // Initialize the decoder with the parameters if not already done
+        // Initialize the decoder with the parsed codec parameters if not already done and possible
         if (!decoder) {
-          decoder = av::Decoder::create(
-              "" /* empty decoder name. codec_params->codec_id is used instead. */, codec_params,
-              "auto" /* auto select the hardware acceleration type */);
-          if (const std::string hw_type_name = decoder.hw_type_name(); hw_type_name.empty()) {
-            RCLCPP_INFO(node->get_logger(), "Configured decoder (%s)", decoder->codec->name);
+          if (parser->key_frame != 0) {
+            // If the last parsed packet is a keyframe,
+            // we can expect the full codec parameters are available and initialize the decoder with them.
+            decoder = av::Decoder::create(
+                "" /* empty decoder name. codec_params->codec_id is used instead. */,
+                parser.codec_parameters(), "auto" /* auto select the hardware acceleration type */);
+            if (const std::string hw_type_name = decoder.hw_type_name(); hw_type_name.empty()) {
+              RCLCPP_INFO(node->get_logger(), "Configured decoder (%s)", decoder->codec->name);
+            } else {
+              RCLCPP_INFO(node->get_logger(), "Configured decoder (%s|%s)", decoder->codec->name,
+                          hw_type_name.c_str());
+            }
           } else {
-            RCLCPP_INFO(node->get_logger(), "Configured decoder (%s|%s)", decoder->codec->name,
-                        hw_type_name.c_str());
+            // Wait for the next keyframe to initialize the decoder.
+            continue;
           }
         }
 

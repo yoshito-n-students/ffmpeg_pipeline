@@ -278,16 +278,12 @@ public:
   // If this is null, return an empty vector.
   std::vector<std::string> codec_names() const;
 
-  // Parse the given buffer and return the found packet and parameters.
-  // The parameters contain enough information to decode the packet.
-  // If no packet is found or the found packet is not a keyframe,
-  // return an empty packet and default parameters.
-  std::pair<Packet, CodecParameters> parse_initial_packet(const Packet &buffer,
-                                                          std::int64_t *const pos);
-
   // Parse the given buffer and return the found packet.
-  // If no packet is found, return an empty packet.
-  Packet parse_next_packet(const Packet &buffer, std::int64_t *const pos);
+  // If no packet is found, return a null packet.
+  Packet parse(const Packet &buffer, std::int64_t *const pos);
+
+  // Return the codec parameters read so far by parse().
+  CodecParameters codec_parameters() const;
 
 private:
   UniquePtr<AVCodecContext> decoder_ctx_ = nullptr;
