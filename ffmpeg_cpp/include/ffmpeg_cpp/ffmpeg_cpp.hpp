@@ -282,7 +282,8 @@ public:
   // If no packet is found, return a null packet.
   Packet parse(const Packet &buffer, std::int64_t *const pos);
 
-  // Return the codec parameters read so far by parse().
+  // Return the codec parameters read so far by parse(). If this->key_frame != 0,
+  // it means that the last parsed packet contains the full codec parameters.
   CodecParameters codec_parameters() const;
 
 private:
