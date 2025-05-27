@@ -1,6 +1,5 @@
 #include <chrono>
 #include <iostream>
-#include <map>
 #include <stdexcept>
 #include <string>
 #include <thread>
@@ -29,19 +28,16 @@ int main(int argc, char *argv[]) {
 
     // Read packets from the input file and play them on the output device
     while (true) {
-      av::Packet packet = av::Packet::null();
-      while (true) {
-        packet = input.read_frame();
-        if (!packet.empty()) {
-          break;
-        }
-        std::cerr << "Failed to read frame for temporary reason. Retrying..." << std::endl;
-        std::this_thread::sleep_for(10ms);
+      const av::Packet packet = input.read_frame();
+      if (packet.empty()) {
+        break;
       }
 
       while (!output.write_frame(packet)) {
-        std::cerr << "Failed to write frame for temporary reason. Retrying..." << std::endl;
-        std::this_thread::sleep_for(10ms);
+        // output.write_frame() may return false if the internal buffer is full with previous frames.
+        // In this case, wait a little for the previous frames to be processed and try again.
+        // The duration of normal wav frames is about 23 ms = 1024 samples / 44100 Hz.
+        std::this_thread::sleep_for(20ms);
       }
     }
   } catch (const std::runtime_error &error) {
