@@ -13,15 +13,35 @@
 
 namespace av = ffmpeg_cpp;
 
-// Utility function to deserialize a message from a bag
-template <class Msg>
-std::unique_ptr<Msg> deserialize(rclcpp::Serialization<Msg> *const deserializer,
-                                 const rosbag2_storage::SerializedBagMessage &bag_msg) {
-  const rclcpp::SerializedMessage serialized_msg(*bag_msg.serialized_data);
-  auto deserialized_msg = std::make_unique<Msg>();
-  deserializer->deserialize_message(&serialized_msg, deserialized_msg.get());
-  return deserialized_msg;
-}
+class BagReader {
+public:
+  BagReader(const std::string &bag_filename, const std::string &topic_name)
+      : topic_name_(topic_name) {
+    // Initialize the bag reader with the specified file
+    rosbag2_storage::StorageOptions storage_options;
+    storage_options.uri = bag_filename;
+    reader_ = rosbag2_transport::ReaderWriterFactory::make_reader(storage_options);
+    reader_->open(storage_options);
+  }
+
+  std::unique_ptr<sensor_msgs::msg::CompressedImage> read_next() {
+    while (reader_->has_next()) {
+      const auto bag_msg = reader_->read_next();
+      if (bag_msg->topic_name == topic_name_) {
+        const rclcpp::SerializedMessage serialized_msg(*bag_msg->serialized_data);
+        auto msg = std::make_unique<sensor_msgs::msg::CompressedImage>();
+        deserializer_.deserialize_message(&serialized_msg, msg.get());
+        return msg; // Return the next compressed image message
+      }
+    }
+    return nullptr; // No more messages available
+  }
+
+private:
+  std::unique_ptr<rosbag2_cpp::Reader> reader_;
+  std::string topic_name_;
+  rclcpp::Serialization<sensor_msgs::msg::CompressedImage> deserializer_;
+};
 
 int main(int argc, char **argv) {
   if (argc < 2) {
@@ -35,14 +55,8 @@ int main(int argc, char **argv) {
   const auto node = rclcpp::Node::make_shared("bag_decoder");
   const auto publisher = node->create_publisher<sensor_msgs::msg::Image>("dst_image", 10);
 
-  // Initialize the bag reader with the specified file
-  rosbag2_storage::StorageOptions storage_options;
-  storage_options.uri = bag_filename;
-  const auto reader = rosbag2_transport::ReaderWriterFactory::make_reader(storage_options);
-  reader->open(storage_options);
-
-  // Initialize the deserializer for messages in the bag
-  rclcpp::Serialization<sensor_msgs::msg::CompressedImage> serialization;
+  // Initialize the bag reader with the specified file and topic
+  BagReader bag_reader(bag_filename, "/image/ffmpeg");
 
   // The parser, which extracts the compressed packets from the stream,
   // the decoder, which decompresses the packets to frames,
@@ -55,13 +69,12 @@ int main(int argc, char **argv) {
   // Decode and convert each message in the bag
   const rclcpp::Time start_time = node->now();
   std::size_t n_decoded = 0, n_error = 0;
-  while (reader->has_next() && rclcpp::ok()) {
-    const auto bag_msg = reader->read_next();
-    if (bag_msg->topic_name != "/image/ffmpeg") {
-      continue;
+  while (rclcpp::ok()) {
+    // Read the next compressed image message from the bag
+    const auto comp_img = bag_reader.read_next();
+    if (!comp_img) {
+      break; // No more messages available
     }
-
-    const auto comp_img = deserialize(&serialization, *bag_msg);
 
     try {
       // Initialize the parser with the image format if not already done
