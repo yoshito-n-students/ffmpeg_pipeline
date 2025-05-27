@@ -67,8 +67,9 @@ CodecParameters Parser::codec_parameters() const {
   // Copy the codec parameters from the codec context
   CodecParameters params = CodecParameters::create();
   if (const int ret = avcodec_parameters_from_context(params.get(), decoder_ctx_.get()); ret < 0) {
-    throw Error("Parser::codec_parameters(): Failed to copy codec parameters from the decoder context",
-                ret);
+    throw Error(
+        "Parser::codec_parameters(): Failed to copy codec parameters from the decoder context",
+        ret);
   }
   return params;
 }

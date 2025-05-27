@@ -34,7 +34,7 @@ int main(int argc, char *argv[]) {
       }
 
       while (!output.write_frame(packet)) {
-        // output.write_frame() may return false if the internal buffer is full with previous frames.
+        // write_frame() may return false if the internal buffer is full with previous frames.
         // In this case, wait a little for the previous frames to be processed and try again.
         // The duration of normal wav frames is about 23 ms = 1024 samples / 44100 Hz.
         std::this_thread::sleep_for(20ms);

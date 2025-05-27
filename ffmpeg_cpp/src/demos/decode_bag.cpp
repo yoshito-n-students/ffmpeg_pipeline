@@ -115,7 +115,7 @@ int main(int argc, char **argv) {
         if (!decoder) {
           if (parser->key_frame != 0) {
             // If the last parsed packet is a keyframe,
-            // we can expect the full codec parameters are available and initialize the decoder with them.
+            // we can expect the full codec parameters are available and initialize the decoder.
             decoder = av::Decoder::create(
                 "" /* empty decoder name. codec_params->codec_id is used instead. */,
                 parser.codec_parameters(), "auto" /* auto select the hardware acceleration type */);
