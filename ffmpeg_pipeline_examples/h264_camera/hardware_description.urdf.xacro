@@ -16,6 +16,7 @@
                 framerate: 24
                 timestamps: abs
             </param>
+            <!-- TODO: omit media_type if works -->
             <param name="media_type">video</param>
         </hardware>
     </ros2_control>
