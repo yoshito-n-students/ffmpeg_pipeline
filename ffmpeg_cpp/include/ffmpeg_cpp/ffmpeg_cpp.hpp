@@ -244,9 +244,11 @@ public:
   static Input null();
   // Open the input device by avformat_open_input() with the given URL, format name, and options,
   // and find the best stream of the given media type.
-  // media_type_name can be left empty if all streams have the same media type.
-  static Input create(const std::string &url, const std::string &format_name,
-                      const Dictionary &options, const std::string &media_type_name = "");
+  // If format_name is an empty string, it tries to guess the format from the URL.
+  // media_type_name can also be left empty if all streams have the same media type.
+  static Input create(const std::string &url, const std::string &format_name = "",
+                      const Dictionary &options = Dictionary::null(),
+                      const std::string &media_type_name = "");
 
   // Return a copy of istream_->codecpar.
   // If istream_ or istream_->codecpar is null, return CodecParameters::null().
@@ -472,9 +474,10 @@ public:
   // Construct without underlying AVFormatContext
   static Output null();
   // Open the output device with the given format name and url,
-  // and set the codec parameters and options to the stream
+  // and set the codec parameters and options to the stream.
   static Output create(const std::string &format_name, const std::string &url,
-                       const CodecParameters &codec_params, const Dictionary &options);
+                       const CodecParameters &codec_params,
+                       const Dictionary &options = Dictionary::null());
 
   // Write a frame to the stream of interest in a NON-BLOCKING way.
   // False if the output stream is not ready to accept the data for some temporary reason.
