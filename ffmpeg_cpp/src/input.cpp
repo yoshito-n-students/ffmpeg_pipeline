@@ -27,7 +27,7 @@ Input Input::create(const std::string &url, const std::string &format_name,
   // Allocate the input format context and set the non-blocking flag
   Input input(avformat_alloc_context());
   if (!input) {
-    throw Error("Input::Input(): Failed to allocate AVFormatContext");
+    throw Error("Input::create(): Failed to allocate AVFormatContext");
   }
   input->flags |= AVFMT_FLAG_NONBLOCK;
 
@@ -35,7 +35,7 @@ Input Input::create(const std::string &url, const std::string &format_name,
   const AVInputFormat *iformat =
       (format_name.empty() ? nullptr : av_find_input_format(format_name.c_str()));
   if (!format_name.empty() && iformat == nullptr) {
-    throw Error("Input::Input(): " + format_name + " was not recognized as an input format");
+    throw Error("Input::create(): " + format_name + " was not recognized as an input format");
   }
 
   // Open the input with the URL, format and options.
@@ -49,17 +49,17 @@ Input Input::create(const std::string &url, const std::string &format_name,
     input.reset(iformat_ctx);
     writable_options.reset(writable_options_ptr);
     if (ret < 0) {
-      throw Error("Input::Input(): Failed to open input " + url, ret);
+      throw Error("Input::create(): Failed to open input " + url, ret);
     }
     if (writable_options) {
-      throw Error("Input::Input(): Input " + url + " does not accept option [" +
+      throw Error("Input::create(): Input " + url + " does not accept option [" +
                   writable_options.to_flow_style_yaml() + "]");
     }
   }
 
   // Retrieve stream information on the input
   if (const int ret = avformat_find_stream_info(input.get(), nullptr); ret < 0) {
-    throw Error("Input::Input(): Failed to find stream information", ret);
+    throw Error("Input::create(): Failed to find stream information", ret);
   }
 
   // Determine the media type to pass to av_find_best_stream()
@@ -68,7 +68,7 @@ Input Input::create(const std::string &url, const std::string &format_name,
     // Use the given media type name if provided
     media_type = to_media_type(media_type_name);
     if (media_type == AVMEDIA_TYPE_UNKNOWN) {
-      throw Error("Input::Input(): " + media_type_name + " was not recognized as a media type");
+      throw Error("Input::create(): " + media_type_name + " was not recognized as a media type");
     }
   } else {
     // Otherwise, use the common media type of all streams
@@ -79,8 +79,8 @@ Input Input::create(const std::string &url, const std::string &format_name,
       }
     }
     if (media_types.size() != 1) {
-      throw Error("Input::Input(): No common media type among all streams in the input. "
-                  "media_type_name must be specified to select a stream");
+      throw Error("Input::create(): No common media type among all streams in the input. "
+                  "media_type_name must be specified to select a stream.");
     }
     media_type = *media_types.begin();
   }
@@ -88,7 +88,7 @@ Input Input::create(const std::string &url, const std::string &format_name,
   // Find the best stream of the determined media type
   const int istream_id = av_find_best_stream(input.get(), media_type, -1, -1, nullptr, 0);
   if (istream_id < 0) {
-    throw Error("Input::Input(): Failed to find the best stream of media type " + media_type_name,
+    throw Error("Input::create(): Failed to find the best stream of media type " + media_type_name,
                 istream_id);
   }
   input.istream_ = input->streams[istream_id];
