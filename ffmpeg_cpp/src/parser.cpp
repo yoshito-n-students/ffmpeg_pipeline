@@ -64,14 +64,18 @@ Packet Parser::parse(const Packet &buffer, std::int64_t *const pos) {
 }
 
 CodecParameters Parser::codec_parameters() const {
-  // Copy the codec parameters from the codec context
-  CodecParameters params = CodecParameters::create();
-  if (const int ret = avcodec_parameters_from_context(params.get(), decoder_ctx_.get()); ret < 0) {
-    throw Error(
-        "Parser::codec_parameters(): Failed to copy codec parameters from the decoder context",
-        ret);
+  if (decoder_ctx_) {
+    // Copy the codec parameters from the codec context
+    CodecParameters params = CodecParameters::create();
+    if (const int ret = avcodec_parameters_from_context(params.get(), decoder_ctx_.get());
+        ret < 0) {
+      throw Error(
+          "Parser::codec_parameters(): Failed to copy codec parameters from the decoder context",
+          ret);
+    }
+    return params;
   }
-  return params;
+  return CodecParameters::null();
 }
 
 std::vector<std::string> Parser::codec_names() const {

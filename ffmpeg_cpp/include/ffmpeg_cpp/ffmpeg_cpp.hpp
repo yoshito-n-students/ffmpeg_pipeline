@@ -287,6 +287,7 @@ public:
 
   // Return the codec parameters read so far by parse(). If this->key_frame != 0,
   // it means that the last parsed packet contains the full codec parameters.
+  // If the source decoder_ctx_ is null, return CodecParameters::null().
   CodecParameters codec_parameters() const;
 
 private:
