@@ -1,6 +1,6 @@
 # ffmpeg_image_transport
 
-`image_transport` plugin powered by FFmpeg decoder for compressed images
+`image_transport` plugin using FFmpeg for image encoding and decoding.
 
 ## `image_transport` Plugins
 
