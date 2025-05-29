@@ -5,11 +5,10 @@
 #include <tuple>
 #include <type_traits>
 
-#include <controller_interface/controller_interface_base.hpp> // for controller_interface::return_type
-#include <ffmpeg_controllers/detail/controller_interface_adapter.hpp>
 #include <ffmpeg_controllers/detail/controller_traits.hpp>
 #include <ffmpeg_controllers/detail/input_mixin.hpp>
 #include <ffmpeg_controllers/detail/output_mixin.hpp>
+#include <ffmpeg_controllers/detail/utility.hpp>
 #include <rclcpp/duration.hpp>
 #include <rclcpp/time.hpp>
 
@@ -22,12 +21,11 @@ namespace ffmpeg_controllers {
 
 // Return type of InputOutputMixin::on_generate()
 template <typename OutputOption> struct GetOnGenerateReturn {
-  using Result =
-      std::pair<controller_interface::return_type, std::optional<OutputFor<OutputOption>>>;
+  using Result = std::pair<ControllerReturn, std::optional<OutputFor<OutputOption>>>;
 };
 template <typename... OutputOptions> struct GetOnGenerateReturn<std::tuple<OutputOptions...>> {
-  using Result = std::pair<controller_interface::return_type,
-                           std::optional<std::tuple<OutputFor<OutputOptions>...>>>;
+  using Result =
+      std::pair<ControllerReturn, std::optional<std::tuple<OutputFor<OutputOptions>...>>>;
 };
 template <typename OutputOption>
 using OnGenerateReturn = typename GetOnGenerateReturn<OutputOption>::Result;
@@ -60,46 +58,35 @@ class InputOutputMixin
       public OnGenerateContract<InputOption, OutputOption> {
 private:
   using ControllerIface = ControllerInterfaceFor<InputOption, OutputOption>;
-  using BaseCommon = ControllerInterfaceAdapter<ControllerIface>;
   using BaseInput = InputMixin<InputOption, ControllerIface>;
   using BaseOutput = OutputMixin<OutputOption, ControllerIface>;
 
 protected:
-  typename BaseCommon::NodeReturn on_init() override {
-    return (BaseInput::on_init() == BaseCommon::NodeReturn::SUCCESS &&
-            BaseOutput::on_init() == BaseCommon::NodeReturn::SUCCESS)
-               ? BaseCommon::NodeReturn::SUCCESS
-               : BaseCommon::NodeReturn::ERROR;
+  NodeReturn on_init() override { return merge({BaseInput::on_init(), BaseOutput::on_init()}); }
+
+  NodeReturn on_activate(const rclcpp_lifecycle::State &previous_state) override {
+    return merge({BaseInput::on_activate(previous_state), BaseOutput::on_activate(previous_state)});
   }
 
-  typename BaseCommon::NodeReturn
-  on_activate(const rclcpp_lifecycle::State &previous_state) override {
-    return (BaseInput::on_activate(previous_state) == BaseCommon::NodeReturn::SUCCESS &&
-            BaseOutput::on_activate(previous_state) == BaseCommon::NodeReturn::SUCCESS)
-               ? BaseCommon::NodeReturn::SUCCESS
-               : BaseCommon::NodeReturn::ERROR;
-  }
-
-  typename BaseCommon::ControllerReturn on_update(const rclcpp::Time &time,
-                                                  const rclcpp::Duration &period) override {
+  ControllerReturn on_update(const rclcpp::Time &time, const rclcpp::Duration &period) override {
     const auto [read_ret, generate_args] = this->on_read(time, period, InputOption());
-    if (read_ret != BaseCommon::ControllerReturn::OK || !generate_args) {
+    if (read_ret != ControllerReturn::OK || !generate_args) {
       return read_ret;
     }
 
     auto [generate_ret, write_args] =
         invoke(&InputOutputMixin::on_generate, time, period, *generate_args);
-    if (generate_ret != BaseCommon::ControllerReturn::OK || !write_args) {
+    if (generate_ret != ControllerReturn::OK || !write_args) {
       return generate_ret;
     }
 
     const auto write_ret =
         invoke(&InputOutputMixin::on_write, time, period, std::move(*write_args));
-    if (write_ret != BaseCommon::ControllerReturn::OK) {
+    if (write_ret != ControllerReturn::OK) {
       return write_ret;
     }
 
-    return BaseCommon::ControllerReturn::OK;
+    return ControllerReturn::OK;
   }
 
   // Invoke the given method of this class with the given arguments.

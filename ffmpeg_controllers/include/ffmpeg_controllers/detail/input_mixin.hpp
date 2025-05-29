@@ -9,10 +9,13 @@
 #include <ffmpeg_controllers/controller_options.hpp>
 #include <ffmpeg_controllers/detail/controller_interface_adapter.hpp>
 #include <ffmpeg_controllers/detail/controller_traits.hpp>
+#include <ffmpeg_controllers/detail/utility.hpp>
 #include <ffmpeg_cpp/ffmpeg_cpp.hpp>
 #include <message_filters/message_event.h>
 #include <rclcpp/duration.hpp>
 #include <rclcpp/logging.hpp>
+#include <rclcpp/qos.hpp>
+#include <rclcpp/qos_overriding_options.hpp>
 #include <rclcpp/subscription.hpp>
 #include <rclcpp/time.hpp>
 #include <realtime_tools/realtime_buffer.hpp>
@@ -26,12 +29,12 @@ namespace ffmpeg_controllers {
 
 // Return type of InputMixin::on_read()
 template <typename InputOption> struct GetOnReadReturn {
-  using Result = std::pair<controller_interface::return_type,
+  using Result = std::pair<ControllerReturn,
                            std::optional<std::reference_wrapper<const InputFor<InputOption>>>>;
 };
 template <typename... InputOptions> struct GetOnReadReturn<std::tuple<InputOptions...>> {
   using Result =
-      std::pair<controller_interface::return_type,
+      std::pair<ControllerReturn,
                 std::optional<std::tuple<std::reference_wrapper<const InputFor<InputOptions>>...>>>;
 };
 template <typename InputOption> using OnReadReturn = typename GetOnReadReturn<InputOption>::Result;
@@ -59,21 +62,20 @@ private:
   using Base = ControllerInterfaceAdapter<ControllerIface>;
 
 protected:
-  typename Base::NodeReturn on_init() override {
+  NodeReturn on_init() override {
     try {
       // The name of the hardware or controller from which the state interface is loaned
       input_name_ = Base::template get_user_parameter<std::string>("input_name");
-      return Base::NodeReturn::SUCCESS;
+      return NodeReturn::SUCCESS;
     } catch (const std::runtime_error &error) {
       RCLCPP_ERROR(Base::get_logger(), "Error while getting parameter value: %s", error.what());
-      return Base::NodeReturn::ERROR;
+      return NodeReturn::ERROR;
     }
   }
 
-  typename Base::NodeReturn
-  on_activate(const rclcpp_lifecycle::State & /*previous_state*/) override {
+  NodeReturn on_activate(const rclcpp_lifecycle::State & /*previous_state*/) override {
     prev_dts_ = 0;
-    return Base::NodeReturn::SUCCESS;
+    return NodeReturn::SUCCESS;
   }
 
   controller_interface::InterfaceConfiguration state_interface_configuration() const override {
@@ -89,10 +91,10 @@ protected:
         input_frame && (*input_frame)->pkt_dts > prev_dts_) {
       // Return the input frame if it is new
       prev_dts_ = (*input_frame)->pkt_dts;
-      return {Base::ControllerReturn::OK, std::cref(*input_frame)};
+      return {ControllerReturn::OK, std::cref(*input_frame)};
     } else {
       // It is still OK if the input frame is not new or not available
-      return {Base::ControllerReturn::OK, std::nullopt};
+      return {ControllerReturn::OK, std::nullopt};
     }
   }
 
@@ -109,21 +111,20 @@ private:
   using Base = ControllerInterfaceAdapter<ControllerIface>;
 
 protected:
-  typename Base::NodeReturn on_init() override {
+  NodeReturn on_init() override {
     try {
       // The name of the hardware or controller from which the state interface is loaned
       input_name_ = Base::template get_user_parameter<std::string>("input_name");
-      return Base::NodeReturn::SUCCESS;
+      return NodeReturn::SUCCESS;
     } catch (const std::runtime_error &error) {
       RCLCPP_ERROR(Base::get_logger(), "Error while getting parameter value: %s", error.what());
-      return Base::NodeReturn::ERROR;
+      return NodeReturn::ERROR;
     }
   }
 
-  typename Base::NodeReturn
-  on_activate(const rclcpp_lifecycle::State & /*previous_state*/) override {
+  NodeReturn on_activate(const rclcpp_lifecycle::State & /*previous_state*/) override {
     prev_dts_ = 0;
-    return Base::NodeReturn::SUCCESS;
+    return NodeReturn::SUCCESS;
   }
 
   controller_interface::InterfaceConfiguration state_interface_configuration() const override {
@@ -139,10 +140,10 @@ protected:
         input_packet && (*input_packet)->dts > prev_dts_) {
       // Return the input packet if it is new
       prev_dts_ = (*input_packet)->dts;
-      return {Base::ControllerReturn::OK, std::cref(*input_packet)};
+      return {ControllerReturn::OK, std::cref(*input_packet)};
     } else {
       // It is still OK if the input packet is not new or not available
-      return {Base::ControllerReturn::OK, std::nullopt};
+      return {ControllerReturn::OK, std::nullopt};
     }
   }
 
@@ -159,14 +160,14 @@ private:
   using Base = ControllerInterfaceAdapter<ControllerIface>;
 
 protected:
-  typename Base::NodeReturn on_init() override {
+  NodeReturn on_init() override {
     try {
       // The name of the hardware or controller from which the state interface is loaned
       input_name_ = Base::template get_user_parameter<std::string>("input_name");
-      return Base::NodeReturn::SUCCESS;
+      return NodeReturn::SUCCESS;
     } catch (const std::runtime_error &error) {
       RCLCPP_ERROR(Base::get_logger(), "Error while getting parameter value: %s", error.what());
-      return Base::NodeReturn::ERROR;
+      return NodeReturn::ERROR;
     }
   }
 
@@ -181,9 +182,9 @@ protected:
     if (const auto object =
             Base::template get_state_as_pointer<Object>(input_name_, HardwareInterfaceName<Object>);
         object) {
-      return {Base::ControllerReturn::OK, std::cref(*object)};
+      return {ControllerReturn::OK, std::cref(*object)};
     } else {
-      return {Base::ControllerReturn::OK, std::nullopt};
+      return {ControllerReturn::OK, std::nullopt};
     }
   }
 
@@ -202,33 +203,43 @@ private:
 protected:
   using InputMessage = Message;
 
-  typename Base::NodeReturn
-  on_configure(const rclcpp_lifecycle::State & /*previous_state*/) override {
+  NodeReturn on_init() override {
+    try {
+      // The base QoS profile for the subscription
+      qos_ =
+          to_qos(Base::template get_user_parameter<std::string>("qos_profile", "system_defaults"));
+      return NodeReturn::SUCCESS;
+    } catch (const std::runtime_error &error) {
+      RCLCPP_ERROR(Base::get_logger(), "Error while getting parameter value: %s", error.what());
+      return NodeReturn::ERROR;
+    }
+  }
+
+  NodeReturn on_configure(const rclcpp_lifecycle::State & /*previous_state*/) override {
     try {
       rclcpp::SubscriptionOptions options;
       options.qos_overriding_options = rclcpp::QosOverridingOptions::with_default_policies();
       subscription_ = Base::get_node()->template create_subscription<InputMessage>(
-          TopicName<Message>, rclcpp::SystemDefaultsQoS(),
+          TopicName<Message>, qos_,
           [this](const typename InputMessage::ConstSharedPtr msg) {
             msg_buffer_.writeFromNonRT(StampedMessage(msg, Base::get_node()->now()));
           },
           options);
       RCLCPP_INFO(Base::get_logger(), "Created subscription to %s",
                   subscription_->get_topic_name());
-      return Base::NodeReturn::SUCCESS;
+      return NodeReturn::SUCCESS;
     } catch (const std::runtime_error &error) {
       RCLCPP_ERROR(Base::get_logger(), "Error while creating subscription: %s", error.what());
-      return Base::NodeReturn::ERROR;
+      return NodeReturn::ERROR;
     }
   }
 
-  typename Base::NodeReturn
-  on_activate(const rclcpp_lifecycle::State & /*previous_state*/) override {
+  NodeReturn on_activate(const rclcpp_lifecycle::State & /*previous_state*/) override {
     prev_stamp_ = Base::get_node()->now();
     msg_buffer_.writeFromNonRT(StampedMessage(
         // as of jazzy, passing nullptr leads a segmentation fault
         std::make_shared<InputMessage>(), prev_stamp_));
-    return Base::NodeReturn::SUCCESS;
+    return NodeReturn::SUCCESS;
   }
 
   OnReadReturn<input_options::Subscribe<Message>>
@@ -237,14 +248,15 @@ protected:
     if (const StampedMessage &msg = *msg_buffer_.readFromRT(); msg.getReceiptTime() > prev_stamp_) {
       // Return the input message if it is new
       prev_stamp_ = msg.getReceiptTime();
-      return {Base::ControllerReturn::OK, std::cref(*msg.getConstMessage())};
+      return {ControllerReturn::OK, std::cref(*msg.getConstMessage())};
     } else {
       // It is still OK if the input message is not new
-      return {Base::ControllerReturn::OK, std::nullopt};
+      return {ControllerReturn::OK, std::nullopt};
     }
   }
 
 private:
+  rclcpp::QoS qos_ = rclcpp::SystemDefaultsQoS();
   typename rclcpp::Subscription<InputMessage>::SharedPtr subscription_;
   realtime_tools::RealtimeBuffer<StampedMessage> msg_buffer_;
   rclcpp::Time prev_stamp_;
@@ -255,34 +267,30 @@ class InputMixin<std::tuple<InputOptions...>, ControllerIface>
     : public InputMixin<InputOptions, ControllerIface>...,
       public OnReadContract<std::tuple<InputOptions...>> {
 private:
-  using BaseCommon = ControllerInterfaceAdapter<ControllerIface>;
-  template <typename InputOption> using BaseInput = InputMixin<InputOption, ControllerIface>;
+  template <typename InputOption> using Base = InputMixin<InputOption, ControllerIface>;
 
 protected:
-  typename BaseCommon::NodeReturn on_init() override {
-    return BaseCommon::merge({BaseInput<InputOptions>::on_init()...});
-  }
+  NodeReturn on_init() override { return merge({Base<InputOptions>::on_init()...}); }
 
-  typename BaseCommon::NodeReturn
-  on_activate(const rclcpp_lifecycle::State &previous_state) override {
-    return BaseCommon::merge({BaseInput<InputOptions>::on_activate(previous_state)...});
+  NodeReturn on_activate(const rclcpp_lifecycle::State &previous_state) override {
+    return merge({Base<InputOptions>::on_activate(previous_state)...});
   }
 
   controller_interface::InterfaceConfiguration state_interface_configuration() const override {
-    return BaseCommon::merge({BaseInput<InputOptions>::state_interface_configuration()...});
+    return merge({Base<InputOptions>::state_interface_configuration()...});
   }
 
   OnReadReturn<std::tuple<InputOptions...>> on_read(const rclcpp::Time &time,
                                                     const rclcpp::Duration &period,
                                                     std::tuple<InputOptions...>) override {
     // Call on_read() for each InputOption and defer to the implementation
-    return on_read_impl(BaseInput<InputOptions>::on_read(time, period, InputOptions())...);
+    return on_read_impl(Base<InputOptions>::on_read(time, period, InputOptions())...);
   }
 
   static OnReadReturn<std::tuple<InputOptions...>>
   on_read_impl(OnReadReturn<InputOptions> &&...results) {
     return {// Overall success - OK if all of on_read() returned OK
-            BaseCommon::merge({std::move(results.first)...}),
+            merge({std::move(results.first)...}),
             // Overall outputs - not a nullopt if any of on_read() did not return nullopt
             (results.second && ...)
                 ? std::make_optional(std::make_tuple(std::move(*results.second)...))

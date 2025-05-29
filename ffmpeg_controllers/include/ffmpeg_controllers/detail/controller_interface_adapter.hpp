@@ -2,12 +2,12 @@
 #define FFMPEG_CONTROLLERS_DETAIL_CONTROLLER_INTERFACE_ADAPTER_HPP
 
 #include <cstdint>
-#include <initializer_list>
 #include <string>
 #include <type_traits>
 
 #include <controller_interface/chainable_controller_interface.hpp>
 #include <controller_interface/controller_interface.hpp>
+#include <ffmpeg_controllers/detail/utility.hpp>
 #include <rclcpp/duration.hpp>
 #include <rclcpp/logger.hpp>
 #include <rclcpp/time.hpp>
@@ -24,10 +24,6 @@ template <class ControllerIface> class ControllerInterfaceAdapter;
 template <class ControllerIface>
 class ControllerInterfaceAdapterBase : public virtual ControllerIface {
 protected:
-  // Provide consistent aliases for the return values of virtual interface functions
-  using NodeReturn = typename ControllerIface::CallbackReturn; // for node-related functions
-  using ControllerReturn = controller_interface::return_type;  // for controller-related functions
-
   // Provide default implementations for virtual functions
   // defined but not implemented in controller_interface::[Chainable]ControllerInterface
 
@@ -100,52 +96,26 @@ protected:
     return nullptr;
   }
 
-  // Return SUCCESS if all given results are SUCCESS, otherwise return ERROR
-  static NodeReturn merge(std::initializer_list<NodeReturn> results) {
-    return std::all_of(results.begin(), results.end(),
-                       [](const auto result) { return result == NodeReturn::SUCCESS; })
-               ? NodeReturn::SUCCESS
-               : NodeReturn::ERROR;
-  }
-
-  // Return OK if all given results are OK, otherwise return ERROR
-  static ControllerReturn merge(std::initializer_list<ControllerReturn> results) {
-    return std::all_of(results.begin(), results.end(),
-                       [](const auto result) { return result == ControllerReturn::OK; })
-               ? ControllerReturn::OK
-               : ControllerReturn::ERROR;
-  }
-
-  // Return interface configuration that covers all given configurations
-  static controller_interface::InterfaceConfiguration
-  merge(std::initializer_list<controller_interface::InterfaceConfiguration> configs) {
-    using ConfigType = controller_interface::interface_configuration_type;
-    if (std::any_of(configs.begin(), configs.end(),
-                    [](const auto &config) { return config.type == ConfigType::ALL; })) {
-      return {ConfigType::ALL, {}};
-    } else if (std::all_of(configs.begin(), configs.end(),
-                           [](const auto &config) { return config.type == ConfigType::NONE; })) {
-      return {ConfigType::NONE, {}};
-    } else {
-      std::set<std::string> names;
-      for (const auto &config : configs) {
-        if (config.type == ConfigType::INDIVIDUAL) {
-          names.insert(config.names.begin(), config.names.end());
-        }
+  // Set the pointer value to the state interface exported from the derived class
+  template <typename T>
+  std::enable_if_t<std::is_pointer_v<T> || std::is_same_v<T, std::nullptr_t>, bool>
+  set_state_from_pointer(const std::string &iface_name, const T ptr_value) {
+    // Find the state interface specified by iface_name owned by this controller
+    for (const auto &iface : ControllerIface::ordered_exported_state_interfaces_) {
+      if (iface && iface->get_interface_name() == iface_name) {
+        // Convert the pointer to a double value and set it to the state interface
+        return iface->set_value(static_cast<double>(reinterpret_cast<std::uintptr_t>(ptr_value)));
       }
-      return {ConfigType::INDIVIDUAL, std::vector<std::string>(names.begin(), names.end())};
     }
+    return false;
   }
 };
 
 template <>
 class ControllerInterfaceAdapter<controller_interface::ControllerInterface>
     : public virtual ControllerInterfaceAdapterBase<controller_interface::ControllerInterface> {
-private:
-  using Base = ControllerInterfaceAdapterBase<controller_interface::ControllerInterface>;
-
 protected:
-  Base::ControllerReturn update(const rclcpp::Time &time, const rclcpp::Duration &period) override {
+  ControllerReturn update(const rclcpp::Time &time, const rclcpp::Duration &period) override {
     return on_update(time, period);
   }
 };
@@ -154,33 +124,15 @@ template <>
 class ControllerInterfaceAdapter<controller_interface::ChainableControllerInterface>
     : public virtual ControllerInterfaceAdapterBase<
           controller_interface::ChainableControllerInterface> {
-private:
-  using Base = ControllerInterfaceAdapterBase<controller_interface::ChainableControllerInterface>;
-
 protected:
-  Base::ControllerReturn
-  update_reference_from_subscribers(const rclcpp::Time & /*time*/,
-                                    const rclcpp::Duration & /*period*/) override {
-    return Base::ControllerReturn::OK;
+  ControllerReturn update_reference_from_subscribers(const rclcpp::Time & /*time*/,
+                                                     const rclcpp::Duration & /*period*/) override {
+    return ControllerReturn::OK;
   }
 
-  Base::ControllerReturn update_and_write_commands(const rclcpp::Time &time,
-                                                   const rclcpp::Duration &period) override {
+  ControllerReturn update_and_write_commands(const rclcpp::Time &time,
+                                             const rclcpp::Duration &period) override {
     return on_update(time, period);
-  }
-
-  // Set the pointer value to the state interface exported from the derived class
-  template <typename T>
-  std::enable_if_t<std::is_pointer_v<T> || std::is_same_v<T, std::nullptr_t>, bool>
-  set_state_from_pointer(const std::string &iface_name, const T ptr_value) {
-    // Find the state interface specified by iface_name owned by this controller
-    for (const auto &iface : Base::ordered_exported_state_interfaces_) {
-      if (iface && iface->get_interface_name() == iface_name) {
-        // Convert the pointer to a double value and set it to the state interface
-        return iface->set_value(static_cast<double>(reinterpret_cast<std::uintptr_t>(ptr_value)));
-      }
-    }
-    return false;
   }
 };
 

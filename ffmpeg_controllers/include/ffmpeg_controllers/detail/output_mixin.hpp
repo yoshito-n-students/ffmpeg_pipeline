@@ -9,9 +9,12 @@
 #include <ffmpeg_controllers/controller_options.hpp>
 #include <ffmpeg_controllers/detail/controller_interface_adapter.hpp>
 #include <ffmpeg_controllers/detail/controller_traits.hpp>
+#include <ffmpeg_controllers/detail/utility.hpp>
 #include <ffmpeg_cpp/ffmpeg_cpp.hpp>
 #include <rclcpp/duration.hpp>
 #include <rclcpp/publisher.hpp>
+#include <rclcpp/qos.hpp>
+#include <rclcpp/qos_overriding_options.hpp>
 #include <rclcpp/time.hpp>
 #include <realtime_tools/realtime_publisher.hpp>
 
@@ -25,16 +28,14 @@ namespace ffmpeg_controllers {
 template <typename OutputOption> class OnWriteContract {
 protected:
   // Default version
-  virtual controller_interface::return_type on_write(const rclcpp::Time &time,
-                                                     const rclcpp::Duration &period,
-                                                     OutputFor<OutputOption> &&output) = 0;
+  virtual ControllerReturn on_write(const rclcpp::Time &time, const rclcpp::Duration &period,
+                                    OutputFor<OutputOption> &&output) = 0;
 };
 template <typename... OutputOptions> class OnWriteContract<std::tuple<OutputOptions...>> {
 protected:
   // Tuple version
-  virtual controller_interface::return_type on_write(const rclcpp::Time &time,
-                                                     const rclcpp::Duration &period,
-                                                     OutputFor<OutputOptions> &&...outputs) = 0;
+  virtual ControllerReturn on_write(const rclcpp::Time &time, const rclcpp::Duration &period,
+                                    OutputFor<OutputOptions> &&...outputs) = 0;
 };
 
 // =====================================
@@ -51,38 +52,35 @@ private:
   using Base = ControllerInterfaceAdapter<ControllerIface>;
 
 protected:
-  typename Base::NodeReturn on_init() override {
+  NodeReturn on_init() override {
     // Names of intraprocess read-only variables to be exported
     Base::exported_state_interface_names_.emplace_back(HardwareInterfaceName<Object>);
-    return Base::NodeReturn::SUCCESS;
+    return NodeReturn::SUCCESS;
   }
 
-  typename Base::NodeReturn
-  on_activate(const rclcpp_lifecycle::State & /*previous_state*/) override {
+  NodeReturn on_activate(const rclcpp_lifecycle::State & /*previous_state*/) override {
     // Initialize the value of state interface owned by this controller
     // This cannot be in on_init() or on_configure()
     // because the interface is registered after executing them.
     return Base::set_state_from_pointer(HardwareInterfaceName<Object>, nullptr)
-               ? Base::NodeReturn::SUCCESS
-               : Base::NodeReturn::ERROR;
+               ? NodeReturn::SUCCESS
+               : NodeReturn::ERROR;
   }
 
-  typename Base::NodeReturn
-  on_deactivate(const rclcpp_lifecycle::State & /*previous_state*/) override {
+  NodeReturn on_deactivate(const rclcpp_lifecycle::State & /*previous_state*/) override {
     // Unregister the object from state interface owned by this controller
     return Base::set_state_from_pointer(HardwareInterfaceName<Object>, nullptr)
-               ? Base::NodeReturn::SUCCESS
-               : Base::NodeReturn::ERROR;
+               ? NodeReturn::SUCCESS
+               : NodeReturn::ERROR;
   }
 
-  typename Base::ControllerReturn on_write(const rclcpp::Time & /*time*/,
-                                           const rclcpp::Duration & /*period*/,
-                                           Object &&input_object) override {
+  ControllerReturn on_write(const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/,
+                            Object &&input_object) override {
     // Export the given object to the state interface owned by this controller
     output_object_ = std::move(input_object);
     return Base::set_state_from_pointer(HardwareInterfaceName<Object>, &output_object_)
-               ? Base::ControllerReturn::OK
-               : Base::ControllerReturn::ERROR;
+               ? ControllerReturn::OK
+               : ControllerReturn::ERROR;
   }
 
 private:
@@ -97,14 +95,14 @@ private:
   using Base = ControllerInterfaceAdapter<ControllerIface>;
 
 protected:
-  typename Base::NodeReturn on_init() override {
+  NodeReturn on_init() override {
     try {
       // The name of the hardware or controller to which the command interface is written
       output_name_ = Base::template get_user_parameter<std::string>("output_name");
-      return Base::NodeReturn::SUCCESS;
+      return NodeReturn::SUCCESS;
     } catch (const std::runtime_error &error) {
       RCLCPP_ERROR(Base::get_logger(), "Error while getting parameter value: %s", error.what());
-      return Base::NodeReturn::ERROR;
+      return NodeReturn::ERROR;
     }
   }
 
@@ -113,21 +111,20 @@ protected:
             {output_name_ + "/" + HardwareInterfaceName<Object>}};
   }
 
-  typename Base::ControllerReturn on_write(const rclcpp::Time & /*time*/,
-                                           const rclcpp::Duration & /*period*/,
-                                           Object &&input_object) override {
+  ControllerReturn on_write(const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/,
+                            Object &&input_object) override {
     if (const auto output_object = Base::template get_command_as_pointer<Object>(
             output_name_, HardwareInterfaceName<Object>);
         output_object) {
       // Update the command variable with the given object
       *output_object = std::move(input_object);
-      return Base::ControllerReturn::OK;
+      return ControllerReturn::OK;
     } else {
       // It is still OK if the command variable is not available
       RCLCPP_WARN(Base::get_logger(),
                   "Discarding output for the command interface %s/%s because it is not available",
                   output_name_.c_str(), HardwareInterfaceName<Object>);
-      return Base::ControllerReturn::OK;
+      return ControllerReturn::OK;
     }
   }
 
@@ -145,36 +142,47 @@ private:
 protected:
   using OutputMessage = Message;
 
-  typename Base::NodeReturn
-  on_configure(const rclcpp_lifecycle::State & /*previous_state*/) override {
+  NodeReturn on_init() override {
+    try {
+      // The base QoS profile for the publisher
+      qos_ =
+          to_qos(Base::template get_user_parameter<std::string>("qos_profile", "system_defaults"));
+      return NodeReturn::SUCCESS;
+    } catch (const std::runtime_error &error) {
+      RCLCPP_ERROR(Base::get_logger(), "Error while getting parameter value: %s", error.what());
+      return NodeReturn::ERROR;
+    }
+  }
+
+  NodeReturn on_configure(const rclcpp_lifecycle::State & /*previous_state*/) override {
     try {
       rclcpp::PublisherOptions options;
       options.qos_overriding_options = rclcpp::QosOverridingOptions::with_default_policies();
       underlying_publisher_ = Base::get_node()->template create_publisher<OutputMessage>(
-          TopicName<Message>, rclcpp::SystemDefaultsQoS(), options);
+          TopicName<Message>, qos_, options);
       async_publisher_ =
           std::make_unique<realtime_tools::RealtimePublisher<OutputMessage>>(underlying_publisher_);
       RCLCPP_INFO(Base::get_logger(), "Created publisher on %s",
                   underlying_publisher_->get_topic_name());
-      return Base::NodeReturn::SUCCESS;
+      return NodeReturn::SUCCESS;
     } catch (const std::runtime_error &error) {
       RCLCPP_ERROR(Base::get_logger(), "Error while creating publishers: %s", error.what());
-      return Base::NodeReturn::ERROR;
+      return NodeReturn::ERROR;
     }
   }
 
-  typename Base::ControllerReturn on_write(const rclcpp::Time & /*time*/,
-                                           const rclcpp::Duration & /*period*/,
-                                           OutputMessage &&input_msg) override {
+  ControllerReturn on_write(const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/,
+                            OutputMessage &&input_msg) override {
     // Publish a message if the message is generated and the publisher can be locked
     if (async_publisher_->trylock()) {
       async_publisher_->msg_ = std::move(input_msg);
       async_publisher_->unlockAndPublish();
     }
-    return Base::ControllerReturn::OK;
+    return ControllerReturn::OK;
   }
 
 private:
+  rclcpp::QoS qos_ = rclcpp::SystemDefaultsQoS();
   typename rclcpp::Publisher<OutputMessage>::SharedPtr underlying_publisher_;
   std::unique_ptr<realtime_tools::RealtimePublisher<OutputMessage>> async_publisher_;
 };
@@ -184,33 +192,27 @@ class OutputMixin<std::tuple<OutputOptions...>, ControllerIface>
     : public OutputMixin<OutputOptions, ControllerIface>...,
       public OnWriteContract<std::tuple<OutputOptions...>> {
 private:
-  using BaseCommon = ControllerInterfaceAdapter<ControllerIface>;
-  template <typename OutputOption> using BaseOutput = OutputMixin<OutputOption, ControllerIface>;
+  template <typename OutputOption> using Base = OutputMixin<OutputOption, ControllerIface>;
 
 protected:
-  typename BaseCommon::NodeReturn on_init() override {
-    return BaseCommon::merge({BaseOutput<OutputOptions>::on_init()...});
+  NodeReturn on_init() override { return merge({Base<OutputOptions>::on_init()...}); }
+
+  NodeReturn on_activate(const rclcpp_lifecycle::State &previous_state) override {
+    return merge({Base<OutputOptions>::on_activate(previous_state)...});
   }
 
-  typename BaseCommon::NodeReturn
-  on_activate(const rclcpp_lifecycle::State &previous_state) override {
-    return BaseCommon::merge({BaseOutput<OutputOptions>::on_activate(previous_state)...});
-  }
-
-  typename BaseCommon::NodeReturn
-  on_deactivate(const rclcpp_lifecycle::State &previous_state) override {
-    return BaseCommon::merge({BaseOutput<OutputOptions>::on_deactivate(previous_state)...});
+  NodeReturn on_deactivate(const rclcpp_lifecycle::State &previous_state) override {
+    return merge({Base<OutputOptions>::on_deactivate(previous_state)...});
   }
 
   controller_interface::InterfaceConfiguration command_interface_configuration() const override {
-    return BaseCommon::merge({BaseOutput<OutputOptions>::command_interface_configuration()...});
+    return merge({Base<OutputOptions>::command_interface_configuration()...});
   }
 
-  typename BaseCommon::ControllerReturn on_write(const rclcpp::Time &time,
-                                                 const rclcpp::Duration &period,
-                                                 OutputFor<OutputOptions> &&...outputs) override {
-    return BaseCommon::merge({BaseOutput<OutputOptions>::on_write(
-        time, period, std::forward<decltype(outputs)>(outputs))...});
+  ControllerReturn on_write(const rclcpp::Time &time, const rclcpp::Duration &period,
+                            OutputFor<OutputOptions> &&...outputs) override {
+    return merge(
+        {Base<OutputOptions>::on_write(time, period, std::forward<decltype(outputs)>(outputs))...});
   }
 };
 
