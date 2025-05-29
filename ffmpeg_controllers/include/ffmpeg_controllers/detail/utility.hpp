@@ -71,7 +71,7 @@ static inline rclcpp::QoS to_qos(const std::string &profile) {
     return rclcpp::SensorDataQoS();
   } else if (profile == "services") {
     return rclcpp::ServicesQoS();
-  } else if (profile == "system_default") {
+  } else if (profile == "system_defaults") {
     return rclcpp::SystemDefaultsQoS();
   } else {
     throw std::runtime_error("Unknown QoS profile: " + profile);
