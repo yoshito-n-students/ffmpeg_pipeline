@@ -46,8 +46,4 @@
       type: ffmpeg_controllers/PacketBroadcaster
       input_name: encoder_filter
       # QoS settings can be customized to reduce transmission latency
-      qos_overrides:
-        /packet_broadcaster/packet:
-          publisher:
-            reliability: best_effort
-            depth: 5
+      qos_profile: sensor_data

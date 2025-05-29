@@ -33,8 +33,4 @@
     ros__parameters:
       type: ffmpeg_controllers/PacketReceiver
       # QoS settings can be customized to reduce reception latency
-      qos_overrides:
-        /packet_receiver/packet:
-          subscription:
-            reliability: best_effort
-            depth: 5
+      qos_profile: sensor_data
