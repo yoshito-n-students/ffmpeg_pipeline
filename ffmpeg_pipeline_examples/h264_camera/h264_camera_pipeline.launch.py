@@ -90,8 +90,9 @@ def generate_launch_description():
         name='image_view',
         parameters=[{
             'image_transport': 'ffmpeg',
-            # 'cuda', 'vaapi', 'vulkan', ... or 'auto'
-            'compressed_image_broadcaster.image.ffmpeg.hw_type_name': 'cuda',
+            'compressed_image_broadcaster.image.ffmpeg': {
+                'hw_type_name': 'cuda',  # 'vaapi', 'vulkan', ... or 'auto'
+            },
         }],
         remappings=[('image', 'compressed_image_broadcaster/image')],
         output='both',
