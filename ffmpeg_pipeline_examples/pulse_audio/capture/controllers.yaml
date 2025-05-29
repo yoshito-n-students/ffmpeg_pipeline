@@ -2,7 +2,7 @@
 
   ros2_control_node:
     ros__parameters:
-      # As noted in robot_description.urdf.xacro, we expect 25 packets per sec from the input device.
+      # As noted in hardware_description.urdf.xacro, we expect 25 packets per sec from the input device.
       # The update rate of the controller must be greater than this value not to miss any packets.
       update_rate: 30 # must be integer
 
