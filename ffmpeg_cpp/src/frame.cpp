@@ -43,23 +43,41 @@ Frame Frame::create(const std::uint8_t *const data, const std::size_t size) {
 
 Frame Frame::create(const ffmpeg_pipeline_msgs::msg::Frame &msg) {
   Frame frame = Frame::create(msg.data.data(), msg.data.size());
-  if (msg.width > 0 && msg.height > 0) {
-    frame->format = av_get_pix_fmt(msg.format.c_str());
-  } else if (msg.nb_samples > 0) {
-    frame->format = av_get_sample_fmt(msg.format.c_str());
-  }
+  // Common fields for any frame type
   frame->pts = msg.pts;
   frame->pkt_dts = msg.pkt_dts;
   frame->time_base.num = msg.time_base.num;
   frame->time_base.den = msg.time_base.den;
-  // Audio-specific fields
+  // Fields specific to the frame type (copy in any case not to lose the data)
+  // - For video frames
+  frame->width = msg.width;
+  frame->height = msg.height;
+  // - For audio frames
   frame->nb_samples = msg.nb_samples;
   frame->sample_rate = msg.sample_rate;
   frame->ch_layout = to_channel_layout(msg.ch_layout);
   frame->duration = msg.duration;
-  // Video-specific fields
-  frame->width = msg.width;
-  frame->height = msg.height;
+  // Fields that change depending on the frame type
+  if (msg.width > 0 && msg.height > 0) {
+    // Video frame
+    frame->format = av_get_pix_fmt(msg.format.c_str());
+    if (const int linesize = av_image_get_linesize(static_cast<AVPixelFormat>(frame->format),
+                                                   frame->width, 0 /* 0: first plane */);
+        linesize >= 0) {
+      frame->linesize[0] = linesize;
+    } else {
+      throw Error("Frame::create(): Failed to get image linesize", linesize);
+    }
+  } else if (msg.nb_samples > 0) {
+    // Audio frame
+    frame->format = av_get_sample_fmt(msg.format.c_str());
+    if (const int ret = av_samples_get_buffer_size(
+            &frame->linesize[0], frame->ch_layout.nb_channels, frame->nb_samples,
+            static_cast<AVSampleFormat>(frame->format), 1 /* 1: no_alignment */);
+        ret < 0) {
+      throw Error("Frame::create(): Failed to get audio linesize", ret);
+    }
+  }
   return frame;
 }
 
@@ -113,7 +131,21 @@ std::string Frame::ch_layout_str() const { return get() ? to_string(get()->ch_la
 ffmpeg_pipeline_msgs::msg::Frame Frame::to_frame_msg(const rclcpp::Time &stamp) const {
   ffmpeg_pipeline_msgs::msg::Frame msg;
   msg.header.stamp = stamp;
-  // Common fields for video and audio frames
+  // Common fields for any frame type
+  msg.pts = get()->pts;
+  msg.pkt_dts = get()->pkt_dts;
+  msg.time_base.num = get()->time_base.num;
+  msg.time_base.den = get()->time_base.den;
+  // Fields specific to the frame type (copy in any case not to lose the data)
+  // - For video frames
+  msg.width = get()->width;
+  msg.height = get()->height;
+  // - For audio frames
+  msg.nb_samples = get()->nb_samples;
+  msg.sample_rate = get()->sample_rate;
+  msg.ch_layout = ch_layout_str();
+  msg.duration = get()->duration;
+  // Fields that change depending on the frame type
   if (get()->width > 0 && get()->height > 0) {
     // Video frame
     msg.format = to_string(static_cast<AVPixelFormat>(get()->format));
@@ -136,18 +168,6 @@ ffmpeg_pipeline_msgs::msg::Frame Frame::to_frame_msg(const rclcpp::Time &stamp) 
     msg.data.assign(get()->data[0], get()->data[0] + data_size);
   }
   // TODO: Warn or throw if data[1] is not null
-  msg.pts = get()->pts;
-  msg.pkt_dts = get()->pkt_dts;
-  msg.time_base.num = get()->time_base.num;
-  msg.time_base.den = get()->time_base.den;
-  // Audio-specific fields
-  msg.nb_samples = get()->nb_samples;
-  msg.sample_rate = get()->sample_rate;
-  msg.ch_layout = ch_layout_str();
-  msg.duration = get()->duration;
-  // Video-specific fields
-  msg.width = get()->width;
-  msg.height = get()->height;
   return msg;
 }
 
