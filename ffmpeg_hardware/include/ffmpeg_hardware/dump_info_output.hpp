@@ -43,7 +43,6 @@ protected:
       set_command_from_pointer("frame", nullptr);
       packet_ = ffmpeg_cpp::Packet::null();
       frame_ = ffmpeg_cpp::Frame::null();
-      RCLCPP_INFO(get_logger(), "Closed the output device");
       return CallbackReturn::SUCCESS;
     } catch (const std::runtime_error &error) {
       RCLCPP_ERROR(get_logger(), "Failed to close the output device: %s", error.what());
