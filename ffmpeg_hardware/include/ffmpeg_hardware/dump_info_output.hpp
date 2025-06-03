@@ -21,7 +21,11 @@ protected:
         ffmpeg_cpp::set_log_level(ffmpeg_log_level);
       }
 
-      // TODO: Print available parameters for debugging purposes
+      // Print available parameters for debugging purposes
+      RCLCPP_INFO(get_logger(), "Hardware parameters for '%s':", info_.name.c_str());
+      for (const auto &[key, value] : info_.hardware_parameters) {
+        RCLCPP_INFO(get_logger(), "  '%s': '%s'", key.c_str(), value.c_str());
+      }
 
       // Initialize the command variables and register them to the interface
       packet_ = ffmpeg_cpp::Packet::create();
