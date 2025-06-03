@@ -45,7 +45,7 @@ protected:
       frame_ = ffmpeg_cpp::Frame::null();
       return CallbackReturn::SUCCESS;
     } catch (const std::runtime_error &error) {
-      RCLCPP_ERROR(get_logger(), "Failed to close the output device: %s", error.what());
+      RCLCPP_ERROR(get_logger(), "Failed to deactivate the mock output: %s", error.what());
       return CallbackReturn::ERROR;
     }
   }
@@ -94,7 +94,7 @@ protected:
       }
       return hardware_interface::return_type::OK;
     } catch (const std::runtime_error &error) {
-      RCLCPP_ERROR(get_logger(), "Failed to write the frame: %s", error.what());
+      RCLCPP_ERROR(get_logger(), "Failed to print the frame: %s", error.what());
       return hardware_interface::return_type::ERROR;
     }
   }
