@@ -113,6 +113,8 @@ protected:
       RCLCPP_INFO(get_logger(), "Got frame (%ld | %s | %s | %d Hz | %d samples)", frame_->pkt_dts,
                   frame_.ch_layout_str().c_str(), frame_.format_name().c_str(), frame_->sample_rate,
                   frame_->nb_samples);
+    } else {
+      RCLCPP_INFO(get_logger(), "Got frame (%ld | %s)", frame_->pkt_dts);
     }
   }
 
