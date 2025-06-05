@@ -17,27 +17,18 @@ namespace ffmpeg_cpp {
 // Utility
 // =======
 
-void set_log_level(const std::string &log_level) {
-  if (log_level == "quiet") {
-    av_log_set_level(AV_LOG_QUIET);
-  } else if (log_level == "panic") {
-    av_log_set_level(AV_LOG_PANIC);
-  } else if (log_level == "fatal") {
-    av_log_set_level(AV_LOG_FATAL);
-  } else if (log_level == "error") {
-    av_log_set_level(AV_LOG_ERROR);
-  } else if (log_level == "warning") {
-    av_log_set_level(AV_LOG_WARNING);
-  } else if (log_level == "info") {
-    av_log_set_level(AV_LOG_INFO);
-  } else if (log_level == "verbose") {
-    av_log_set_level(AV_LOG_VERBOSE);
-  } else if (log_level == "debug") {
-    av_log_set_level(AV_LOG_DEBUG);
-  } else if (log_level == "trace") {
-    av_log_set_level(AV_LOG_TRACE);
+void set_log_level(const std::string &level_name) {
+  constexpr std::pair<const char *, int> name_level_pairs[] = {
+      {"quiet", AV_LOG_QUIET},     {"panic", AV_LOG_PANIC},     {"fatal", AV_LOG_FATAL},
+      {"error", AV_LOG_ERROR},     {"warning", AV_LOG_WARNING}, {"info", AV_LOG_INFO},
+      {"verbose", AV_LOG_VERBOSE}, {"debug", AV_LOG_DEBUG},     {"trace", AV_LOG_TRACE}};
+  const auto found_it =
+      std::find_if(std::begin(name_level_pairs), std::end(name_level_pairs),
+                   [&level_name](const auto &pair) { return pair.first == level_name; });
+  if (found_it != std::end(name_level_pairs)) {
+    av_log_set_level(found_it->second);
   } else {
-    throw Error("set_log_level(): " + log_level + " is not a valid log level");
+    throw Error("set_log_level(): " + level_name + " is not a valid log level");
   }
 }
 
@@ -112,7 +103,7 @@ template <> void Deleter<AVFormatContext>::operator()(AVFormatContext *format_ct
     }
     avformat_free_context(format_ctx);
   } else {
-    // If the context is not configured as an input or output device, just free it
+    // If the context is not configured as an input or output device, just free found_it
     avformat_free_context(format_ctx);
   }
 }

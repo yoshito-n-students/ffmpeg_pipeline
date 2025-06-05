@@ -31,7 +31,7 @@ namespace ffmpeg_cpp {
 // =================
 
 // Set the log level ("quiet", "panic", "fatal", ..., "verbose", "debug", "trace") for ffmpeg
-void set_log_level(const std::string &log_level);
+void set_log_level(const std::string &level_name);
 // Convert a ffmpeg's error number to a string
 std::string err2str(const int errnum);
 // Convert a ffmpeg pixel format name to a ROS image encoding, or an empty string if not found
