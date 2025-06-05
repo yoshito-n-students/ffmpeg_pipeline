@@ -409,12 +409,6 @@ private:
 public:
   // Construct without underlying SwsContext
   static VideoConverter null();
-  // Initialize the converter for changing only the pixel format
-  static VideoConverter create(const int width, const int height, //
-                               const std::string &src_format_name,
-                               const std::string &dst_format_name) {
-    return create(width, height, src_format_name, width, height, dst_format_name);
-  }
   // Initialize the converter for changing the pixel format and the size
   static VideoConverter create(const int src_width, const int src_height,
                                const std::string &src_format_name, const int dst_width,

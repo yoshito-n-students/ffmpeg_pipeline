@@ -125,8 +125,9 @@ protected:
 
             // Configure the image converter for this frame if needed
             if (!converter_) {
-              converter_ = ffmpeg_cpp::VideoConverter::create(frame->width, frame->height,
-                                                              frame.format_name(), dst_format_name);
+              converter_ = ffmpeg_cpp::VideoConverter::create(      //
+                  frame->width, frame->height, frame.format_name(), //
+                  frame->width, frame->height, dst_format_name);
               RCLCPP_INFO(node_->get_logger(), "Configured converter ([%s] %dx%d -> [%s])",
                           converter_.src_format_name().c_str(), converter_.src_width(),
                           converter_.src_height(), converter_.dst_format_name().c_str());

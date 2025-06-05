@@ -150,7 +150,7 @@ int main(int argc, char **argv) {
           // Initialize the image converter if not already done
           if (!converter) {
             converter = av::VideoConverter::create(frame->width, frame->height, frame.format_name(),
-                                                   "bgr24");
+                                                   frame->width, frame->height, "bgr24");
             RCLCPP_INFO(node->get_logger(), "Configured converter ([%s] %dx%d -> [%s])",
                         converter.src_format_name().c_str(), converter.src_width(),
                         converter.src_height(), converter.dst_format_name().c_str());
