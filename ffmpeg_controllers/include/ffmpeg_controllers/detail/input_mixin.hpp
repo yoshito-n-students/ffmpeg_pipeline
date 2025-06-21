@@ -4,6 +4,7 @@
 #include <optional>
 #include <stdexcept>
 #include <string>
+#include <type_traits>
 #include <utility> // for std::pair<>
 
 #include <ffmpeg_controllers/controller_options.hpp>
@@ -54,104 +55,6 @@ protected:
 
 template <typename InputOption, class ControllerIface> class InputMixin;
 
-template <class ControllerIface>
-class InputMixin<input_options::Read<ffmpeg_cpp::Frame>, ControllerIface>
-    : public virtual ControllerInterfaceAdapter<ControllerIface>,
-      public OnReadContract<input_options::Read<ffmpeg_cpp::Frame>> {
-private:
-  using Base = ControllerInterfaceAdapter<ControllerIface>;
-
-protected:
-  NodeReturn on_init() override {
-    try {
-      // The name of the hardware or controller from which the state interface is loaned
-      input_name_ = Base::template get_user_parameter<std::string>("input_name");
-      return NodeReturn::SUCCESS;
-    } catch (const std::runtime_error &error) {
-      RCLCPP_ERROR(Base::get_logger(), "Error while getting parameter value: %s", error.what());
-      return NodeReturn::ERROR;
-    }
-  }
-
-  NodeReturn on_activate(const rclcpp_lifecycle::State & /*previous_state*/) override {
-    prev_dts_ = 0;
-    return NodeReturn::SUCCESS;
-  }
-
-  controller_interface::InterfaceConfiguration state_interface_configuration() const override {
-    return {controller_interface::interface_configuration_type::INDIVIDUAL,
-            {input_name_ + "/" + HardwareInterfaceName<ffmpeg_cpp::Frame>}};
-  }
-
-  OnReadReturn<input_options::Read<ffmpeg_cpp::Frame>>
-  on_read(const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/,
-          input_options::Read<ffmpeg_cpp::Frame>) override {
-    if (const auto input_frame = Base::template get_state_as_pointer<ffmpeg_cpp::Frame>(
-            input_name_, HardwareInterfaceName<ffmpeg_cpp::Frame>);
-        input_frame && (*input_frame)->pkt_dts > prev_dts_) {
-      // Return the input frame if it is new
-      prev_dts_ = (*input_frame)->pkt_dts;
-      return {ControllerReturn::OK, std::cref(*input_frame)};
-    } else {
-      // It is still OK if the input frame is not new or not available
-      return {ControllerReturn::OK, std::nullopt};
-    }
-  }
-
-private:
-  std::string input_name_;
-  std::int64_t prev_dts_;
-};
-
-template <class ControllerIface>
-class InputMixin<input_options::Read<ffmpeg_cpp::Packet>, ControllerIface>
-    : public virtual ControllerInterfaceAdapter<ControllerIface>,
-      public OnReadContract<input_options::Read<ffmpeg_cpp::Packet>> {
-private:
-  using Base = ControllerInterfaceAdapter<ControllerIface>;
-
-protected:
-  NodeReturn on_init() override {
-    try {
-      // The name of the hardware or controller from which the state interface is loaned
-      input_name_ = Base::template get_user_parameter<std::string>("input_name");
-      return NodeReturn::SUCCESS;
-    } catch (const std::runtime_error &error) {
-      RCLCPP_ERROR(Base::get_logger(), "Error while getting parameter value: %s", error.what());
-      return NodeReturn::ERROR;
-    }
-  }
-
-  NodeReturn on_activate(const rclcpp_lifecycle::State & /*previous_state*/) override {
-    prev_dts_ = 0;
-    return NodeReturn::SUCCESS;
-  }
-
-  controller_interface::InterfaceConfiguration state_interface_configuration() const override {
-    return {controller_interface::interface_configuration_type::INDIVIDUAL,
-            {input_name_ + "/" + HardwareInterfaceName<ffmpeg_cpp::Packet>}};
-  }
-
-  OnReadReturn<input_options::Read<ffmpeg_cpp::Packet>>
-  on_read(const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/,
-          input_options::Read<ffmpeg_cpp::Packet>) override {
-    if (const auto input_packet = Base::template get_state_as_pointer<ffmpeg_cpp::Packet>(
-            input_name_, HardwareInterfaceName<ffmpeg_cpp::Packet>);
-        input_packet && (*input_packet)->dts > prev_dts_) {
-      // Return the input packet if it is new
-      prev_dts_ = (*input_packet)->dts;
-      return {ControllerReturn::OK, std::cref(*input_packet)};
-    } else {
-      // It is still OK if the input packet is not new or not available
-      return {ControllerReturn::OK, std::nullopt};
-    }
-  }
-
-private:
-  std::string input_name_;
-  std::int64_t prev_dts_;
-};
-
 template <typename Object, class ControllerIface>
 class InputMixin<input_options::Read<Object>, ControllerIface>
     : public virtual ControllerInterfaceAdapter<ControllerIface>,
@@ -171,6 +74,11 @@ protected:
     }
   }
 
+  NodeReturn on_activate(const rclcpp_lifecycle::State & /*previous_state*/) override {
+    prev_dts_ = 0;
+    return NodeReturn::SUCCESS;
+  }
+
   controller_interface::InterfaceConfiguration state_interface_configuration() const override {
     return {controller_interface::interface_configuration_type::INDIVIDUAL,
             {input_name_ + "/" + HardwareInterfaceName<Object>}};
@@ -179,17 +87,39 @@ protected:
   OnReadReturn<input_options::Read<Object>> on_read(const rclcpp::Time & /*time*/,
                                                     const rclcpp::Duration & /*period*/,
                                                     input_options::Read<Object>) override {
-    if (const auto object =
-            Base::template get_state_as_pointer<Object>(input_name_, HardwareInterfaceName<Object>);
-        object) {
-      return {ControllerReturn::OK, std::cref(*object)};
+    const auto input_object =
+        Base::template get_state_as_pointer<Object>(input_name_, HardwareInterfaceName<Object>);
+
+    // Specialization for different Object types
+    if constexpr (std::is_same_v<Object, ffmpeg_cpp::Frame>) {
+      // for ffmpeg_cpp::Frame
+      if (input_object && (*input_object)->pkt_dts > prev_dts_) {
+        // Return the input frame if it is new
+        prev_dts_ = (*input_object)->pkt_dts;
+        return {ControllerReturn::OK, std::cref(*input_object)};
+      }
+    } else if constexpr (std::is_same_v<Object, ffmpeg_cpp::Packet>) {
+      // for ffmpeg_cpp::Packet
+      if (input_object && (*input_object)->dts > prev_dts_) {
+        // Return the input packet if it is new
+        prev_dts_ = (*input_object)->dts;
+        return {ControllerReturn::OK, std::cref(*input_object)};
+      }
     } else {
-      return {ControllerReturn::OK, std::nullopt};
+      // for other Object types
+      if (input_object) {
+        // Return the input object if available
+        return {ControllerReturn::OK, std::cref(*input_object)};
+      }
     }
+
+    // It is still OK if no input object to be returned
+    return {ControllerReturn::OK, std::nullopt};
   }
 
-private:
+protected:
   std::string input_name_;
+  std::int64_t prev_dts_;
 };
 
 template <typename Message, class ControllerIface>
