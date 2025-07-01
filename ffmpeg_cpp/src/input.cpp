@@ -32,7 +32,7 @@ Input Input::create(const std::string &url, const std::string &format_name,
   input->flags |= AVFMT_FLAG_NONBLOCK;
 
   // Find the input format by name
-  const AVInputFormat *iformat =
+  const AVInputFormat *const iformat =
       (format_name.empty() ? nullptr : av_find_input_format(format_name.c_str()));
   if (!format_name.empty() && iformat == nullptr) {
     throw Error("Input::create(): " + format_name + " was not recognized as an input format");
@@ -42,11 +42,11 @@ Input Input::create(const std::string &url, const std::string &format_name,
   // avformat_open_input() may free the context and options,
   // so we release the ownership of them from unique_ptr during calling it.
   {
-    AVFormatContext *iformat_ctx = input.release();
+    AVFormatContext *input_ptr = input.release();
     Dictionary writable_options = options;
     AVDictionary *writable_options_ptr = writable_options.release();
-    const int ret = avformat_open_input(&iformat_ctx, url.c_str(), iformat, &writable_options_ptr);
-    input.reset(iformat_ctx);
+    const int ret = avformat_open_input(&input_ptr, url.c_str(), iformat, &writable_options_ptr);
+    input.reset(input_ptr);
     writable_options.reset(writable_options_ptr);
     if (ret < 0) {
       throw Error("Input::create(): Failed to open input " + url, ret);
