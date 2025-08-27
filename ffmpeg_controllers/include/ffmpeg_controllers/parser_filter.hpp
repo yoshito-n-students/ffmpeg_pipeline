@@ -63,7 +63,7 @@ protected:
       // Return OK with no packet if no packet is found
       return {ControllerReturn::OK, std::nullopt};
     } catch (const std::runtime_error &error) {
-      RCLCPP_ERROR(get_logger(), "Error while decoding packet: %s", error.what());
+      RCLCPP_ERROR(get_logger(), "Error while parsing packet: %s", error.what());
       return {ControllerReturn::ERROR, std::nullopt};
     }
   }
