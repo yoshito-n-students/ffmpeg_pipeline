@@ -362,7 +362,7 @@ public:
   // Send a raw frame to the encoder
   void send_frame(const Frame &frame);
 
-  // Receive a encoded packet from the encoder.
+  // Receive an encoded packet from the encoder.
   // The packet may be null if no packet is available.
   Packet receive_packet();
 };

@@ -36,14 +36,14 @@ Decoder Decoder::create(const std::string &decoder_name, const CodecParameters &
   }
 
   // Set the options to enable error concealment and format preference.
-  // Some options are for video decoders, but they suppose no problem for other decoders.
+  // Some options are for video decoders, but they do not affect other decoders.
   decoder->workaround_bugs = FF_BUG_AUTODETECT;
   decoder->err_recognition = AV_EF_CRCCHECK;
   decoder->error_concealment = FF_EC_GUESS_MVS | FF_EC_DEBLOCK;
 
   // Import the codec parameters to the decoder context except for codec_{type, id}
-  // because they suppose to be already set by avcodec_alloc_context3()
-  // and are ommitted from the codec parameters.
+  // because they are supposed to be already set by avcodec_alloc_context3()
+  // and are omitted from the codec parameters.
   if (codec_params) {
     const AVMediaType codec_type = decoder->codec_type;
     const AVCodecID codec_id = decoder->codec_id;
@@ -72,7 +72,7 @@ Decoder Decoder::create(const std::string &decoder_name, const CodecParameters &
         }
       }
     } else {
-      // USe the specified hardware device type
+      // Use the specified hardware device type
       const AVHWDeviceType hw_type = av_hwdevice_find_type_by_name(hw_type_name.c_str());
       if (hw_type == AV_HWDEVICE_TYPE_NONE) {
         throw Error("Decoder::create(): " + hw_type_name + " is not a valid hardware type name");
@@ -126,7 +126,7 @@ Decoder Decoder::create(const std::string &decoder_name, const CodecParameters &
   }
 
   // Open the decoder. We copy the given options and release the ownership of it
-  // during calling avcodec_open2() because the funtion modify the options.
+  // during calling avcodec_open2() because the function modifies the options.
   // The following code should work even if the given options are nullptr.
   {
     Dictionary writable_options = decoder_options;
