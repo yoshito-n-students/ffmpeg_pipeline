@@ -103,7 +103,7 @@ template <> void Deleter<AVFormatContext>::operator()(AVFormatContext *format_ct
     }
     avformat_free_context(format_ctx);
   } else {
-    // If the context is not configured as an input or output device, just free found_it
+    // If the context is not configured as an input or output device, just free it
     avformat_free_context(format_ctx);
   }
 }
