@@ -13,7 +13,7 @@ extern "C" {
 namespace ffmpeg_cpp {
 
 // =========================================
-// Decoder - RAII wrapper for AVCodecContext
+// Encoder - RAII wrapper for AVCodecContext
 // =========================================
 
 Encoder Encoder::null() { return Encoder(nullptr); }
