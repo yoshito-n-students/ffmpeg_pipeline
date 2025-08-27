@@ -28,7 +28,7 @@ Encoder Encoder::create(const std::string &encoder_name, const CodecParameters &
     codec = avcodec_find_encoder(codec_params->codec_id);
   }
   if (!codec) {
-    throw Error("Encoder::create(): Faild to find encoder");
+    throw Error("Encoder::create(): Failed to find encoder");
   }
 
   // Allocate the encoder context
