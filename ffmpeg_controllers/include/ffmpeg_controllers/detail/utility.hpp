@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <initializer_list>
+#include <numeric> // for std::reduce()
 #include <set>
 #include <stdexcept>
 #include <string>
