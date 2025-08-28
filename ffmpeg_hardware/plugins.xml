@@ -20,7 +20,7 @@
            type="ffmpeg_hardware::FFmpegOutput"
            base_class_type="hardware_interface::ActuatorInterface">
         <description>
-            This plugin writes video/audio packets from various outputs using FFmpeg.
+            This plugin writes video/audio packets to various outputs using FFmpeg.
         </description>
     </class>
 
