@@ -4,7 +4,7 @@
     ros__parameters:
       # If this example is used with the capture example,
       # we receive 25 packets per second from the input topic.
-      # The update rate of the controllers must be greater than this value not to miss any packets.
+      # Controllers must update faster than this to avoid missing packets.
       update_rate: 30  # must be integer
 
   # Write the decompressed frames to the output device

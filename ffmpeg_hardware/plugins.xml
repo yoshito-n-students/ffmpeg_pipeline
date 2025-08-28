@@ -4,7 +4,7 @@
            type="ffmpeg_hardware::DumpInfoOutput"
            base_class_type="hardware_interface::ActuatorInterface">
         <description>
-            This plugin does not write video/audio packets but print them for debugging purposes.
+            This plugin does not write video/audio packets but prints them for debugging purposes.
         </description>
     </class>
     
@@ -12,7 +12,7 @@
            type="ffmpeg_hardware::FFmpegInput"
            base_class_type="hardware_interface::SensorInterface">
         <description>
-            This plugin read video/audio frames from various inputs using FFmpeg.
+            This plugin reads video/audio frames from various inputs using FFmpeg.
         </description>
     </class>
 
@@ -20,7 +20,7 @@
            type="ffmpeg_hardware::FFmpegOutput"
            base_class_type="hardware_interface::ActuatorInterface">
         <description>
-            This plugin write video/audio packets from various outputs using FFmpeg.
+            This plugin writes video/audio packets from various outputs using FFmpeg.
         </description>
     </class>
 
