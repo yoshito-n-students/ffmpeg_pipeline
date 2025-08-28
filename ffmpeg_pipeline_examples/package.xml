@@ -3,7 +3,7 @@
 <package format="3">
   <name>ffmpeg_pipeline_examples</name>
   <version>0.0.1</version>
-  <description>TODO: Package description</description>
+  <description>Example launch files and configurations demonstrating ffmpeg_pipeline usage</description>
   <maintainer email="okada@tohoku.ac.jp">root</maintainer>
   <license>MIT</license>
 

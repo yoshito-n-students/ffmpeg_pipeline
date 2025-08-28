@@ -3,7 +3,7 @@
 <package format="3">
   <name>ffmpeg_pipeline_msgs</name>
   <version>0.0.1</version>
-  <description>TODO: Package description</description>
+  <description>OS 2 message definitions for FFmpeg-based audio/video processing</description>
   <maintainer email="okada@tohoku.ac.jp">root</maintainer>
   <license>MIT</license>
 
