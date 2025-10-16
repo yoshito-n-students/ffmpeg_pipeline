@@ -76,8 +76,6 @@ def generate_launch_description():
         arguments=[
             '--controller-manager',
             'ros2_control_node',
-            '--param-file',
-            ffmpeg_controllers,
             'compressed_image_broadcaster',
             ],
         output='both',
