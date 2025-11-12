@@ -90,6 +90,7 @@ ament_export_dependencies(ffmpeg_pipeline_msgs rclcpp yaml_cpp_vendor)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
+  find_package(ament_cmake_gtest REQUIRED)
   # the following line skips the linter which checks for copyrights
   # comment the line when a copyright and license is added to all source files
   set(ament_cmake_copyright_FOUND TRUE)
@@ -100,6 +101,17 @@ if(BUILD_TESTING)
   # the following line specifies the clang-format file to use in clang_format test
   set(ament_cmake_clang_format_CONFIG_FILE ../.clang-format)
   ament_lint_auto_find_test_dependencies()
+
+  ament_add_gtest(test_dictionary test/test_dictionary.cpp)
+  if(TARGET test_dictionary)
+    target_link_libraries(test_dictionary ffmpeg_cpp ${YAML_CPP_LIBRARIES})
+    ament_target_dependencies(test_dictionary yaml_cpp_vendor)
+  endif()
+
+  ament_add_gtest(test_codec_parameters test/test_codec_parameters.cpp)
+  if(TARGET test_codec_parameters)
+    target_link_libraries(test_codec_parameters ffmpeg_cpp)
+  endif()
 endif()
 
 ament_package()
