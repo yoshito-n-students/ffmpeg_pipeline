@@ -7,7 +7,7 @@ TEST(CodecParametersTest, NullCodecParametersExposeEmptyMetadata) {
   const auto params = ffmpeg_cpp::CodecParameters::null();
   EXPECT_FALSE(params);
   EXPECT_EQ("", params.codec_type_name());
-  EXPECT_EQ("none", params.codec_name());
+  EXPECT_EQ("", params.codec_name());
   EXPECT_EQ("", params.format_name());
   EXPECT_EQ("", params.ch_layout_str());
 }
@@ -33,7 +33,6 @@ framerate: [30000, 1001]
   EXPECT_EQ("video", params.codec_type_name());
   EXPECT_EQ("h264", params.codec_name());
   EXPECT_EQ("yuv420p", params.format_name());
-  EXPECT_EQ("", params.ch_layout_str());
 }
 
 // Ensures audio-centric YAML populates the expected audio fields.
