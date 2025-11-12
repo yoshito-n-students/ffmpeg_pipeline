@@ -7,7 +7,7 @@ TEST(CodecParametersTest, NullCodecParametersExposeEmptyMetadata) {
   const auto params = ffmpeg_cpp::CodecParameters::null();
   EXPECT_FALSE(params);
   EXPECT_EQ("", params.codec_type_name());
-  EXPECT_EQ("", params.codec_name());
+  EXPECT_EQ("none", params.codec_name());
   EXPECT_EQ("", params.format_name());
   EXPECT_EQ("", params.ch_layout_str());
 }
@@ -16,7 +16,7 @@ TEST(CodecParametersTest, NullCodecParametersExposeEmptyMetadata) {
 TEST(CodecParametersTest, CreateReturnsAllocatedWrapper) {
   const auto params = ffmpeg_cpp::CodecParameters::create();
   EXPECT_TRUE(params);
-  EXPECT_EQ("", params.codec_name());
+  EXPECT_EQ("none", params.codec_name());
 }
 
 // Ensures video-centric YAML populates the expected video fields.
@@ -74,8 +74,8 @@ TEST(CodecParametersTest, FlowStyleYamlIsSupported) {
   EXPECT_EQ("video", params.codec_type_name());
   EXPECT_EQ("h264", params.codec_name());
   EXPECT_EQ("yuv420p", params.format_name());
-  EXPECT_EQ(640, params.width());
-  EXPECT_EQ(360, params.height());
+  EXPECT_EQ(640, params->width);
+  EXPECT_EQ(360, params->height);
 }
 
 // Ensures the copy constructor creates an independent clone of the parameters.

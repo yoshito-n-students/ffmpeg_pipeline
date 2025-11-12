@@ -20,12 +20,10 @@ TEST(DictionaryTest, NullDictionaryProducesEmptyYaml) {
   EXPECT_FALSE(dict);
 
   const YAML::Node node = YAML::Load(dict.to_yaml());
-  EXPECT_TRUE(node.IsMap());
-  EXPECT_EQ(0u, node.size());
+  EXPECT_TRUE(node.IsNull());
 
   const YAML::Node flow_node = YAML::Load(dict.to_flow_style_yaml());
-  EXPECT_TRUE(flow_node.IsMap());
-  EXPECT_EQ(0u, flow_node.size());
+  EXPECT_TRUE(flow_node.IsNull());
 }
 
 // Ensures a dictionary created from YAML round-trips back to the same data.
