@@ -47,8 +47,12 @@ static inline std::string to_string(const AVSampleFormat format) {
 
 static inline std::string to_string(const AVChannelLayout &ch_layout) {
   char buf[256];
-  if (const int len = av_channel_layout_describe(&ch_layout, buf, sizeof(buf)); len >= 0) {
-    return std::string(buf, len);
+  if (av_channel_layout_describe(&ch_layout, buf, sizeof(buf)) >= 0) {
+    // av_channel_layout_describe() includes the terminating null character
+    // in the returned length.
+    // Rely on the null-terminated buffer instead of the reported length
+    // to avoid embedding '\0' in the resulting std::string.
+    return std::string(buf);
   } else {
     return "";
   }
