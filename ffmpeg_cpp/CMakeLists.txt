@@ -107,6 +107,8 @@ if(BUILD_TESTING)
     target_link_libraries(test_dictionary ffmpeg_cpp ${YAML_CPP_LIBRARIES})
     ament_target_dependencies(test_dictionary yaml_cpp_vendor)
     if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+      # The tests perform intentional self-moves to prove wrapper robustness, so suppress the
+      # corresponding warning just for this target.
       target_compile_options(test_dictionary PRIVATE -Wno-self-move)
     endif()
   endif()
@@ -115,6 +117,7 @@ if(BUILD_TESTING)
   if(TARGET test_codec_parameters)
     target_link_libraries(test_codec_parameters ffmpeg_cpp)
     if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+      # These tests also rely on intentional self-move assignments; silence the warning locally.
       target_compile_options(test_codec_parameters PRIVATE -Wno-self-move)
     endif()
   endif()
