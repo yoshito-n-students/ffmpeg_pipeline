@@ -13,6 +13,7 @@ extern "C" {
 }
 
 #include <ffmpeg_cpp/ffmpeg_cpp.hpp>
+#include "internal.hpp"
 
 namespace {
 
