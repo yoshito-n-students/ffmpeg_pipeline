@@ -109,7 +109,9 @@ TEST(PacketTest, CopyConstructorClonesUnderlyingPacket) {
 
   EXPECT_NE(original.get(), copy.get());
   ASSERT_NE(nullptr, copy->data);
-  EXPECT_NE(static_cast<const void *>(original->data), static_cast<const void *>(copy->data));
+  // av_packet_clone shares the underlying refcounted buffer, so the data pointers are allowed
+  // to match while still providing value semantics.
+  EXPECT_EQ(static_cast<const void *>(original->data), static_cast<const void *>(copy->data));
   EXPECT_EQ(0, std::memcmp(original->data, copy->data, source.size()));
 }
 
