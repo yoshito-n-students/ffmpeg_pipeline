@@ -7,6 +7,7 @@
 
 extern "C" {
 #include <libavutil/avutil.h>
+#include <libavutil/hwcontext.h>
 #include <libavutil/opt.h>
 #include <libavutil/pixdesc.h>
 #include <libavutil/pixfmt.h>
