@@ -12,8 +12,8 @@ extern "C" {
 #include <libavutil/samplefmt.h>
 }
 
-#include <ffmpeg_cpp/ffmpeg_cpp.hpp>
 #include "internal.hpp"
+#include <ffmpeg_cpp/ffmpeg_cpp.hpp>
 
 namespace {
 
@@ -24,7 +24,7 @@ std::vector<std::uint8_t> make_pattern(const std::size_t size) {
 }
 
 ffmpeg_pipeline_msgs::msg::Frame make_video_message(const int width, const int height,
-                                                     const AVPixelFormat pixel_format) {
+                                                    const AVPixelFormat pixel_format) {
   ffmpeg_pipeline_msgs::msg::Frame msg;
   msg.pts = 42;
   msg.pkt_dts = 41;
@@ -42,8 +42,8 @@ ffmpeg_pipeline_msgs::msg::Frame make_video_message(const int width, const int h
 }
 
 ffmpeg_pipeline_msgs::msg::Frame make_audio_message(const int nb_samples, const int sample_rate,
-                                                     const AVSampleFormat sample_format,
-                                                     const std::string &layout_str) {
+                                                    const AVSampleFormat sample_format,
+                                                    const std::string &layout_str) {
   ffmpeg_pipeline_msgs::msg::Frame msg;
   msg.pts = 7;
   msg.pkt_dts = 5;
@@ -68,7 +68,7 @@ ffmpeg_pipeline_msgs::msg::Frame make_audio_message(const int nb_samples, const 
 }
 
 sensor_msgs::msg::Image make_image_message(const int width, const int height,
-                                            const std::string &encoding) {
+                                           const std::string &encoding) {
   sensor_msgs::msg::Image msg;
   msg.width = width;
   msg.height = height;
@@ -147,7 +147,7 @@ TEST(FrameTest, CreateFromAudioMessagePopulatesAudioFields) {
   EXPECT_EQ(layout, frame.ch_layout_str());
   EXPECT_EQ("s16", frame.format_name());
   const int expected_linesize = av_samples_get_buffer_size(nullptr, frame->ch_layout.nb_channels,
-                                                          nb_samples, sample_format, 1);
+                                                           nb_samples, sample_format, 1);
   EXPECT_EQ(expected_linesize, frame->linesize[0]);
   ASSERT_NE(nullptr, frame->data[0]);
   EXPECT_NE(static_cast<const void *>(msg.data.data()), static_cast<const void *>(frame->data[0]));
@@ -168,7 +168,8 @@ TEST(FrameTest, CreateFromImageMessageUsesEncodingProperties) {
   EXPECT_EQ(image.step, frame->linesize[0]);
   EXPECT_NE(AV_PIX_FMT_NONE, static_cast<AVPixelFormat>(frame->format));
   ASSERT_NE(nullptr, frame->data[0]);
-  EXPECT_NE(static_cast<const void *>(image.data.data()), static_cast<const void *>(frame->data[0]));
+  EXPECT_NE(static_cast<const void *>(image.data.data()),
+            static_cast<const void *>(frame->data[0]));
   EXPECT_EQ(0, std::memcmp(image.data.data(), frame->data[0], image.data.size()));
 }
 
@@ -258,4 +259,3 @@ TEST(FrameTest, ToImageMsgExportsDimensionsAndPayload) {
   EXPECT_EQ(static_cast<std::size_t>(image.step) * image.height, image.data.size());
   EXPECT_EQ(msg.data, image.data);
 }
-
