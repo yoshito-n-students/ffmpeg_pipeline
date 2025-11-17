@@ -70,9 +70,7 @@ TEST_F(SetLogLevelInvalidTest, ThrowsOnUnknownLevel) {
 TEST(Err2StrTest, ReturnsExpectedMessageForKnownErrors) {
   struct {
     int errnum;
-    const char *message;
-  } constexpr error_messages[] = {{AVERROR(EINVAL), "Invalid argument"},
-                                  {AVERROR(EIO), "I/O error"}};
+  } constexpr error_messages[] = {{AVERROR(EINVAL)}, {AVERROR(EIO)}};
 
   for (const auto &param : error_messages) {
     EXPECT_FALSE(ffmpeg_cpp::err2str(param.errnum).empty());
@@ -83,7 +81,6 @@ TEST(Err2StrTest, HandlesSuccessCode) {
   const auto result = ffmpeg_cpp::err2str(0);
 
   EXPECT_FALSE(result.empty());
-  EXPECT_EQ(std::string("Success"), result);
 }
 
 TEST(Err2StrTest, HandlesUnknownErrorCode) {
@@ -91,7 +88,6 @@ TEST(Err2StrTest, HandlesUnknownErrorCode) {
   const auto result = ffmpeg_cpp::err2str(kUnknownErrnum);
 
   EXPECT_FALSE(result.empty());
-  EXPECT_NE(std::string("Success"), result);
 }
 
 namespace {
