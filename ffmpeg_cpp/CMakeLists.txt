@@ -141,6 +141,12 @@ if(BUILD_TESTING)
       target_compile_options(test_packet PRIVATE -Wno-self-move)
     endif()
   endif()
+
+  ament_add_gtest(test_utility test/test_utility.cpp)
+  if(TARGET test_utility)
+    target_link_libraries(test_utility ffmpeg_cpp)
+    ament_target_dependencies(test_utility sensor_msgs)
+  endif()
 endif()
 
 ament_package()
