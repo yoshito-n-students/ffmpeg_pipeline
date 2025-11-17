@@ -68,12 +68,10 @@ TEST_F(SetLogLevelInvalidTest, ThrowsOnUnknownLevel) {
 }
 
 TEST(Err2StrTest, ReturnsExpectedMessageForKnownErrors) {
-  struct {
-    int errnum;
-  } constexpr error_messages[] = {{AVERROR(EINVAL)}, {AVERROR(EIO)}};
+  constexpr std::array<int, 2> kErrorCodes = {AVERROR(EINVAL), AVERROR(EIO)};
 
-  for (const auto &param : error_messages) {
-    EXPECT_FALSE(ffmpeg_cpp::err2str(param.errnum).empty());
+  for (const auto errnum : kErrorCodes) {
+    EXPECT_FALSE(ffmpeg_cpp::err2str(errnum).empty());
   }
 }
 
