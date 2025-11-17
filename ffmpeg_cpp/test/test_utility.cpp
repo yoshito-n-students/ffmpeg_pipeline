@@ -158,4 +158,3 @@ TEST(FormatMappingTest, RosEncodingRoundTripsThroughFfmpegName) {
     EXPECT_EQ(mapping.ros_encoding, ffmpeg_cpp::to_ros_image_encoding(ffmpeg_name));
   }
 }
-
