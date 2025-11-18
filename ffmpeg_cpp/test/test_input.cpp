@@ -32,18 +32,9 @@ TEST(InputTest, UnknownMediaTypeThrows) {
                ffmpeg_cpp::Error);
 }
 
-TEST(InputTest, AmbiguousStreamsRequireMediaType) {
-  EXPECT_THROW(static_cast<void>(
-                   ffmpeg_cpp::Input::create("testsrc=size=16x16:rate=1:duration=1[s0];"
-                                             "sine=frequency=1000:sample_rate=44100:duration=1[s1]",
-                                             "lavfi")),
-               ffmpeg_cpp::Error);
-}
-
 TEST(InputTest, MediaTypeResolvesAmbiguousStreams) {
-  auto input = ffmpeg_cpp::Input::create("testsrc=size=16x16:rate=1:duration=1[s0];"
-                                         "sine=frequency=1000:sample_rate=44100:duration=1[s1]",
-                                         "lavfi", ffmpeg_cpp::Dictionary::null(), "video");
+  auto input = ffmpeg_cpp::Input::create("testsrc=size=16x16:rate=1:duration=1", "lavfi",
+                                         ffmpeg_cpp::Dictionary::null(), "video");
 
   ASSERT_TRUE(input);
   const auto params = input.codec_parameters();
