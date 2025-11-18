@@ -92,7 +92,7 @@ TEST(Err2StrTest, HandlesUnknownErrorCode) {
 namespace {
 
 struct FormatMappingParam {
-  AVPixelFormat pix_fmt;
+  AVPixelFormat ffmpeg_fmt;
   const char *ros_encoding;
 };
 
@@ -123,10 +123,10 @@ class ToRosEncodingTest : public ::testing::TestWithParam<FormatMappingParam> {}
 TEST_P(ToRosEncodingTest, ConvertsKnownFormats) {
   const auto param = GetParam();
 
-  const auto *format_name = av_get_pix_fmt_name(param.pix_fmt);
-  ASSERT_NE(nullptr, format_name);
+  const auto *ffmpeg_name = av_get_pix_fmt_name(param.ffmpeg_fmt);
+  ASSERT_NE(nullptr, ffmpeg_name);
 
-  EXPECT_EQ(param.ros_encoding, ffmpeg_cpp::to_ros_image_encoding(format_name));
+  EXPECT_EQ(param.ros_encoding, ffmpeg_cpp::to_ros_image_encoding(ffmpeg_name));
 }
 
 INSTANTIATE_TEST_SUITE_P(KnownMappings, ToRosEncodingTest, ::testing::ValuesIn(kFormatMappings));
@@ -140,11 +140,11 @@ class ToFfmpegFormatNameTest : public ::testing::TestWithParam<FormatMappingPara
 TEST_P(ToFfmpegFormatNameTest, ConvertsKnownEncodings) {
   const auto param = GetParam();
 
-  const auto format_name = ffmpeg_cpp::to_ffmpeg_format_name(param.ros_encoding);
-  ASSERT_NE(nullptr, av_get_pix_fmt_name(param.pix_fmt));
+  const auto ffmpeg_name = ffmpeg_cpp::to_ffmpeg_format_name(param.ros_encoding);
+  ASSERT_NE(nullptr, av_get_pix_fmt_name(param.ffmpeg_fmt));
 
-  ASSERT_FALSE(format_name.empty());
-  EXPECT_EQ(param.pix_fmt, av_get_pix_fmt(format_name.c_str()));
+  ASSERT_FALSE(ffmpeg_name.empty());
+  EXPECT_EQ(param.ffmpeg_fmt, av_get_pix_fmt(ffmpeg_name.c_str()));
 }
 
 INSTANTIATE_TEST_SUITE_P(KnownMappings, ToFfmpegFormatNameTest,
