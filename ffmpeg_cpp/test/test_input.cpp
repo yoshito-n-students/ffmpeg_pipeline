@@ -32,7 +32,7 @@ TEST(InputTest, UnknownMediaTypeThrows) {
                ffmpeg_cpp::Error);
 }
 
-TEST(InputTest, MediaTypeResolvesAmbiguousStreams) {
+TEST(InputTest, MediaTypeSelectsVideoStreamParameters) {
   auto input = ffmpeg_cpp::Input::create("testsrc=size=16x16:rate=1:duration=1", "lavfi",
                                          ffmpeg_cpp::Dictionary::null(), "video");
 
