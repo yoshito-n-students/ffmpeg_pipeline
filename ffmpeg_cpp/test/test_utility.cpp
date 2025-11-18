@@ -8,6 +8,7 @@ extern "C" {
 #include <libavutil/error.h>
 #include <libavutil/log.h>
 #include <libavutil/pixdesc.h>
+#include <libavutil/pixfmt.h>
 }
 
 #include <sensor_msgs/image_encodings.hpp>
@@ -91,29 +92,29 @@ TEST(Err2StrTest, HandlesUnknownErrorCode) {
 namespace {
 
 struct FormatMappingParam {
-  const char *ffmpeg_name;
+  AVPixelFormat pix_fmt;
   const char *ros_encoding;
 };
 
 constexpr std::array<FormatMappingParam, 18> kFormatMappings = {
-    {{"rgb24", sensor_msgs::image_encodings::RGB8},
-     {"rgba", sensor_msgs::image_encodings::RGBA8},
-     {"rgb48", sensor_msgs::image_encodings::RGB16},
-     {"rgba64", sensor_msgs::image_encodings::RGBA16},
-     {"bgr24", sensor_msgs::image_encodings::BGR8},
-     {"bgra", sensor_msgs::image_encodings::BGRA8},
-     {"bgr48", sensor_msgs::image_encodings::BGR16},
-     {"bgra64", sensor_msgs::image_encodings::BGRA16},
-     {"gray8", sensor_msgs::image_encodings::MONO8},
-     {"gray16", sensor_msgs::image_encodings::MONO16},
-     {"bayer_rggb8", sensor_msgs::image_encodings::BAYER_RGGB8},
-     {"bayer_rggb16", sensor_msgs::image_encodings::BAYER_RGGB16},
-     {"bayer_bggr8", sensor_msgs::image_encodings::BAYER_BGGR8},
-     {"bayer_bggr16", sensor_msgs::image_encodings::BAYER_BGGR16},
-     {"bayer_grbg8", sensor_msgs::image_encodings::BAYER_GRBG8},
-     {"bayer_grbg16", sensor_msgs::image_encodings::BAYER_GRBG16},
-     {"bayer_gbrg8", sensor_msgs::image_encodings::BAYER_GBRG8},
-     {"bayer_gbrg16", sensor_msgs::image_encodings::BAYER_GBRG16}}};
+    {{AV_PIX_FMT_RGB24, sensor_msgs::image_encodings::RGB8},
+     {AV_PIX_FMT_RGBA, sensor_msgs::image_encodings::RGBA8},
+     {AV_PIX_FMT_RGB48, sensor_msgs::image_encodings::RGB16},
+     {AV_PIX_FMT_RGBA64, sensor_msgs::image_encodings::RGBA16},
+     {AV_PIX_FMT_BGR24, sensor_msgs::image_encodings::BGR8},
+     {AV_PIX_FMT_BGRA, sensor_msgs::image_encodings::BGRA8},
+     {AV_PIX_FMT_BGR48, sensor_msgs::image_encodings::BGR16},
+     {AV_PIX_FMT_BGRA64, sensor_msgs::image_encodings::BGRA16},
+     {AV_PIX_FMT_GRAY8, sensor_msgs::image_encodings::MONO8},
+     {AV_PIX_FMT_GRAY16, sensor_msgs::image_encodings::MONO16},
+     {AV_PIX_FMT_BAYER_RGGB8, sensor_msgs::image_encodings::BAYER_RGGB8},
+     {AV_PIX_FMT_BAYER_RGGB16, sensor_msgs::image_encodings::BAYER_RGGB16},
+     {AV_PIX_FMT_BAYER_BGGR8, sensor_msgs::image_encodings::BAYER_BGGR8},
+     {AV_PIX_FMT_BAYER_BGGR16, sensor_msgs::image_encodings::BAYER_BGGR16},
+     {AV_PIX_FMT_BAYER_GRBG8, sensor_msgs::image_encodings::BAYER_GRBG8},
+     {AV_PIX_FMT_BAYER_GRBG16, sensor_msgs::image_encodings::BAYER_GRBG16},
+     {AV_PIX_FMT_BAYER_GBRG8, sensor_msgs::image_encodings::BAYER_GBRG8},
+     {AV_PIX_FMT_BAYER_GBRG16, sensor_msgs::image_encodings::BAYER_GBRG16}}};
 
 class ToRosEncodingTest : public ::testing::TestWithParam<FormatMappingParam> {};
 
@@ -122,7 +123,10 @@ class ToRosEncodingTest : public ::testing::TestWithParam<FormatMappingParam> {}
 TEST_P(ToRosEncodingTest, ConvertsKnownFormats) {
   const auto param = GetParam();
 
-  EXPECT_EQ(param.ros_encoding, ffmpeg_cpp::to_ros_image_encoding(param.ffmpeg_name));
+  const auto *format_name = av_get_pix_fmt_name(param.pix_fmt);
+  ASSERT_NE(nullptr, format_name);
+
+  EXPECT_EQ(param.ros_encoding, ffmpeg_cpp::to_ros_image_encoding(format_name));
 }
 
 INSTANTIATE_TEST_SUITE_P(KnownMappings, ToRosEncodingTest, ::testing::ValuesIn(kFormatMappings));
@@ -137,11 +141,10 @@ TEST_P(ToFfmpegFormatNameTest, ConvertsKnownEncodings) {
   const auto param = GetParam();
 
   const auto format_name = ffmpeg_cpp::to_ffmpeg_format_name(param.ros_encoding);
-  const auto expected_pix_fmt = av_get_pix_fmt(param.ffmpeg_name);
-  ASSERT_NE(AV_PIX_FMT_NONE, expected_pix_fmt);
+  ASSERT_NE(nullptr, av_get_pix_fmt_name(param.pix_fmt));
 
   ASSERT_FALSE(format_name.empty());
-  EXPECT_EQ(expected_pix_fmt, av_get_pix_fmt(format_name.c_str()));
+  EXPECT_EQ(param.pix_fmt, av_get_pix_fmt(format_name.c_str()));
 }
 
 INSTANTIATE_TEST_SUITE_P(KnownMappings, ToFfmpegFormatNameTest,
