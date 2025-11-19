@@ -82,8 +82,6 @@ static inline AVMediaType to_media_type(const std::string &str) {
     return AVMEDIA_TYPE_SUBTITLE;
   } else if (str == av_get_media_type_string(AVMEDIA_TYPE_ATTACHMENT)) {
     return AVMEDIA_TYPE_ATTACHMENT;
-  } else if (str == av_get_media_type_string(AVMEDIA_TYPE_NB)) {
-    return AVMEDIA_TYPE_NB;
   } else {
     return AVMEDIA_TYPE_UNKNOWN;
   }
