@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include <cstdio>
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -25,8 +26,10 @@ ffmpeg_cpp::CodecParameters make_audio_parameters(const int sample_rate) {
   return params;
 }
 
-ffmpeg_cpp::Output make_output(const ffmpeg_cpp::CodecParameters &params) {
-  return ffmpeg_cpp::Output::create("null", "/dev/null", params);
+ffmpeg_cpp::Output make_output(const ffmpeg_cpp::CodecParameters &params,
+                               const std::string &format,
+                               const std::string &path) {
+  return ffmpeg_cpp::Output::create(format, path, params);
 }
 
 ffmpeg_cpp::Frame make_audio_frame(const int sample_rate, const int nb_samples) {
@@ -69,7 +72,7 @@ TEST(OutputTest, NullOutputIsFalsy) {
 TEST(OutputTest, CreateSetsNonBlockingFlagAndTimeBase) {
   constexpr int sample_rate = 48'000;
   const auto params = make_audio_parameters(sample_rate);
-  const auto output = make_output(params);
+  const auto output = make_output(params, "null", "/dev/null");
 
   ASSERT_TRUE(output);
   EXPECT_NE(0, output->flags & AVFMT_FLAG_NONBLOCK);
@@ -87,7 +90,7 @@ TEST(OutputTest, SurplusOptionsAreRejected) {
 
 TEST(OutputTest, WriteFrameSetsStreamIndexAndAcceptsSequentialWrites) {
   const auto params = make_audio_parameters(48'000);
-  auto output = make_output(params);
+  auto output = make_output(params, "null", "/dev/null");
   ASSERT_TRUE(output);
   ASSERT_NE(nullptr, output->streams[0]);
 
@@ -109,7 +112,10 @@ TEST(OutputTest, WriteFrameSetsStreamIndexAndAcceptsSequentialWrites) {
 TEST(OutputTest, WriteUncodedFrameClonesAndPreservesInputTimestamps) {
   constexpr int sample_rate = 48'000;
   const auto params = make_audio_parameters(sample_rate);
-  auto output = make_output(params);
+  const std::string wav_path = "/tmp/ffmpeg_cpp_test_output.wav";
+  std::remove(wav_path.c_str());
+
+  auto output = make_output(params, "wav", wav_path);
   ASSERT_TRUE(output);
 
   auto frame = make_audio_frame(sample_rate, 32);
@@ -125,4 +131,6 @@ TEST(OutputTest, WriteUncodedFrameClonesAndPreservesInputTimestamps) {
   bool second_written = false;
   ASSERT_NO_THROW({ second_written = output.write_uncoded_frame(frame); });
   EXPECT_TRUE(second_written);
+
+  std::remove(wav_path.c_str());
 }
