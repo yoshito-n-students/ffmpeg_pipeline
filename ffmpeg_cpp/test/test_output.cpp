@@ -113,6 +113,7 @@ TEST(OutputTest, WriteUncodedFrameClonesAndPreservesInputTimestamps) {
   constexpr int sample_rate = 48'000;
   const auto params = make_audio_parameters(sample_rate);
   const std::string wav_path = "/tmp/ffmpeg_cpp_test_output.wav";
+  // std::remove from <cstdio> clears any stale file before the test writes.
   std::remove(wav_path.c_str());
 
   auto output = make_output(params, "wav", wav_path);
