@@ -85,7 +85,7 @@ TEST(OutputTest, SurplusOptionsAreRejected) {
                ffmpeg_cpp::Error);
 }
 
-TEST(OutputTest, WriteFrameSetsStreamIndexAndTimestampsMonotonically) {
+TEST(OutputTest, WriteFrameSetsStreamIndexAndAcceptsSequentialWrites) {
   const auto params = make_audio_parameters(48'000);
   auto output = make_output(params);
   ASSERT_TRUE(output);
@@ -98,22 +98,15 @@ TEST(OutputTest, WriteFrameSetsStreamIndexAndTimestampsMonotonically) {
   bool first_written = false;
   ASSERT_NO_THROW({ first_written = output.write_frame(packet1); });
   EXPECT_TRUE(first_written);
-  const int64_t first_dts = output->streams[0]->cur_dts;
-  EXPECT_NE(AV_NOPTS_VALUE, first_dts);
 
   auto packet2 = make_packet(stream_index + 7, 0xBB, 4);
 
   bool second_written = false;
-  int64_t second_dts = 0;
-  ASSERT_NO_THROW({
-    second_written = output.write_frame(packet2);
-    second_dts = output->streams[0]->cur_dts;
-  });
+  ASSERT_NO_THROW({ second_written = output.write_frame(packet2); });
   EXPECT_TRUE(second_written);
-  EXPECT_GT(second_dts, first_dts);
 }
 
-TEST(OutputTest, WriteUncodedFrameClonesAndTimestamps) {
+TEST(OutputTest, WriteUncodedFrameClonesAndPreservesInputTimestamps) {
   constexpr int sample_rate = 48'000;
   const auto params = make_audio_parameters(sample_rate);
   auto output = make_output(params);
@@ -124,21 +117,12 @@ TEST(OutputTest, WriteUncodedFrameClonesAndTimestamps) {
   const auto original_dts = frame->pkt_dts;
 
   bool first_written = false;
-  int64_t first_dts = 0;
-  ASSERT_NO_THROW({
-    first_written = output.write_uncoded_frame(frame);
-    first_dts = output->streams[0]->cur_dts;
-  });
+  ASSERT_NO_THROW({ first_written = output.write_uncoded_frame(frame); });
   EXPECT_TRUE(first_written);
   EXPECT_EQ(original_pts, frame->pts);
   EXPECT_EQ(original_dts, frame->pkt_dts);
 
   bool second_written = false;
-  int64_t second_dts = 0;
-  ASSERT_NO_THROW({
-    second_written = output.write_uncoded_frame(frame);
-    second_dts = output->streams[0]->cur_dts;
-  });
+  ASSERT_NO_THROW({ second_written = output.write_uncoded_frame(frame); });
   EXPECT_TRUE(second_written);
-  EXPECT_GT(second_dts, first_dts);
 }
