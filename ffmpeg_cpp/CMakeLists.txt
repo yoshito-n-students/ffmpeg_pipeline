@@ -157,6 +157,12 @@ if(BUILD_TESTING)
       target_compile_options(test_input PRIVATE -Wno-self-move)
     endif()
   endif()
+
+  ament_add_gtest(test_output test/test_output.cpp)
+  if(TARGET test_output)
+    target_link_libraries(test_output ffmpeg_cpp)
+    target_include_directories(test_output PRIVATE src)
+  endif()
 endif()
 
 ament_package()
