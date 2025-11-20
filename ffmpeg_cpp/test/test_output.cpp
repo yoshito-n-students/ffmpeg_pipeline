@@ -1,7 +1,6 @@
 #include <gtest/gtest.h>
 
 #include <cstdint>
-#include <cstdio>
 #include <string>
 #include <vector>
 
@@ -29,28 +28,6 @@ ffmpeg_cpp::CodecParameters make_audio_parameters(const int sample_rate) {
 ffmpeg_cpp::Output make_output(const ffmpeg_cpp::CodecParameters &params, const std::string &format,
                                const std::string &path) {
   return ffmpeg_cpp::Output::create(format, path, params);
-}
-
-ffmpeg_cpp::Frame make_audio_frame(const int sample_rate, const int nb_samples) {
-  const AVSampleFormat format = AV_SAMPLE_FMT_S16;
-  AVChannelLayout layout;
-  av_channel_layout_default(&layout, 1);
-
-  int buffer_size = 0;
-  EXPECT_GE(av_samples_get_buffer_size(&buffer_size, layout.nb_channels, nb_samples, format, 1), 0);
-
-  std::vector<std::uint8_t> samples(static_cast<std::size_t>(buffer_size), 0x7F);
-  auto frame = ffmpeg_cpp::Frame::create(samples.data(), samples.size());
-  frame->format = format;
-  frame->nb_samples = nb_samples;
-  frame->sample_rate = sample_rate;
-  frame->ch_layout = layout;
-  frame->linesize[0] = buffer_size;
-  frame->time_base = AVRational{1, sample_rate};
-  frame->pts = 11;
-  frame->pkt_dts = 3;
-
-  return frame;
 }
 
 ffmpeg_cpp::Packet make_packet(const int stream_index, const std::uint8_t fill_value,
