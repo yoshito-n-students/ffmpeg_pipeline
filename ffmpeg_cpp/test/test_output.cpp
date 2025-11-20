@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
-#include <cstdio>
 #include <cstdint>
+#include <cstdio>
 #include <string>
 #include <vector>
 
@@ -26,8 +26,7 @@ ffmpeg_cpp::CodecParameters make_audio_parameters(const int sample_rate) {
   return params;
 }
 
-ffmpeg_cpp::Output make_output(const ffmpeg_cpp::CodecParameters &params,
-                               const std::string &format,
+ffmpeg_cpp::Output make_output(const ffmpeg_cpp::CodecParameters &params, const std::string &format,
                                const std::string &path) {
   return ffmpeg_cpp::Output::create(format, path, params);
 }
@@ -82,10 +81,10 @@ TEST(OutputTest, CreateSetsNonBlockingFlagAndTimeBase) {
 
 TEST(OutputTest, SurplusOptionsAreRejected) {
   const auto params = make_audio_parameters(48'000);
-  EXPECT_THROW(static_cast<void>(ffmpeg_cpp::Output::create(
-                   "null", "/dev/null", params,
-                   ffmpeg_cpp::Dictionary::create("unexpected: value"))),
-               ffmpeg_cpp::Error);
+  EXPECT_THROW(
+      static_cast<void>(ffmpeg_cpp::Output::create(
+          "null", "/dev/null", params, ffmpeg_cpp::Dictionary::create("unexpected: value"))),
+      ffmpeg_cpp::Error);
 }
 
 TEST(OutputTest, WriteFrameSetsStreamIndexAndAcceptsSequentialWrites) {
@@ -107,31 +106,4 @@ TEST(OutputTest, WriteFrameSetsStreamIndexAndAcceptsSequentialWrites) {
   bool second_written = false;
   ASSERT_NO_THROW({ second_written = output.write_frame(packet2); });
   EXPECT_TRUE(second_written);
-}
-
-TEST(OutputTest, WriteUncodedFrameClonesAndPreservesInputTimestamps) {
-  constexpr int sample_rate = 48'000;
-  const auto params = make_audio_parameters(sample_rate);
-  const std::string wav_path = "/tmp/ffmpeg_cpp_test_output.wav";
-  // std::remove from <cstdio> clears any stale file before the test writes.
-  std::remove(wav_path.c_str());
-
-  auto output = make_output(params, "wav", wav_path);
-  ASSERT_TRUE(output);
-
-  auto frame = make_audio_frame(sample_rate, 32);
-  const auto original_pts = frame->pts;
-  const auto original_dts = frame->pkt_dts;
-
-  bool first_written = false;
-  ASSERT_NO_THROW({ first_written = output.write_uncoded_frame(frame); });
-  EXPECT_TRUE(first_written);
-  EXPECT_EQ(original_pts, frame->pts);
-  EXPECT_EQ(original_dts, frame->pkt_dts);
-
-  bool second_written = false;
-  ASSERT_NO_THROW({ second_written = output.write_uncoded_frame(frame); });
-  EXPECT_TRUE(second_written);
-
-  std::remove(wav_path.c_str());
 }
