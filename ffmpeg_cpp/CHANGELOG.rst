@@ -2,8 +2,8 @@
 Changelog for package ffmpeg_cpp
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.0.2 (2025-11-21)
+------------------
 * Fix bugs
 * Fix typos
 * Add unit tests for wrapper classes

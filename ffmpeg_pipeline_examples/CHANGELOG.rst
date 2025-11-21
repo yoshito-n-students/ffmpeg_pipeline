@@ -2,8 +2,8 @@
 Changelog for package ffmpeg_pipeline_examples
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.0.2 (2025-11-21)
+------------------
 * Update examples to support new parameter structure of controller_manager
 * Update package descriptions
 * Fix or improve comments
