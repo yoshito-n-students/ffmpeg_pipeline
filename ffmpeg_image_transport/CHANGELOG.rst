@@ -2,6 +2,11 @@
 Changelog for package ffmpeg_image_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Update package descriptions
+* Contributors: Yoshito Okada
+
 0.0.1 (2025-06-14)
 ------------------
 * Initial version
