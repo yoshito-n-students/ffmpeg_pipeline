@@ -46,11 +46,11 @@ TEST_F(MemoryLeakTest, DictionaryCreationDoesNotThrow) {
 
 TEST_F(MemoryLeakTest, PacketAndFrameCreationDoesNotThrow) {
   EXPECT_NO_THROW({
-    const std::array<uint8_t, 11> test_payload = {'m', 'e', 'd', 'i', 'a', '_', 'p', 'a', 'y', 'l', 'd'};
+    const std::array<uint8_t, 12> payload = {'t', 'e', 's', 't', '_', 'p', 'a', 'y', 'l', 'o', 'a', 'd'};
     for (int i = 0; i < 32; ++i) {
-      const auto packet = ffmpeg_cpp::Packet::create(test_payload.data(), test_payload.size());
+      const auto packet = ffmpeg_cpp::Packet::create(payload.data(), payload.size());
       ASSERT_TRUE(packet);
-      const auto frame = ffmpeg_cpp::Frame::create(test_payload.data(), test_payload.size());
+      const auto frame = ffmpeg_cpp::Frame::create(payload.data(), payload.size());
       ASSERT_TRUE(frame);
     }
   });
