@@ -1,9 +1,9 @@
 #include <gtest/gtest.h>
 
+#include <array>
 #include <cstdlib>
 #include <cstring>
 #include <string>
-#include <vector>
 
 extern "C" {
 #include <libavformat/avformat.h>
@@ -46,7 +46,8 @@ TEST_F(MemoryLeakTest, DictionaryCreationDoesNotThrow) {
 
 TEST_F(MemoryLeakTest, PacketAndFrameCreationDoesNotThrow) {
   EXPECT_NO_THROW({
-    const std::vector<uint8_t> payload = {'f', 'r', 'a', 'm', 'e', '_', 'd', 'a', 't', 'a'};
+    const std::array<uint8_t, 14> payload = {'p', 'a', 'c', 'k', 'e', 't', '_',
+                                             'p', 'a', 'y', 'l', 'o', 'a', 'd'};
     for (int i = 0; i < 32; ++i) {
       const auto packet = ffmpeg_cpp::Packet::create(payload.data(), payload.size());
       ASSERT_TRUE(packet);
