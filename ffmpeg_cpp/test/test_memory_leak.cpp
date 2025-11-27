@@ -45,8 +45,9 @@ TEST_F(MemoryLeakTest, DictionaryCreationDoesNotThrow) {
 }
 
 TEST_F(MemoryLeakTest, PacketAndFrameCreationDoesNotThrow) {
+  static constexpr std::array<uint8_t, 12> payload = {'t', 'e', 's', 't', '_', 'p',
+                                                      'a', 'y', 'l', 'o', 'a', 'd'};
   EXPECT_NO_THROW({
-    const std::array<uint8_t, 12> payload = {'t', 'e', 's', 't', '_', 'p', 'a', 'y', 'l', 'o', 'a', 'd'};
     for (int i = 0; i < 32; ++i) {
       const auto packet = ffmpeg_cpp::Packet::create(payload.data(), payload.size());
       ASSERT_TRUE(packet);
@@ -59,7 +60,7 @@ TEST_F(MemoryLeakTest, PacketAndFrameCreationDoesNotThrow) {
 TEST_F(MemoryLeakTest, InputReadDoesNotThrow) {
   EXPECT_NO_THROW({
     for (int i = 0; i < 12; ++i) {
-      auto input = ffmpeg_cpp::Input::create("testsrc=size=8x8:rate=1:duration=1", "lavfi",
+      auto input = ffmpeg_cpp::Input::create("testsrc=size=8x8:rate=1", "lavfi",
                                              ffmpeg_cpp::Dictionary::null(), "video");
       ASSERT_TRUE(input);
       // Drain a few packets to exercise alloc/free paths repeatedly.
