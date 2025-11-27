@@ -160,6 +160,12 @@ if(BUILD_TESTING)
     target_link_libraries(test_output ffmpeg_cpp)
     target_include_directories(test_output PRIVATE src)
   endif()
+
+  ament_add_gtest(test_memory_leak test/test_memory_leak.cpp)
+  if(TARGET test_memory_leak)
+    target_link_libraries(test_memory_leak ffmpeg_cpp)
+    target_include_directories(test_memory_leak PRIVATE src)
+  endif()
 endif()
 
 ament_package()
