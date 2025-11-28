@@ -45,3 +45,12 @@ jobs:
         run: |
           source /opt/ros/${{ github.ref_name }}/setup.bash
           colcon test --event-handlers console_cohesion+
+      # Upload test results
+      - name: Upload colcon test results
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: colcon-test-results
+          path: |
+            build/*/Testing
+            build/*/test_results
